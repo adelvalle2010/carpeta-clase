@@ -43,6 +43,7 @@
       return { tipo: "evaluacion", selTipo: F("input_tipo_evaluacion"), fecha: F("input_fecha_eval_grupal_input"), desc: F("evalDescripc"), tipoCalif: F("tipo_calif"),
         filas: Array.prototype.map.call(document.querySelectorAll("tr.estudiante_fila"), function (tr) {
           var n = tr.querySelector("td.fit-content-eval-est") || tr.cells[1];
+          if (n) { n = n.cloneNode(true); Array.prototype.forEach.call(n.querySelectorAll(".dataadcurricular"), function (x) { x.remove(); }); } // sin la marca «AR» de ajuste razonable
           return { nombre: n ? n.textContent : "", nota: tr.querySelector("input.campoCalificacion"), texto: tr.querySelector("td.calif-comentario textarea") || tr.querySelector("textarea") };
         }).filter(function (f) { return f.nota && !f.nota.disabled && !f.nota.readOnly; }) };
     }
@@ -60,7 +61,7 @@
 
   /* ---- emparejar nombres: «Ana Pérez» encuentra a «PEREZ GOMEZ, ANA MARIA»; si hay dos posibles, no completa ---- */
   function emparejar(pag, paq) {
-    var P = pag.map(function (f) { return { n: norm(f.nombre.replace(/^\s*\d+\s+/, "")), t: toks(f.nombre) }; });
+    var P = pag.map(function (f) { var nom = f.nombre.replace(/^\s*\d+\.?\s+/, ""); return { n: norm(nom), t: toks(nom) }; }); // sin el número de lista («0. », «12 »)
     var res = paq.map(function (f) {
       var n = norm(f.nombre), t = toks(f.nombre), c = [];
       if (!t.length) return -1;
