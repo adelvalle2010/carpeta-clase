@@ -89,3 +89,21 @@ Se cargan desde CDN, así que la página necesita internet la primera vez:
 ## Privacidad
 
 Si el repositorio es público, el código queda a la vista de cualquiera, pero los datos de los estudiantes **no**. Viven en tu navegador, en tu planilla de Google o en tus archivos de respaldo. No subas los `.json` de respaldo ni los Excel exportados a un repositorio público.
+
+## Migrar al Portafolio Docente de ANEP
+
+En **Resumen del grupo → ⇪ Migrar a ANEP** la libreta arma tres paquetes y los copia al portapapeles:
+
+| Botón | Qué lleva | Dónde se completa |
+|---|---|---|
+| Copiar asistencia | Horas de falta injustificada (A) y justificada (J) de una clase | «Pasaje de Lista» (Registro de inasistencias de UTU), con la misma fecha |
+| Copiar evaluación | Notas de una columna en una clase, tipo de actividad de ANEP, fecha y descripción | Calificaciones → Evaluación grupal → Nueva evaluación grupal |
+| Copiar cierre | Promedio redondeado a entero y juicio conceptual | Calificaciones → Cerrar promedios |
+
+La libreta no puede escribir dentro del Portafolio (es otro sitio y usa la sesión de ANEP). Lo completa el marcador **📒 Migrar desde la Libreta**, que se instala una sola vez desde [`anep.html`](https://adelvalle2010.github.io/carpeta-clase/anep.html). El marcador nunca aprieta «Guardar».
+
+- Los **juicios** se escriben en la tabla del paso 3 y quedan guardados en el grupo (`juicios`).
+- El **tipo de actividad** se elige una vez por columna de nota (`anepTipos`).
+- El **link del grupo** en el Portafolio es opcional y sirve para abrir cada pantalla desde la libreta (`anepUrl`).
+
+Archivos: `marcador-anep.js` (fuente del marcador), `anep.plantilla.html` y `armar-anep.js` (`node armar-anep.js` regenera `anep.html`).

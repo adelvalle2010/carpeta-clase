@@ -129,6 +129,11 @@ input.txt{width:100%;min-width:160px}
 .legend span b{font-family:var(--f-mono);margin-right:3px}
  
 .empty{padding:28px 12px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
+.migpaso{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:10px} .migpaso h3{margin:0;font-size:1rem} .migpaso p{margin:0}
+.mig label{display:inline-flex;flex-direction:column;gap:3px;font-size:.85rem;color:var(--muted)} .mig label.grow{display:flex;flex:1 1 260px} .mig label .field{color:var(--ink);font-size:.95rem}
+.migmsg{border-radius:var(--r);padding:8px 12px;font-size:.92rem} .migmsg.ok{background:var(--info-soft)} .migmsg.mal{border:1px solid var(--bad);color:var(--bad)} .migmsg a{color:var(--accent)}
+table.migt td.jc,table.migt th.jc{min-width:280px;width:55%;text-align:left} table.migt textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:0;height:3.4em;font:inherit;font-size:.9rem;padding:5px 8px}
+@media print{.mig{display:none}}
 .banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
 .confirm{display:inline-flex;gap:6px;align-items:center;background:var(--bad-soft);padding:4px 8px;border-radius:var(--r);font-size:.88rem}
  
@@ -188,7 +193,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v7 · 06/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v8 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn">+ Grupo</button>
@@ -1112,11 +1117,137 @@ function viewResumen(g){
   const canDl = !!DL.api;
   return `<section class="panel">
     <div class="row spread"><h2>Resumen de ${esc(g.nombre)}</h2>
-      <div class="row">${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
+      <div class="row"><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">⇪ Migrar a ANEP</button>${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
     <p class="muted" style="margin:0">${fechas.length} clases, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}. El porcentaje de asistencia cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %. Las faltas se cuentan por horas. <b>Fictas</b> = horas A + horas J/2 + tardes/2; límite del grupo: <b>${fmtN(limiteFictas(g).max)}</b> (${limiteFictas(g).pct} % de ${limiteFictas(g).base} horas dictadas), en ámbar al acercarse y en rojo al pasarlo. Con promedio de 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre. Tocá una fecha para abrir esa clase, o un nombre para ver la ficha del estudiante.</p>
     <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+  </section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
+}
+ 
+/* ---------- migrar al Portafolio Docente de ANEP ----------
+   La libreta no puede escribir en el Portafolio (es otro sitio y usa la sesión de ANEP): arma un «paquete»
+   y lo copia; el marcador «Migrar desde la Libreta» (anep.html) lo completa allá. Nunca guarda: guarda el docente.
+   En el grupo quedan g.juicios = { idEstudiante: texto }, g.anepTipos = { "nota:escrito": "Escritos" } y g.anepUrl. */
+const ANEP_TIPOS = ["Carpeta", "Escritos", "Orales", "Parcial", "Práctico", "Tarea domiciliaria", "Teórico"];
+const ANEP_PISTAS = [[/carpeta|cuaderno/, "Carpeta"], [/escrit|prueba/, "Escritos"], [/oral/, "Orales"], [/parcial/, "Parcial"], [/practic|proyecto|laboratorio|taller/, "Práctico"], [/tarea|deber|domicil/, "Tarea domiciliaria"], [/teoric/, "Teórico"]];
+const notaAnep = n => Math.max(1, Math.min(10, Math.round(Number(n)))); // ANEP: enteros de 1 a 10 (7,5 → 8)
+const anepKey = k => k.key || colKey(k);
+function tipoAnep(g, k){
+  const t = (g.anepTipos || {})[anepKey(k)]; if (ANEP_TIPOS.includes(t)) return t;
+  const n = sinAcentos(k.nombre); const p = ANEP_PISTAS.find(([re]) => re.test(n)); return p ? p[1] : "";
+}
+function anepLinks(g){
+  const m = /libretaId=(\d+)/.exec(g.anepUrl || ""); if (!m) return null;
+  const b = "https://portafoliodocente.anep.edu.uy/paginas/";
+  return { asistencia: `${b}pasaje_de_lista_page.xhtml?libretaId=${m[1]}`, evaluacion: `${b}eval_grupal_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, cierre: `${b}promedios_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF` };
+}
+function migState(g){
+  const m = S.mig ||= {}, fs = fechasOrden(), est = activos(g);
+  if (!fs.includes(m.fAsis)) m.fAsis = fs.includes(S.fecha) ? S.fecha : fs[fs.length - 1] || "";
+  const cats = catsNota(g);
+  if (!cats.some(k => k.id === m.colEval)) m.colEval = cats[0] ? cats[0].id : "";
+  const kEval = cats.find(k => k.id === m.colEval);
+  const fEvals = kEval ? fs.filter(f => est.some(e => valR(S.clases[f], e.id, kEval) !== "")) : [];
+  if (!fEvals.includes(m.fEval)) m.fEval = fEvals[fEvals.length - 1] || "";
+  const proms = colsResumen(g).filter(k => k.tipo === "nota");
+  if (!proms.some(k => k.id === m.colCierre)) m.colCierre = (proms.find(k => k.todas) || proms[0] || {}).id || "";
+  const dk = m.colEval + "|" + m.fEval; if (m.descDe !== dk) { m.descDe = dk; m.desc = kEval ? kEval.nombre : ""; }
+  return { m, fs, est, cats, kEval, fEvals, proms };
+}
+function paqueteAnep(g, tipo){
+  const { m, est, kEval, proms } = migState(g), base = { app: "libreta-anep", v: 1, tipo, grupo: g.nombre };
+  if (tipo === "asistencia") {
+    const k = asisCol(g), c = S.clases[m.fAsis]; if (!k || !c) return { error: "No hay una clase con asistencia para esa fecha." };
+    const filas = est.map(e => { const v = val(c, e.id, k.id), h = horasFalta(g, c, e.id, k.id); return { nombre: e.nombre, inj: v === "A" ? h : 0, jus: v === "J" ? h : 0, marca: v || "" }; });
+    return { ...base, fecha: m.fAsis, horas: horasClase(g, c), filas };
+  }
+  if (tipo === "evaluacion") {
+    const c = S.clases[m.fEval]; if (!kEval || !c) return { error: "No hay notas para migrar en esa columna." };
+    const actividad = tipoAnep(g, kEval); if (!actividad) return { error: "Elegí el tipo de actividad de ANEP para esta columna." };
+    const filas = est.map(e => ({ nombre: e.nombre, n: Number(String(valR(c, e.id, kEval)).replace(",", ".")) })).filter(x => x.n >= 1 && x.n <= NOTA_MAX).map(x => ({ nombre: x.nombre, nota: notaAnep(x.n) }));
+    if (!filas.length) return { error: "Esa clase no tiene notas en esa columna." };
+    return { ...base, fecha: m.fEval, actividad, descripcion: (m.desc || "").trim(), filas };
+  }
+  const k = proms.find(x => x.id === m.colCierre); if (!k) return { error: "El grupo no tiene columnas de nota." };
+  const filas = resumenData(g).map(r => { const p = (r.cols[k.id] || {}).prom; return { nombre: r.e.nombre, nota: p === null || p === undefined ? "" : notaAnep(p), juicio: ((g.juicios || {})[r.e.id] || "").trim() }; }).filter(x => x.nota !== "" || x.juicio);
+  if (!filas.length) return { error: "Todavía no hay promedios ni juicios para migrar." };
+  return { ...base, promedio: k.todas ? "ponderado" : k.nombre, filas };
+}
+async function copiarPaquete(g, tipo){
+  const p = paqueteAnep(g, tipo), m = S.mig;
+  if (p.error) { m.msg = { tipo, mal: true, txt: p.error }; render(); return; }
+  const txt = "LIBRETA-ANEP " + JSON.stringify(p);
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch(e) {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand("copy"); } catch(e2) {} ta.remove();
+  }
+  const n = p.filas.length, que = tipo === "asistencia" ? `la asistencia del ${fmtDate(p.fecha)} (${p.filas.filter(x => x.inj || x.jus).length} con faltas, ${n} estudiantes)` : tipo === "evaluacion" ? `${n} nota${n === 1 ? "" : "s"} de «${p.actividad}» del ${fmtDate(p.fecha)}` : `el cierre de ${n} estudiante${n === 1 ? "" : "s"} (${p.filas.filter(x => x.juicio).length} con juicio)`;
+  m.msg = ok ? { tipo, txt: `Copiado: ${que}.` } : { tipo, mal: true, txt: "El navegador no dejó copiar. Probá de nuevo." };
+  render(); if (ok) toast("Copiado para ANEP");
+}
+function viewMigrar(g){
+  const { m, fs, est, cats, kEval, fEvals, proms } = migState(g);
+  if (!m.open) return "";
+  const L = anepLinks(g), kA = asisCol(g);
+  const opt = (v, t, sel) => `<option value="${esc(v)}"${v === sel ? " selected" : ""}>${esc(t)}</option>`;
+  const paso = (tipo, donde) => { const x = m.msg && m.msg.tipo === tipo ? m.msg : null; if (!x) return "";
+    return `<p class="migmsg ${x.mal ? "mal" : "ok"}" role="status">${esc(x.txt)}${x.mal ? "" : ` Ahora ${L ? `<a href="${esc(L[tipo])}" target="_blank" rel="noopener">abrí ${donde} ↗</a>` : `abrí ${donde}`} y tocá el marcador <b>📒 Migrar desde la Libreta</b>.`}</p>`; };
+  let asis = `<p class="muted">El grupo no tiene columna de asistencia.</p>`;
+  if (kA && fs.length) {
+    const c = S.clases[m.fAsis], vs = est.map(e => val(c, e.id, kA.id));
+    const sinMarcar = vs.filter(v => !v).length, tardes = vs.filter(v => v === "T").length;
+    asis = `<div class="row"><label>Clase <select class="field" data-mig="fAsis">${[...fs].reverse().map(f => opt(f, fmtDate(f) + " · " + horasClase(g, S.clases[f]) + " h", m.fAsis)).join("")}</select></label>
+      <button class="btn primary" data-mig-act="copy" data-k="asistencia">Copiar asistencia</button></div>
+      <p class="muted">${vs.filter(v => v === "A").length} ausentes y ${vs.filter(v => v === "J").length} con falta justificada, en horas.${tardes ? ` ${tardes === 1 ? "La llegada tarde no se migra" : `Las ${tardes} llegadas tarde no se migran`}: el registro de UTU solo lleva horas de falta.` : ""}${sinMarcar ? ` <b>${sinMarcar} sin marcar</b> van como presentes.` : ""} En UTU se carga una fecha por vez: poné la misma fecha allá antes de tocar el marcador.</p>${paso("asistencia", "Pasaje de Lista")}`;
+  }
+  let ev = `<p class="muted">El grupo todavía no tiene columnas de nota.</p>`;
+  if (kEval) {
+    const tipo = tipoAnep(g, kEval), c = S.clases[m.fEval];
+    const cant = c ? est.filter(e => { const n = Number(String(valR(c, e.id, kEval)).replace(",", ".")); return n >= 1 && n <= NOTA_MAX; }).length : 0;
+    ev = `<div class="row"><label>Columna <select class="field" data-mig="colEval">${cats.map(k => opt(k.id, k.nombre, m.colEval)).join("")}</select></label>
+      <label>Clase <select class="field" data-mig="fEval"${fEvals.length ? "" : " disabled"}>${fEvals.length ? [...fEvals].reverse().map(f => opt(f, fmtDate(f), m.fEval)).join("") : "<option>sin notas</option>"}</select></label>
+      <label>Tipo de actividad en ANEP <select class="field" data-mig="tipo"><option value="">— elegir —</option>${ANEP_TIPOS.map(t => opt(t, t, tipo)).join("")}</select></label></div>
+      <div class="row"><label class="grow">Descripción <input class="field" data-mig="desc" value="${esc(m.desc || "")}" maxlength="200"></label>
+      <button class="btn primary" data-mig-act="copy" data-k="evaluacion"${fEvals.length ? "" : " disabled"}>Copiar evaluación</button></div>
+      <p class="muted">${cant} nota${cant === 1 ? "" : "s"} en esa clase. El tipo queda guardado para la columna «${esc(kEval.nombre)}». Las notas van como enteros de 1 a 10 (7,5 → 8).</p>${paso("evaluacion", "Evaluación grupal → Nueva evaluación grupal")}`;
+  }
+  let ci = `<p class="muted">El cierre necesita al menos una columna de nota.</p>`;
+  if (proms.length) {
+    const k = proms.find(x => x.id === m.colCierre), data = resumenData(g), J = g.juicios || {};
+    ci = `<div class="row"><label>Promedio a migrar <select class="field" data-mig="colCierre">${proms.map(x => opt(x.id, x.todas ? "Ponderado de todas las notas" : x.nombre, m.colCierre)).join("")}</select></label>
+      <button class="btn primary" data-mig-act="copy" data-k="cierre">Copiar cierre</button></div>
+      <div class="sheet"><table class="sum migt"><thead><tr><th class="name">Estudiante</th><th>Promedio</th><th title="Promedio redondeado a entero, como lo pide ANEP">Calificación</th><th class="jc">Juicio conceptual</th></tr></thead><tbody>${data.map((r, i) => { const p = (r.cols[k.id] || {}).prom, tiene = p !== null && p !== undefined;
+        return `<tr><td class="name"><span class="idx">${i + 1}</span>${esc(r.e.nombre)}</td><td>${tiene ? p.toFixed(1) : "—"}</td><td>${tiene ? `<b class="sit ${sit(notaAnep(p))}">${notaAnep(p)}</b>` : "—"}</td><td class="jc"><textarea class="field" rows="2" data-mig="juicio" data-sid="${esc(r.e.id)}" maxlength="1000" aria-label="Juicio conceptual de ${esc(r.e.nombre)}">${esc(J[r.e.id] || "")}</textarea></td></tr>`; }).join("")}</tbody></table></div>
+      <p class="muted">Los juicios se guardan solos en la libreta. Se migran la calificación y el juicio del período que esté abierto en «Cerrar promedios».</p>${paso("cierre", "Cerrar promedios")}`;
+  }
+  return `<section class="panel mig" id="migPanel">
+    <div class="row spread"><h2>Migrar al Portafolio de ANEP</h2><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div>
+    <p class="muted" style="margin:0">Cada botón copia un paquete; en la pantalla de ANEP, el marcador <b>📒 Migrar desde la Libreta</b> lo completa. <a href="anep.html" target="_blank" rel="noopener">Instalar el marcador (una sola vez) ↗</a>. El marcador <b>nunca aprieta «Guardar»</b>: revisás y guardás vos.</p>
+    <label class="grow">Link del grupo en el Portafolio (opcional, para abrir cada pantalla desde acá) <input class="field" data-mig="url" value="${esc(g.anepUrl || "")}" placeholder="https://portafoliodocente.anep.edu.uy/paginas/calif_page.xhtml?libretaId=…"></label>
+    <div class="migpaso"><h3>1 · Lista de presentes</h3>${asis}</div>
+    <div class="migpaso"><h3>2 · Calificaciones y tipo de evaluación</h3>${ev}</div>
+    <div class="migpaso"><h3>3 · Juicios y cierre de promedios</h3>${ci}</div>
   </section>`;
 }
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-mig-act]"), g = grupo(); if (!t || !g) return;
+  const m = S.mig ||= {};
+  if (t.dataset.migAct === "toggle") { m.open = !m.open; m.msg = null; render(); if (m.open) { const p = $("#migPanel"); if (p) p.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
+  if (t.dataset.migAct === "copy") copiarPaquete(g, t.dataset.k);
+});
+document.addEventListener("input", ev => {
+  const t = ev.target, g = grupo(); if (!g || !t.dataset || !t.dataset.mig) return;
+  if (t.dataset.mig === "juicio") { g.juicios ||= {}; if (t.value.trim()) g.juicios[t.dataset.sid] = t.value; else delete g.juicios[t.dataset.sid]; saveGrupoSoon(); return; }
+  if (t.dataset.mig === "desc") { (S.mig ||= {}).desc = t.value; return; }
+});
+document.addEventListener("change", ev => {
+  const t = ev.target, g = grupo(); if (!g || !t.dataset || !t.dataset.mig) return;
+  const m = S.mig ||= {}, k = t.dataset.mig;
+  if (k === "juicio" || k === "desc") return;
+  if (k === "url") { const v = t.value.trim(); if (v) g.anepUrl = v; else delete g.anepUrl; saveGrupoSoon(); m.msg = null; render(); return; }
+  if (k === "tipo") { const { kEval } = migState(g); if (!kEval) return; g.anepTipos ||= {}; if (t.value) g.anepTipos[anepKey(kEval)] = t.value; else delete g.anepTipos[anepKey(kEval)]; saveGrupoSoon(); m.msg = null; render(); return; }
+  m[k] = t.value; m.msg = null; render();
+});
  
 /* ---------- vista: configuración ---------- */
 function viewConfig(g){

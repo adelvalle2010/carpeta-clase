@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Migrar la Libreta al Portafolio de ANEP</title>
+<style>
+:root{--bg:#f3f5f9;--paper:#fff;--ink:#1b2333;--muted:#5d6880;--line:#d9dfea;--accent:#2a4ea8;--info-soft:#e8e4f8;--warn-soft:#f8ecc9}
+@media (prefers-color-scheme:dark){:root{--bg:#11151e;--paper:#181e2a;--ink:#e6eaf3;--muted:#9aa5bd;--line:#2c3447;--accent:#8fb0ff;--info-soft:#2b2550;--warn-soft:#3a2f12}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
+main{max-width:780px;margin:24px auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:26px 30px}
+h1{margin:0 0 4px;font-size:1.6rem}h2{font-size:1.15rem;margin:26px 0 6px}a{color:var(--accent)}
+.bm{display:inline-block;margin:10px 0;padding:10px 18px;background:#2a4ea8;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;cursor:grab}
+.nota{background:var(--warn-soft);border-radius:8px;padding:10px 14px}
+li{margin:4px 0}code{background:var(--info-soft);padding:1px 5px;border-radius:4px}small,.muted{color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+@media (max-width:600px){main{margin:0;border:0;border-radius:0;padding:18px 16px}}
+</style></head><body><main>
+<h1>📒 Migrar la Libreta al Portafolio de ANEP</h1>
+<p class="muted">Un marcador del navegador que completa en ANEP lo que copiás en la <a href="./">Libreta de Clase</a> con el botón <b>⇪ Migrar a ANEP</b>: lista de presentes, calificaciones con su tipo de evaluación, juicios y cierre de promedios.</p>
+
+<h2>1. Instalar el marcador (una sola vez)</h2>
+<p>Mostrá la barra de marcadores (<code>Ctrl+Shift+B</code>) y <b>arrastrá este botón hasta la barra</b>:</p>
+<p><a class="bm" href="__MARCADOR__" onclick="alert('No se hace clic acá: arrastrá el botón hasta la barra de marcadores.');return false">📒 Migrar desde la Libreta</a></p>
+<small>Funciona en Chrome, Edge y Firefox, en la computadora. Si ya tenías una versión anterior, borrala de la barra y arrastrá la nueva.</small>
+
+<h2>2. Copiar en la Libreta</h2>
+<p>En la pestaña <b>Resumen del grupo</b>, tocá <b>⇪ Migrar a ANEP</b> y usá el botón de lo que quieras pasar. Cada botón copia un paquete distinto:</p>
+<table>
+<tr><th>En la Libreta</th><th>Qué lleva</th><th>Dónde se pega</th></tr>
+<tr><td><b>Copiar asistencia</b></td><td>Horas de falta injustificada (A) y justificada (J) de una clase.</td><td>Botón <b>Pasaje de Lista</b> del Portafolio (abre el Registro de inasistencias de UTU), con <b>la misma fecha</b>.</td></tr>
+<tr><td><b>Copiar evaluación</b></td><td>Notas de una columna en una clase, el tipo de actividad (Carpeta, Escritos, Orales, Parcial, Práctico, Tarea domiciliaria, Teórico), la fecha y la descripción.</td><td>Calificaciones → <b>Evaluación grupal</b> → <b>Nueva evaluación grupal</b>.</td></tr>
+<tr><td><b>Copiar cierre</b></td><td>El promedio redondeado a entero y el juicio conceptual de cada estudiante.</td><td>Calificaciones → <b>Cerrar promedios</b>, con el período a cerrar desplegado.</td></tr>
+</table>
+
+<h2>3. Completar en ANEP</h2>
+<ol>
+<li>Abrí la pantalla que corresponde y tocá el marcador <b>📒 Migrar desde la Libreta</b>.</li>
+<li>El cuadro muestra qué paquete encontró (si el navegador pregunta, permití leer el portapapeles; si no aparece, pegalo con <code>Ctrl+V</code>).</li>
+<li>Tocá <b>Completar</b>. Lo que puso queda en <span style="outline:3px solid #2f9e5b;padding:0 4px">verde</span>; lo que ya tenía otro valor y no tocó, en <span style="outline:3px solid #c2410c;padding:0 4px">naranja</span>; los casilleros de nota que quedaron vacíos, en <span style="outline:3px solid #e0a100;padding:0 4px">amarillo</span>.</li>
+<li>Revisá los avisos (nombres que no encontró o dudosos) y apretá <b>Guardar</b> en la pantalla.</li>
+</ol>
+<p class="nota">El marcador <b>nunca aprieta «Guardar»</b>: lo oficial lo confirmás vos. <b>Deshacer</b> vuelve los casilleros a como estaban. La primera vez que cargues asistencia, después de guardar volvé a abrir esa fecha y verificá que las horas quedaron.</p>
+
+<h2>Cómo empareja los nombres</h2>
+<ul>
+<li>No importan mayúsculas, tildes ni el orden: «Ana Pérez» encuentra a «PÉREZ GÓMEZ, ANA MARÍA».</li>
+<li>Si un nombre coincide con dos estudiantes, no lo completa y lo avisa.</li>
+<li>No cambia lo que ya esté escrito, salvo que marques <b>Reemplazar lo que ya esté escrito</b>.</li>
+<li>Las llegadas tarde no se migran: el registro de UTU solo lleva horas de falta.</li>
+</ul>
+
+<h2>Privacidad</h2>
+<p>Todo pasa dentro del navegador: el marcador no envía datos a ningún lado y no guarda nada. No es una herramienta oficial de ANEP ni de UTU; si alguna de esas pantallas cambia, puede dejar de encontrar los casilleros.</p>
+</main></body></html>
