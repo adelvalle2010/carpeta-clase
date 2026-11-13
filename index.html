@@ -240,7 +240,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
   <header class="top">
-    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v11 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v12 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
@@ -538,10 +538,25 @@ const Store = {
     this.mode = this.db ? "db" : this.gs ? "sheets" : "local";
   },
   async call(accion, extra, cfg){
+    // Google Apps Script atiende de a un pedido por vez (si hay otra pestaña de la libreta leyendo, responde «ocupada»)
+    // y a veces tarda en arrancar: se espera hasta 40 s y se reintenta dos veces antes de mostrar el error.
+    const lectura = accion === "ping" || accion === "grupos" || accion === "clases";
+    for (let intento = 0; ; intento++) {
+      try { return await this._call1(accion, extra, cfg); }
+      catch(e) {
+        const ocupada = e && e.code === "unavailable" && !e.red, red = e && e.red;
+        if (intento >= 2 || !(ocupada || (red && lectura))) throw e;
+        await new Promise(r => setTimeout(r, 2500 * (intento + 1)));
+      }
+    }
+  },
+  async _call1(accion, extra, cfg){
     cfg = cfg || this.gs; let r, j;
-    try { r = await fetch(cfg.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion, clave: cfg.clave, ...(extra || {}) }) }); }
-    catch(e) { throw { code: "unavailable", message: "No se pudo contactar a Google Sheets. Revisá la conexión a internet y la URL." }; }
-    try { j = await r.json(); } catch(e) { throw { code: "sheets_bad", message: "Esa URL no responde como el script de la libreta. Revisá que termine en /exec y que el acceso sea «Cualquier usuario»." }; }
+    const ctl = typeof AbortController === "function" ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), 40000) : 0;
+    try { r = await fetch(cfg.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion, clave: cfg.clave, ...(extra || {}) }), signal: ctl ? ctl.signal : undefined }); }
+    catch(e) { clearTimeout(tm); throw { code: "unavailable", red: true, message: e && e.name === "AbortError" ? "Google Sheets tardó demasiado en responder." : "No se pudo contactar a Google Sheets. Revisá la conexión a internet." }; }
+    try { j = await r.json(); } catch(e) { clearTimeout(tm); throw { code: "sheets_bad", message: "Esa URL no responde como el script de la libreta. Revisá que termine en /exec y que el acceso sea «Cualquier usuario»." }; }
+    clearTimeout(tm);
     if (!j.ok) throw { code: j.error || "sheets_error", message: j.mensaje || "Google Sheets devolvió un error." };
     return j.data;
   },
@@ -652,18 +667,16 @@ async function boot(){
   await loadAll();
 }
 async function loadAll(){
-  S.loading = true; S.grupos = []; render();
+  S.loading = true; S.loadError = null; S.grupos = []; render();
   $("#localBanner").hidden = Store.mode !== "local";
   $("#refrescarBtn").hidden = Store.mode !== "sheets"; ultimaLectura = Date.now();
   setStatus("saving", Store.mode === "sheets" ? "Leyendo Google Sheets…" : "Cargando…");
   let fallo = false;
   $("#gsBanner").hidden = true;
-  if (Store.mode === "sheets") Store.call("ping").then(info => { if (!(info && info.version >= SCRIPT_VERSION)) {
-    const b = $("#gsBanner"); const vr = info && info.version ? "la versión " + info.version : "una versión sin número (la primera)"; b.innerHTML = `La URL conectada responde con ${vr} del script, y la libreta necesita la versión ${SCRIPT_VERSION}. Por eso la hoja de cada grupo no muestra los totales de faltas. Pegá el <a href="${SCRIPT_URL_REPO}" target="_blank" rel="noopener">código nuevo</a> en Apps Script y hacé <b>Implementar → Gestionar implementaciones → Editar → Versión: Nueva versión</b>. Después, en la planilla, usá el menú <b>Libreta → Rehacer hojas de los grupos</b>.`; b.hidden = false; } }).catch(() => {});
   let last = null; try { last = localStorage.getItem(LSKEY + ":ultimo"); } catch(e) {}
   const pre = Store.mode === "sheets" && last ? Store.clases(last).catch(() => null) : null; // se pide a la vez que los grupos: carga en la mitad de tiempo
   try { S.grupos = await Store.grupos(); }
-  catch(e) { console.error(e); fallo = true; setStatus("error", Store.mode === "sheets" ? "No se pudo leer Google Sheets: " + (e.message || "error") : "No se pudieron leer los datos"); }
+  catch(e) { console.error(e); fallo = true; S.loadError = e && e.message || "error"; setStatus("error", Store.mode === "sheets" ? "No se pudo leer Google Sheets" : "No se pudieron leer los datos"); }
   S.grupos.sort((a,b) => (a.creado || "").localeCompare(b.creado || ""));
   for (const g of S.grupos) { // agrega una sola vez la columna Conducta a los grupos creados antes de que existiera
     if (g.conductaAgregada || (g.columnas || []).some(k => k.tipo === "conducta")) continue;
@@ -674,8 +687,15 @@ async function loadAll(){
   }
   S.gid = (S.grupos.find(g => g.id === last) || S.grupos[0] || {}).id || null;
   await loadClases(S.gid === last ? pre : null);
+  S.loadError = fallo ? (S.loadError || "No se pudo leer Google Sheets.") : null;
   S.loading = false; if (!fallo) idleStatus(); render();
-  recibirDeAnep();
+  if (!fallo) recibirDeAnep();
+  if (Store.mode === "sheets" && !fallo) chequearScript();
+}
+function chequearScript(){
+  Store.call("ping").then(info => { if (!(info && info.version >= SCRIPT_VERSION)) {
+    const b = $("#gsBanner"); const vr = info && info.version ? "la versión " + info.version : "una versión sin número (la primera)"; b.innerHTML = `La URL conectada responde con ${vr} del script, y la libreta necesita la versión ${SCRIPT_VERSION}. Por eso la hoja de cada grupo no muestra los totales de faltas. Pegá el <a href="${SCRIPT_URL_REPO}" target="_blank" rel="noopener">código nuevo</a> en Apps Script y hacé <b>Implementar → Gestionar implementaciones → Editar → Versión: Nueva versión</b>. Después, en la planilla, usá el menú <b>Libreta → Rehacer hojas de los grupos</b>.`; b.hidden = false; } }).catch(() => {});
+
 }
 function recibirDeAnep(){ // el marcador abre la libreta con #anep={…}: se muestra la vista previa (nada se aplica sin tocar «Traer»)
   const h = location.hash; if (!h.startsWith("#anep=")) return;
@@ -703,6 +723,9 @@ function render(){
   $("#groupLabel").textContent = S.loading ? "Cargando…" : g ? `${activos(g).length} estudiantes · ${Object.keys(S.clases).length} clases registradas` : "Sin grupo";
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === S.tab)));
   const v = $("#view");
+  if (S.loadError && !S.grupos.length) { v.innerHTML = `<div class="panel"><div class="empty"><h2>No se pudieron leer tus datos de Google Sheets</h2>
+    <p>${esc(S.loadError)}</p><p class="muted">Tus datos siguen en la planilla: no se perdió nada. Suele pasar si Google tarda en responder o si hay otra pestaña de la libreta abierta leyendo al mismo tiempo. Cerrá las otras pestañas de la libreta y tocá <b>Reintentar</b>.</p>
+    <button class="btn primary" id="reintentarBtn">${ic("refrescar")}Reintentar</button></div></div>`; return; }
   if (S.loading) { v.innerHTML = `<div class="panel"><div class="empty">Cargando tus datos guardados…</div></div>`; return; }
   if (!g) { v.innerHTML = `<div class="panel"><div class="empty"><h2>Todavía no hay grupos</h2><p>Creá un grupo con <b>+ Grupo</b>. Después cargás la lista de estudiantes pegándola o importando tu planilla de Excel.</p><button class="btn primary" data-act="newgroup">Crear el primer grupo</button>${Store.mode === "sheets" && Store.localTiene() ? `<p style="margin:8px 0 0">La planilla de Google Sheets está vacía, pero este navegador tiene datos guardados.</p><button class="btn" data-act="gsSubir">Copiar a Sheets lo guardado en este navegador</button>` : ""}${S.gsMsg ? `<p class="muted">${esc(S.gsMsg)}</p>` : ""}</div></div>${CAN_SHEETS && Store.mode !== "sheets" ? `<div style="height:18px"></div><div class="banner"><b>¿Ya tenés tus grupos en una planilla de Google Sheets?</b> Conectala acá abajo y aparecen solos. No hace falta crear ningún grupo.</div><div style="height:18px"></div>${viewSheets()}` : ""}`; return; }
   v.innerHTML = S.tab === "clase" ? viewClase(g) : S.tab === "resumen" ? viewResumen(g) : viewConfig(g);
@@ -1771,6 +1794,7 @@ document.addEventListener("submit", ev => {
 });
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { S.tab = b.dataset.tab; S.confirm = null; render(); }));
 function showNG(on){ $("#newGroupForm").hidden = !on; if (on) $("#ngName").focus(); }
+document.addEventListener("click", ev => { if (ev.target.closest("#reintentarBtn")) loadAll(); });
 $("#refrescarBtn").addEventListener("click", async () => { if (pend.size || inflight || fallidos.size) { toast("Esperá a que se guarden los cambios"); return; } setStatus("saving", "Leyendo Google Sheets…"); await refrescar(true); idleStatus(); });
 $("#newGroupBtn").addEventListener("click", () => showNG($("#newGroupForm").hidden));
 $("#ngCancel").addEventListener("click", () => showNG(false));
