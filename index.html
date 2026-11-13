@@ -241,7 +241,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
   <header class="top">
-    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v13 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v14 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
@@ -1245,7 +1245,12 @@ function tipoAnep(g, k){
 function anepLinks(g){
   const m = /libretaId=(\d+)/.exec(g.anepUrl || ""); if (!m) return null;
   const b = "https://portafoliodocente.anep.edu.uy/paginas/";
-  return { asistencia: `${b}pasaje_de_lista_page.xhtml?libretaId=${m[1]}`, evaluacion: `${b}eval_grupal_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, cierre: `${b}promedios_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF` };
+  return { asistencia: `${b}pasaje_de_lista_page.xhtml?libretaId=${m[1]}`, evaluacion: `${b}eval_grupal_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, cierre: `${b}promedios_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, desarrollo: `${b}desarrollo_page.xhtml?libretaId=${m[1]}` };
+}
+const temaDe = c => c ? String(c.tema || "").trim() : "";
+function temaHtmlDe(c){ // HTML del tema para el editor del Portafolio (ya limpio)
+  if (c.temaHtml) return limpiarHtml(c.temaHtml);
+  return temaDe(c).split(/\n{2,}/).map(par => "<p>" + esc(par).replace(/\n/g, "<br>") + "</p>").join("");
 }
 function migState(g){
   const m = S.mig ||= {}, fs = fechasOrden(), est = activos(g);
@@ -1258,7 +1263,9 @@ function migState(g){
   const proms = colsResumen(g).filter(k => k.tipo === "nota");
   if (!proms.some(k => k.id === m.colCierre)) m.colCierre = (proms.find(k => k.todas) || proms[0] || {}).id || "";
   const dk = m.colEval + "|" + m.fEval; if (m.descDe !== dk) { m.descDe = dk; m.desc = kEval ? kEval.nombre : ""; }
-  return { m, fs, est, cats, kEval, fEvals, proms };
+  const fTema = fs.filter(f => temaDe(S.clases[f]));
+  if (!fTema.includes(m.fDes)) m.fDes = fTema[0] || "";
+  return { m, fs, est, cats, kEval, fEvals, proms, fTema };
 }
 function paqueteAnep(g, tipo){
   const { m, est, kEval, proms } = migState(g), base = { app: "libreta-anep", v: 1, tipo, grupo: g.nombre };
@@ -1276,6 +1283,12 @@ function paqueteAnep(g, tipo){
     if (!filas.length) return { error: "Esa clase no tiene notas en esa columna." };
     return { ...base, fecha: m.fEval, actividad, descripcion: (m.desc || "").trim(), filas };
   }
+  if (tipo === "desarrollo") {
+    const { fTema } = migState(g), desde = m.fDes;
+    const filas = fTema.filter(f => !desde || f >= desde).map(f => { const c = S.clases[f]; return { fecha: f, horas: horasClase(g, c), texto: temaDe(c), html: temaHtmlDe(c) }; });
+    if (!filas.length) return { error: "No hay clases con tema anotado para migrar." };
+    return { ...base, filas };
+  }
   const k = proms.find(x => x.id === m.colCierre); if (!k) return { error: "El grupo no tiene columnas de nota." };
   const filas = resumenData(g).map(r => { const p = (r.cols[k.id] || {}).prom; return { nombre: r.e.nombre, nota: p === null || p === undefined ? "" : notaAnep(p), juicio: ((g.juicios || {})[r.e.id] || "").trim() }; }).filter(x => x.nota !== "" || x.juicio);
   if (!filas.length) return { error: "Todavía no hay promedios ni juicios para migrar." };
@@ -1290,9 +1303,18 @@ async function copiarPaquete(g, tipo){
     const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
     try { ok = document.execCommand("copy"); } catch(e2) {} ta.remove();
   }
-  const n = p.filas.length, que = tipo === "asistencia" ? `la asistencia del ${fmtDate(p.fecha)} (${p.filas.filter(x => x.inj || x.jus).length} con faltas, ${n} estudiantes)` : tipo === "evaluacion" ? `${n} nota${n === 1 ? "" : "s"} de «${p.actividad}» del ${fmtDate(p.fecha)}` : `el cierre de ${n} estudiante${n === 1 ? "" : "s"} (${p.filas.filter(x => x.juicio).length} con juicio)`;
+  const n = p.filas.length, que = tipo === "desarrollo" ? `el tema de ${n === 1 ? "1 clase" : n + " clases"} (${fmtDate(p.filas[0].fecha)} a ${fmtDate(p.filas[n - 1].fecha)})` : tipo === "asistencia" ? `la asistencia del ${fmtDate(p.fecha)} (${p.filas.filter(x => x.inj || x.jus).length} con faltas, ${n} estudiantes)` : tipo === "evaluacion" ? `${n} nota${n === 1 ? "" : "s"} de «${p.actividad}» del ${fmtDate(p.fecha)}` : `el cierre de ${n} estudiante${n === 1 ? "" : "s"} (${p.filas.filter(x => x.juicio).length} con juicio)`;
   m.msg = ok ? { tipo, txt: `Copiado: ${que}.` } : { tipo, mal: true, txt: "El navegador no dejó copiar. Probá de nuevo." };
   render(); if (ok) toast("Copiado para ANEP");
+}
+function viewDesarrolloMig(g){
+  const { m, fTema } = migState(g), L = anepLinks(g);
+  if (!fTema.length) return `<p class="muted">Todavía no hay clases con el tema anotado. El tema se escribe arriba de cada clase, en «Clase del día».</p>`;
+  const elegidas = fTema.filter(f => f >= m.fDes), x = m.msg && m.msg.tipo === "desarrollo" ? m.msg : null;
+  return `<div class="row"><label>Desde la clase <select class="field" data-mig="fDes">${fTema.map(f => `<option value="${f}"${f === m.fDes ? " selected" : ""}>${esc(fmtDate(f))} · ${esc(temaDe(S.clases[f]).slice(0, 40))}</option>`).join("")}</select></label>
+      <button class="btn primary" data-mig-act="copy" data-k="desarrollo">Copiar desarrollo</button></div>
+    <p class="muted">${elegidas.length === 1 ? "1 clase" : elegidas.length + " clases"} con tema, con su fecha y sus horas. En el Portafolio se cargan <b>de a una</b>: el marcador completa la próxima que falte, apretás <b>Guardar</b> y volvés a tocar «Completar» para la siguiente. Las fechas que ya estén en «Desarrollo del curso» se saltean solas.</p>
+    ${x ? `<p class="migmsg ${x.mal ? "mal" : "ok"}" role="status">${esc(x.txt)}${x.mal ? "" : ` Ahora ${L ? `<a href="${esc(L.desarrollo)}" target="_blank" rel="noopener">abrí la pestaña Desarrollo ↗</a>` : "abrí la pestaña Desarrollo del Portafolio"} y tocá el marcador <b>📒 Migrar desde la Libreta</b>.`}</p>` : ""}`;
 }
 function viewMigrar(g){
   const { m, fs, est, cats, kEval, fEvals, proms } = migState(g);
@@ -1337,6 +1359,7 @@ function viewMigrar(g){
     <div class="migpaso"><h3>1 · Lista de presentes</h3>${asis}</div>
     <div class="migpaso"><h3>2 · Calificaciones y tipo de evaluación</h3>${ev}</div>
     <div class="migpaso"><h3>3 · Juicios y cierre de promedios</h3>${ci}</div>
+    <div class="migpaso"><h3>4 · Desarrollo de las clases (tema)</h3>${viewDesarrolloMig(g)}</div>
   </section>`;
 }
 document.addEventListener("click", ev => {

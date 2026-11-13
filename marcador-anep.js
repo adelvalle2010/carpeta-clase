@@ -3,6 +3,7 @@
      · asistencia  → Registro de inasistencias de UTU (Pasaje de Lista): horas injustificadas y justificadas de una fecha
      · evaluacion  → Portafolio Docente → Evaluación grupal: tipo de actividad, fecha, descripción y notas
      · cierre      → Portafolio Docente → Cerrar promedios: calificación y juicio conceptual del período abierto
+     · desarrollo  → Portafolio Docente → Desarrollo: fecha, horas y tema de cada clase, una por vez (salta las ya cargadas)
    Y al revés («⬇ De esta pantalla a la Libreta»): en el Registro de inasistencias lee las faltas de un rango de fechas
    (pide la misma pantalla con otra fecha, de a tres por vez) y en Cerrar promedios lee el total de fictas; copia un paquete
    «tipo: faltas | fictas» que se pega en la Libreta (Resumen → «⬇ Traer de ANEP»).
@@ -17,8 +18,8 @@
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var byId = function (id) { return document.getElementById(id); };
   var LIBRETA = "https://adelvalle2010.github.io/carpeta-clase/";
-  var NOMBRES = { asistencia: "asistencia", evaluacion: "evaluación", cierre: "cierre de promedios" };
-  var DONDE = { asistencia: "«Pasaje de Lista» (Registro de inasistencias de UTU)", evaluacion: "Calificaciones → Evaluación grupal → Nueva evaluación grupal", cierre: "Calificaciones → Cerrar promedios" };
+  var NOMBRES = { asistencia: "asistencia", evaluacion: "evaluación", cierre: "cierre de promedios", desarrollo: "desarrollo del curso" };
+  var DONDE = { asistencia: "«Pasaje de Lista» (Registro de inasistencias de UTU)", evaluacion: "Calificaciones → Evaluación grupal → Nueva evaluación grupal", cierre: "Calificaciones → Cerrar promedios", desarrollo: "la pestaña «Desarrollo» del Portafolio" };
 
   function poner(el, v) {
     try { el.dispatchEvent(new Event("focus")); } catch (e) {}
@@ -35,6 +36,7 @@
 
   /* ---- qué pantalla es ---- */
   function pantalla() {
+    if (document.querySelector('input[id^="libreta_desarrollo_am"][id$=":fecha_input"]') || document.querySelector('[id$="tablaDesarrollo_data"]')) return { tipo: "desarrollo", filas: [1] };
     var sp = Array.prototype.slice.call(document.querySelectorAll('[id^="span_BDALUPERNOMCOM_"]'));
     if (sp.length && byId("vFECHA")) {
       return { tipo: "asistencia", fecha: byId("vFECHA").value, filas: sp.map(function (s) {
@@ -87,6 +89,7 @@
     try { var p = JSON.parse(m[1]); return p && p.app === "libreta-anep" && Array.isArray(p.filas) && NOMBRES[p.tipo] ? p : null; } catch (e) { return null; }
   }
   function resumenPaquete(p) {
+    if (p.tipo === "desarrollo") return "Desarrollo (tema) de " + p.filas.length + " clase" + (p.filas.length === 1 ? "" : "s") + " · «" + p.grupo + "»";
     var n = p.filas.length + " estudiante" + (p.filas.length === 1 ? "" : "s");
     if (p.tipo === "asistencia") return "Asistencia del " + dmy(p.fecha) + " · " + n + " · «" + p.grupo + "»";
     if (p.tipo === "evaluacion") return "Evaluación «" + p.actividad + "» del " + dmy(p.fecha) + " · " + n + " · «" + p.grupo + "»";
@@ -137,6 +140,7 @@
   }
   function deshacer() {
     hechos.reverse().forEach(function (h) { poner(h[0], h[1]); }); hechos = [];
+    restaurar.reverse().forEach(function (fn) { try { fn(); } catch (e) {} }); restaurar = [];
     marcados.forEach(function (e) { marca(e, ""); }); marcados = [];
   }
 
@@ -219,6 +223,70 @@
     return { app: "libreta-anep", v: 1, tipo: "fictas", obtenido: obtenido, asignatura: asign, filas: filas };
   }
 
+  /* ---- Desarrollo del curso (Portafolio → pestaña Desarrollo): una clase por vez ---- */
+  function formDesarrollo() {
+    var fi = document.querySelector('input[id^="libreta_desarrollo_am"][id$=":fecha_input"]');
+    if (!fi || !window.CKEDITOR || !window.PrimeFaces) return null;
+    var W = PrimeFaces.widgets, ks = Object.keys(W);
+    var kF = ks.filter(function (k) { return /libreta_desarrollo_am/.test(k) && /_fecha$/.test(k); })[0];
+    var edName = Object.keys(CKEDITOR.instances).filter(function (k) { return /libreta_desarrollo_am/.test(k); })[0];
+    return { fecha: fi, cal: kF ? W[kF] : null, cant: W.cantidadInput || null, cantIn: document.querySelector('input[id^="libreta_desarrollo_am"][id$=":cantidad_input"]'),
+      ed: edName ? CKEDITOR.instances[edName] : null, dictadoSi: document.querySelector('input[name^="libreta_desarrollo_am"][name$=":dictado"][value="1"]') };
+  }
+  function abrirFormDesarrollo() { // el formulario está en un acordeón «Ingresar nuevo desarrollo»
+    var f = formDesarrollo(); if (f && vis(f.fecha)) return true;
+    var h = Array.prototype.filter.call(document.querySelectorAll('[role="tab"], h3, .ui-accordion-header'), function (x) { return /Ingresar nuevo desarrollo/i.test(x.textContent); })[0];
+    if (h) h.click();
+    return false;
+  }
+  function fechasDesarrollo() { // fechas ya cargadas en «Desarrollo del curso» (muestra todas las filas)
+    return new Promise(function (ok) {
+      var w = window.PF ? PF("tablaDesarrollo") : null, leer = function () {
+        var tb = document.querySelector('[id$="tablaDesarrollo_data"]'), set = {};
+        if (tb) Array.prototype.forEach.call(tb.rows, function (r) { if (r.cells.length > 1) { var d = parseInt(r.cells[0].textContent, 10), m = parseInt(r.cells[1].textContent, 10); if (d && m) set[d + "/" + m] = 1; } });
+        return set;
+      };
+      try {
+        var total = w && w.cfg.paginator ? w.cfg.paginator.rowCount : 0, tb = document.querySelector('[id$="tablaDesarrollo_data"]');
+        if (w && w.paginator && tb && tb.rows.length < total) {
+          w.paginator.setRowsPerPage(1000);
+          var t0 = Date.now(), espera = function () { var t = document.querySelector('[id$="tablaDesarrollo_data"]'); if ((t && t.rows.length >= total) || Date.now() - t0 > 8000) ok(leer()); else setTimeout(espera, 250); };
+          return setTimeout(espera, 300);
+        }
+      } catch (e) {}
+      ok(leer());
+    });
+  }
+  var restaurar = [];
+  function completarDesarrollo(p, reemplazar) {
+    var r = { puestos: 0, iguales: 0, ocupados: [], sin: [], dudosos: [], avisos: [], error: "" };
+    if (!abrirFormDesarrollo()) return new Promise(function (ok) { setTimeout(function () { ok(completarDesarrollo(p, reemplazar)); }, 900); });
+    return fechasDesarrollo().then(function (ya) {
+      var f = formDesarrollo();
+      if (!f || !f.cal || !f.ed) { r.error = "No encontré el formulario «Ingresar nuevo desarrollo». Desplegalo y tocá «Completar» otra vez."; return r; }
+      var fs = p.filas.slice().sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; });
+      var dm = function (iso) { var x = iso.split("-").map(Number); return x[2] + "/" + x[1]; };
+      var cargadas = fs.filter(function (c) { return ya[dm(c.fecha)]; }), pend = fs.filter(function (c) { return !ya[dm(c.fecha)]; });
+      if (!pend.length) { r.html = '<span class="ok">Las ' + fs.length + " clases del paquete ya están en «Desarrollo del curso». No queda nada por cargar.</span>"; return r; }
+      var actual = String(f.ed.getData() || "").replace(/<[^>]+>|&nbsp;/g, "").trim();
+      if (actual && !reemplazar) { r.error = "El cuadro de desarrollo ya tiene texto escrito. Guardalo o borralo, o marcá «Reemplazar lo que ya esté escrito»."; return r; }
+      var c = pend[0], x = c.fecha.split("-").map(Number);
+      var antes = { fecha: f.fecha.value, cant: f.cantIn ? f.cantIn.value : "", ed: f.ed.getData() };
+      restaurar.push(function () { var g = formDesarrollo(); if (!g) return; try { g.ed.setData(antes.ed, { callback: function () { g.ed.updateElement(); } }); } catch (e) {} try { if (g.cant) g.cant.setValue(antes.cant); } catch (e) {} poner(g.fecha, antes.fecha); });
+      try { f.cal.setDate(new Date(x[0], x[1] - 1, x[2])); } catch (e) { poner(f.fecha, dos(x[2]) + "/" + dos(x[1])); }
+      if (c.horas) { try { f.cant.setValue(c.horas); } catch (e) { if (f.cantIn) poner(f.cantIn, String(c.horas)); } }
+      if (f.dictadoSi && !f.dictadoSi.checked) { var box = f.dictadoSi.closest(".ui-radiobutton"); box = box && box.querySelector(".ui-radiobutton-box"); if (box) box.click(); }
+      f.ed.setData(c.html, { callback: function () { f.ed.updateElement(); } });
+      [f.fecha, f.cantIn, f.ed.container && f.ed.container.$].forEach(function (e) { if (e) { marca(e, "#2f9e5b"); marcados.push(e); } });
+      r.puestos = 1;
+      var resto = pend.slice(1);
+      r.html = '<span class="ok">Completé el desarrollo del <b>' + dmy(c.fecha) + "</b>" + (c.horas ? " (" + c.horas + " h)" : "") + ".</span>" +
+        "<div>Revisalo y apretá <b>Guardar</b> en la pantalla." + (resto.length ? " Después tocá <b>Completar</b> otra vez para la siguiente (" + (resto.length === 1 ? "queda 1: " : "quedan " + resto.length + ": ") + resto.map(function (z) { return dmy(z.fecha); }).join(", ") + ")." : " Es la última del paquete.") + "</div>" +
+        (cargadas.length ? '<div class="av" style="font-size:12px">Ya estaban cargadas y no se repiten: ' + cargadas.map(function (z) { return dmy(z.fecha); }).join(", ") + ".</div>" : "");
+      return r;
+    });
+  }
+
   /* ---- cuadro ---- */
   var host = document.createElement("div");
   host.style.cssText = "position:fixed;top:12px;right:12px;z-index:2147483647";
@@ -247,8 +315,20 @@
   q(".un").addEventListener("click", function () { deshacer(); q(".un").disabled = true; q(".r").innerHTML = "Deshecho: los casilleros volvieron a como estaban."; });
   q(".go").addEventListener("click", function () {
     if (!paquete) return;
+    var el = q(".r");
+    if (paquete.tipo === "desarrollo") { // una clase por vez: no se deshace la anterior (ya se guardó)
+      hechos = []; restaurar = []; marcados.forEach(function (e) { marca(e, ""); }); marcados = [];
+      var pg = pantalla();
+      if (!pg || pg.tipo !== "desarrollo") { el.innerHTML = '<span class="mal">' + esc("El paquete es del desarrollo de las clases. Abrí " + DONDE.desarrollo + " y tocá «Completar» otra vez.") + "</span>"; return; }
+      q(".go").disabled = true; el.textContent = "Buscando las fechas ya cargadas…";
+      completarDesarrollo(paquete, q(".rp").checked).then(function (r) {
+        q(".go").disabled = false; q(".un").disabled = !restaurar.length;
+        el.innerHTML = r.error ? '<span class="mal">' + esc(r.error) + "</span>" : r.html;
+      });
+      return;
+    }
     deshacer();
-    var r = completar(paquete, q(".rp").checked), el = q(".r");
+    var r = completar(paquete, q(".rp").checked);
     if (r.error) { el.innerHTML = '<span class="mal">' + esc(r.error) + "</span>"; return; }
     q(".un").disabled = !hechos.length;
     var uno = r.puestos === 1, que = (uno ? "casillero" : "casilleros") + (paquete.tipo === "asistencia" ? " de horas" : "");
@@ -315,6 +395,6 @@
   });
   var enLibreta = location.href.indexOf(LIBRETA) === 0 || /^Libreta de Clase/.test(document.title);
   if (enLibreta) root.querySelector(".p").innerHTML = '<button class="x" title="Cerrar">×</button><h2>📒 Migrar desde la Libreta</h2><p>Esta es tu <b>Libreta</b>. El marcador se toca <b>en las pantallas de ANEP</b>, no acá:</p><ul style="padding-left:18px;margin:4px 0"><li><b>Para llevar datos a ANEP:</b> acá, en Resumen → «⇪ Migrar a ANEP», tocá un botón «Copiar…»; después abrí la pantalla de ANEP y tocá el marcador allá.</li><li><b>Para traer faltas de ANEP:</b> abrí «Pasaje de Lista» o «Cerrar promedios» en ANEP y tocá el marcador allá.</li></ul>', q(".x").addEventListener("click", function () { host.remove(); });
-  window.__migrarLibreta = { mostrar: function () { if (enLibreta) { if (!host.isConnected) document.body.appendChild(host); return; } prepararTraer(); if (!host.isConnected) document.body.appendChild(host); leerPortapapeles(); }, _probar: { leerFechaUtu: leerFechaUtu, leerTotales: leerTotales, urlDeFecha: urlDeFecha, pantalla: pantalla, completar: completar, deshacer: deshacer, emparejar: emparejar, leerPaquete: leerPaquete } };
+  window.__migrarLibreta = { mostrar: function () { if (enLibreta) { if (!host.isConnected) document.body.appendChild(host); return; } prepararTraer(); if (!host.isConnected) document.body.appendChild(host); leerPortapapeles(); }, _probar: { completarDesarrollo: completarDesarrollo, fechasDesarrollo: fechasDesarrollo, leerFechaUtu: leerFechaUtu, leerTotales: leerTotales, urlDeFecha: urlDeFecha, pantalla: pantalla, completar: completar, deshacer: deshacer, emparejar: emparejar, leerPaquete: leerPaquete } };
   window.__migrarLibreta.mostrar();
 })();
