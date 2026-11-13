@@ -1,0 +1,53 @@
+Guion de narración — Video tutorial Libreta de Clase (2:12)
+Cada línea va con su escena; a ritmo tranquilo entra en el tiempo indicado.
+
+[0:00,0 – 0:05,0]  Portada
+¡Hola! En este video te muestro cómo usar la Libreta de Clase: asistencia, notas y conducta de cada clase, guardadas en Google Sheets, y el pase al Portafolio de ANEP.
+
+[0:05,0 – 0:12,5]  1 · Armá el grupo
+Primero, armá el grupo. Con el botón «Grupo» lo creás, y en «Estudiantes y columnas» pegás la lista y elegís qué querés registrar.
+
+[0:12,5 – 0:20,0]  2 · Google Sheets
+Después conectás tu planilla de Google Sheets. Se hace una sola vez, y desde ahí todo se guarda solo.
+
+[0:20,0 – 0:27,5]  3 · Cada día, una clase
+Cada día de clase, elegís la fecha y tocás «Crear clase». Arriba anotás el tema y las horas.
+
+[0:27,5 – 0:36,0]  4 · Marcá en la planilla
+Pasar la lista es tocar los casilleros: P presente, A ausente, T tarde y J justificada. Las notas van del 1 al 10.
+
+[0:36,0 – 0:43,5]  5 · O dictalo
+Si te resulta más cómodo, dictalo: «Ana presente, Luis ausente dos horas, Mateo nota ocho».
+
+[0:43,5 – 0:52,0]  6 · Resumen del grupo
+En el resumen ves la asistencia, las faltas fictas, el promedio y la situación de cada estudiante. Lo descargás en Excel o lo imprimís.
+
+[0:52,0 – 0:59,5]  7 · Límite de faltas fictas
+Acá ajustás el límite de faltas fictas: en ámbar cuando alguien se acerca, en rojo cuando lo pasa.
+
+[0:59,5 – 1:07,0]  8 · Tres estilos (oscuro)
+La libreta tiene tres estilos. Este es el oscuro.
+
+[1:07,0 – 1:14,5]  8 · Tres estilos (cuaderno)
+Y este es el estilo cuaderno, con papel y renglones, como la libreta de siempre.
+
+[1:14,5 – 1:22,0]  9 · Llevar los datos a ANEP
+Para ANEP, en el resumen tocás «Migrar a ANEP» y copiás la asistencia de un día o las notas con su tipo de actividad.
+
+[1:22,0 – 1:30,5]  10 · Juicio automático
+El juicio del cierre se escribe solo según el promedio: Avance Destacado, Significativo, Moderado, Escaso o Mínimo. Si lo cambiás, queda tu texto.
+
+[1:30,5 – 1:39,0]  11 · Desarrollo de las clases
+También copiás el tema de cada clase. En la pestaña Desarrollo de ANEP, el marcador completa la próxima clase que falte.
+
+[1:39,0 – 1:47,5]  12 · Completar en ANEP
+En ANEP tocás el marcador y después «Completar». Revisás, y el «Guardar» lo apretás vos.
+
+[1:47,5 – 1:56,0]  13 · Traer las faltas de ANEP
+También funciona al revés: en «Pasaje de Lista», el marcador lee las faltas de las fechas que elijas.
+
+[1:56,0 – 2:04,5]  14 · Revisar y traer
+Las abrís en la libreta, revisás fecha por fecha y recién al tocar «Traer» queda guardado.
+
+[2:04,5 – 2:12,0]  Cierre · ¿Dudas?
+Y si te queda alguna duda, el botón «Ayuda» abre el manual con este video. ¡Que tengas muy buenas clases!
