@@ -261,7 +261,7 @@
     var utu = esRegistroUtu(), ci = !utu && esCierre();
     q(".tr").hidden = !(utu || ci); q(".trutu").hidden = !utu; q(".trci").hidden = !ci;
     if (utu && !q(".d2").value) {
-      var hoy = isoDeDmy(byId("vFECHA").value) || isoDe(new Date());
+      var hoy = isoDe(new Date()), enPantalla = isoDeDmy(byId("vFECHA").defaultValue); if (enPantalla > hoy) hoy = enPantalla;
       q(".d2").value = hoy; q(".d1").value = prefs.desde && prefs.desde < hoy ? prefs.desde : hoy.slice(0, 4) + "-03-01";
       var dias = Array.isArray(prefs.dias) && prefs.dias.length ? prefs.dias : [1, 2, 3, 4, 5];
       Array.prototype.forEach.call(root.querySelectorAll(".dias input"), function (c) { c.checked = dias.indexOf(Number(c.value)) >= 0; });
