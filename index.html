@@ -134,6 +134,9 @@ input.txt{width:100%;min-width:160px}
 .migmsg{border-radius:var(--r);padding:8px 12px;font-size:.92rem} .migmsg.ok{background:var(--info-soft)} .migmsg.mal{border:1px solid var(--bad);color:var(--bad)} .migmsg a{color:var(--accent)}
 table.migt td.jc,table.migt th.jc{min-width:280px;width:55%;text-align:left} table.migt textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:0;height:3.4em;font:inherit;font-size:.9rem;padding:5px 8px}
 @media print{.mig{display:none}}
+.limrow{gap:6px;font-size:.92rem} .limrow .muted{font-size:.85rem;flex-basis:100%} input.inl{width:4.6em;padding:3px 6px;text-align:right}
+table.impt td.quien{text-align:left;font-size:.85rem;min-width:220px;white-space:normal} table.impt .av{color:var(--warn)} .imptxt{width:100%;box-sizing:border-box;font:12px ui-monospace,monospace}
+.mig label.chk{flex-direction:row;align-items:center;gap:6px;color:var(--ink)}
 .banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
 .confirm{display:inline-flex;gap:6px;align-items:center;background:var(--bad-soft);padding:4px 8px;border-radius:var(--r);font-size:.88rem}
  
@@ -193,7 +196,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v8 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v9 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn">+ Grupo</button>
@@ -444,7 +447,7 @@ function conteoFaltas(g, sid, kid){
 }
 function limiteFictas(g){
   const pct = Number(g.limiteFictas) > 0 ? Number(g.limiteFictas) : LIMITE_DEF;
-  const base = horasRegistradas(g); // el límite es sobre las horas dictadas (clases registradas)
+  const base = Number(g.horasBase) > 0 ? Number(g.horasBase) : horasRegistradas(g); // horas del curso fijadas a mano, o las dictadas (clases registradas)
   return { pct, base, max: base * pct / 100 };
 }
 function nivelFictas(g, fictas){
@@ -1097,15 +1100,27 @@ function resumenData(g){
     return r;
   });
 }
+function celdaFictasAnep(g, sid){
+  const a = ((g.anepFictas || {}).v || {})[sid]; if (!a) return `<td class="muted" title="Sin dato de ANEP">—</td>`;
+  return `<td class="ficcol ${nivelFictas(g, a.f)}" title="ANEP${a.i !== null && a.i !== undefined ? `: ${a.i} h injustificadas${a.j !== null && a.j !== undefined ? ` + ${a.j} h justificadas ÷ 2` : ""}` : ""}">${fmtN(a.f)}</td>`;
+}
+function viewLimite(g){
+  const L = limiteFictas(g), reg = horasRegistradas(g);
+  return `<div class="row limrow"><b>Límite de faltas fictas:</b>
+    <input class="field inl" data-act="glim" type="number" min="1" max="100" step="any" value="${esc(L.pct)}" aria-label="Porcentaje de faltas fictas permitido"><span>% de</span>
+    <input class="field inl" data-act="gbase" type="number" min="1" max="2000" step="1" value="${esc(g.horasBase ?? "")}" placeholder="${reg}" aria-label="Horas sobre las que se calcula el límite"><span>horas =</span>
+    <b id="limTxt">${fmtN(L.max)}</b><span>fictas</span>
+    <span class="muted">${g.horasBase ? `Horas puestas a mano (en la libreta hay ${reg} registradas); borrá el número para usar las registradas.` : `Vacío = las ${reg} horas de las clases registradas; si en la libreta faltan clases, poné las horas del curso.`}</span></div>`;
+}
 function viewResumen(g){
   const fechas = fechasOrden(), cols = colsResumen(g).filter(k => k.tipo !== "texto");
-  if (!fechas.length) return `<section class="panel"><div class="empty"><h2>Sin clases registradas</h2><p>El resumen se arma solo a medida que registrás clases.</p><button class="btn primary" data-act="tab" data-t="clase">Ir a la clase de hoy</button></div></section>`;
+  if (!fechas.length) return `<section class="panel"><div class="empty"><h2>Sin clases registradas</h2><p>El resumen se arma solo a medida que registrás clases.</p><button class="btn primary" data-act="tab" data-t="clase">Ir a la clase de hoy</button> <button class="btn" data-imp-act="abrir">⬇ Traer las faltas de ANEP</button></div></section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
   const data = resumenData(g);
-  const totHead = cols.map(k => k.tipo === "asistencia" ? `<th>% ${esc(k.nombre)}</th><th title="Horas de ausencia sin justificar">Injust. (h)</th><th title="Horas de falta justificada">Just. (h)</th><th title="Llegada tarde">Tardes (T)</th><th title="A + J/2 + T/2">Fictas</th>` : k.tipo === "entrega" ? `<th>${esc(k.nombre)} ✓/½/✗</th>` : k.tipo === "conducta" ? `<th>${esc(k.nombre)} MB/B/R/M</th><th>Última</th>` : `<th>Prom. ${esc(k.nombre)}</th><th>Situación</th>`).join("");
+  const totHead = cols.map(k => k.tipo === "asistencia" ? `<th>% ${esc(k.nombre)}</th><th title="Horas de ausencia sin justificar">Injust. (h)</th><th title="Horas de falta justificada">Just. (h)</th><th title="Llegada tarde">Tardes (T)</th><th title="A + J/2 + T/2">Fictas</th>${g.anepFictas ? `<th title="Total oficial de ANEP (Cerrar promedios), obtenido el ${esc(g.anepFictas.obtenido || "?")}">Fictas ANEP</th>` : ""}` : k.tipo === "entrega" ? `<th>${esc(k.nombre)} ✓/½/✗</th>` : k.tipo === "conducta" ? `<th>${esc(k.nombre)} MB/B/R/M</th><th>Última</th>` : `<th>Prom. ${esc(k.nombre)}</th><th>Situación</th>`).join("");
   const head = `<tr><th class="name">Estudiante</th>${totHead}${fechas.map(f => `<th class="d" data-act="pick" data-f="${f}" title="Abrir la clase">${fmtDate(f)}<br><span style="text-transform:none">${horasClase(g, S.clases[f])} h</span></th>`).join("")}</tr>`;
   const rows = data.map((r, i) => {
     const tot = cols.map(k => { const x = r.cols[k.id];
-      if (k.tipo === "asistencia") return `<td class="${x.pct !== null && x.pct < 75 ? "lowatt" : ""}">${x.pct === null ? "—" : x.pct + "%"}</td><td>${x.faltas}</td><td>${x.just}</td><td>${x.tardes}</td><td class="ficcol ${nivelFictas(g, x.fictas)}">${fmtN(x.fictas)}</td>`;
+      if (k.tipo === "asistencia") return `<td class="${x.pct !== null && x.pct < 75 ? "lowatt" : ""}">${x.pct === null ? "—" : x.pct + "%"}</td><td>${x.faltas}</td><td>${x.just}</td><td>${x.tardes}</td><td class="ficcol ${nivelFictas(g, x.fictas)}">${fmtN(x.fictas)}</td>${g.anepFictas ? celdaFictasAnep(g, r.e.id) : ""}`;
       if (k.tipo === "entrega") return `<td>${x.s}/${x.m}/${x.n}</td>`;
       if (k.tipo === "conducta") return `<td>${CONDUCTA.map(c => x.cnt[c]).join("/")}</td><td>${x.ult ? `<span class="mini"><i class="${x.ult}">${SHOW[x.ult]}</i></span>` : "—"}</td>`;
       return `<td>${x.prom === null ? "—" : x.prom.toFixed(1)}</td><td>${x.prom === null ? "—" : `<span class="sit ${sit(x.prom)}">${sit(x.prom)}</span>`}</td>`; }).join("");
@@ -1117,8 +1132,9 @@ function viewResumen(g){
   const canDl = !!DL.api;
   return `<section class="panel">
     <div class="row spread"><h2>Resumen de ${esc(g.nombre)}</h2>
-      <div class="row"><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">⇪ Migrar a ANEP</button>${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
-    <p class="muted" style="margin:0">${fechas.length} clases, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}. El porcentaje de asistencia cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %. Las faltas se cuentan por horas. <b>Fictas</b> = horas A + horas J/2 + tardes/2; límite del grupo: <b>${fmtN(limiteFictas(g).max)}</b> (${limiteFictas(g).pct} % de ${limiteFictas(g).base} horas dictadas), en ámbar al acercarse y en rojo al pasarlo. Con promedio de 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre. Tocá una fecha para abrir esa clase, o un nombre para ver la ficha del estudiante.</p>
+      <div class="row"><button class="btn" data-imp-act="abrir" title="Traer las faltas día a día y el total de fictas desde ANEP">⬇ Traer de ANEP</button><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">⇪ Migrar a ANEP</button>${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
+    <p class="muted" style="margin:0">${fechas.length} clases, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}. El porcentaje de asistencia cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %. Las faltas se cuentan por horas. <b>Fictas</b> = horas A + horas J/2 + tardes/2; en ámbar al acercarse al límite y en rojo al pasarlo. Con promedio de 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre. Tocá una fecha para abrir esa clase, o un nombre para ver la ficha del estudiante.</p>
+    ${viewLimite(g)}
     <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
   </section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
 }
@@ -1221,9 +1237,10 @@ function viewMigrar(g){
       <p class="muted">Los juicios se guardan solos en la libreta. Se migran la calificación y el juicio del período que esté abierto en «Cerrar promedios».</p>${paso("cierre", "Cerrar promedios")}`;
   }
   return `<section class="panel mig" id="migPanel">
-    <div class="row spread"><h2>Migrar al Portafolio de ANEP</h2><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div>
+    <div class="row spread"><h2>Libreta ⇄ Portafolio de ANEP</h2><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div>
     <p class="muted" style="margin:0">Cada botón copia un paquete; en la pantalla de ANEP, el marcador <b>📒 Migrar desde la Libreta</b> lo completa. <a href="anep.html" target="_blank" rel="noopener">Instalar el marcador (una sola vez) ↗</a>. El marcador <b>nunca aprieta «Guardar»</b>: revisás y guardás vos.</p>
     <label class="grow">Link del grupo en el Portafolio (opcional, para abrir cada pantalla desde acá) <input class="field" data-mig="url" value="${esc(g.anepUrl || "")}" placeholder="https://portafoliodocente.anep.edu.uy/paginas/calif_page.xhtml?libretaId=…"></label>
+    ${viewTraer(g)}
     <div class="migpaso"><h3>1 · Lista de presentes</h3>${asis}</div>
     <div class="migpaso"><h3>2 · Calificaciones y tipo de evaluación</h3>${ev}</div>
     <div class="migpaso"><h3>3 · Juicios y cierre de promedios</h3>${ci}</div>
@@ -1247,6 +1264,152 @@ document.addEventListener("change", ev => {
   if (k === "url") { const v = t.value.trim(); if (v) g.anepUrl = v; else delete g.anepUrl; saveGrupoSoon(); m.msg = null; render(); return; }
   if (k === "tipo") { const { kEval } = migState(g); if (!kEval) return; g.anepTipos ||= {}; if (t.value) g.anepTipos[anepKey(kEval)] = t.value; else delete g.anepTipos[anepKey(kEval)]; saveGrupoSoon(); m.msg = null; render(); return; }
   m[k] = t.value; m.msg = null; render();
+});
+ 
+/* ---------- traer de ANEP: faltas día a día (Registro de inasistencias de UTU) y total de fictas (Cerrar promedios) ----------
+   El marcador copia un paquete «LIBRETA-ANEP {tipo: "faltas" | "fictas"}» y acá se pega. Las faltas se aplican a las clases
+   (creando las que falten); el total queda en g.anepFictas = { obtenido, v: { idEstudiante: { f, i, j } } }. */
+const normN = s => sinAcentos(s).replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
+const toksN = s => normN(s).split(" ").filter(w => w.length > 1 && !/^\d+$/.test(w));
+function emparejarAnep(g, nombres){ // nombre de ANEP → id del estudiante, solo si no hay dudas («ACOSTA SABRINA» → «ACOSTA IRUTE, SABRINA MIKAELA»)
+  const est = activos(g).map(e => ({ id: e.id, n: normN(e.nombre), t: toksN(e.nombre) }));
+  const res = nombres.map(nom => {
+    const n = normN(nom), t = toksN(nom); if (!t.length) return null;
+    let c = est.filter(e => e.n === n);
+    if (!c.length) c = est.filter(e => { const [a, b] = t.length <= e.t.length ? [t, e.t] : [e.t, t]; return a.length > 0 && a.every(w => b.includes(w)); });
+    return c.length === 1 ? c[0].id : null;
+  });
+  const usos = {}; res.forEach(id => { if (id) usos[id] = (usos[id] || 0) + 1; });
+  return res.map(id => id && usos[id] === 1 ? id : null);
+}
+function leerPaqAnep(txt){
+  const m = /LIBRETA-ANEP\s*(\{[\s\S]*\})/.exec(String(txt || "")); if (!m) return { error: "Eso no es lo que copia el marcador en ANEP. En el Registro de inasistencias o en «Cerrar promedios», tocá el marcador 📒 y usá «Copiar para la Libreta»." };
+  let p; try { p = JSON.parse(m[1]); } catch(e) { return { error: "Lo pegado está incompleto. Copialo de nuevo en ANEP." }; }
+  if (!p || p.app !== "libreta-anep") return { error: "Lo pegado no es de la Libreta." };
+  if (p.tipo !== "faltas" && p.tipo !== "fictas") return { error: "Ese paquete es para llevar a ANEP (se completa allá con el marcador), no para traer." };
+  return { p };
+}
+const nomEst = (g, sid) => (activos(g).find(e => e.id === sid) || {}).nombre || "";
+const marcaTxt = (v, h, horas) => v === "A" || v === "J" ? v + (h && h < horas ? h : "") : v || "vacío";
+function planFaltas(g, p, im){
+  const kA = asisCol(g); if (!kA) return { error: "El grupo no tiene columna de asistencia: agregala en «Estudiantes y columnas»." };
+  const nombres = p.estudiantes || [], ids = emparejarAnep(g, nombres), idDe = {};
+  nombres.forEach((n, i) => { if (ids[i]) idDe[n] = ids[i]; });
+  const enAnep = [...new Set(Object.values(idDe))];
+  const fechas = Object.keys(p.fechas || {}).sort().map(f => {
+    const fal = {}; let otros = 0;
+    for (const x of p.fechas[f]) { const sid = idDe[x.nombre]; if (sid) fal[sid] = x; else otros++; }
+    const c = S.clases[f], nf = Object.keys(fal).length;
+    const horas = c ? horasClase(g, c) : Math.max(Number(im.horas) || horasGrupo(g), ...Object.values(fal).map(x => (x.inj || 0) + (x.jus || 0)));
+    const cambios = [], difs = [], avisos = [];
+    for (const sid of enAnep) {
+      const x = fal[sid] || { inj: 0, jus: 0 }, inj = Number(x.inj) || 0, jus = Number(x.jus) || 0;
+      const v = inj || jus ? (inj >= jus ? "A" : "J") : "P", h = v === "A" ? inj : v === "J" ? jus : 0;
+      if (inj && jus) avisos.push(`${nomEst(g, sid)}: ${inj} h injustificadas y ${jus} justificadas; la libreta guarda una sola marca por clase y queda ${v}${h}.`);
+      if (h > horas) avisos.push(`${nomEst(g, sid)}: ${h} h de falta en una clase de ${horas} h; se cuentan ${horas}.`);
+      const cur = c ? val(c, sid, kA.id) : "", hc = c ? horasFalta(g, c, sid, kA.id) : 0;
+      if (cur === v && (v === "P" || hc === Math.min(h, horas))) continue;
+      if (v === "P" && cur === "T") continue; // UTU no lleva llegadas tarde
+      const op = { sid, v, h };
+      if (!cur) cambios.push(op); else difs.push({ ...op, antes: marcaTxt(cur, hc, horas), ahora: marcaTxt(v, h, horas) });
+    }
+    return { f, existe: !!c, horas, nf, otros, cambios, difs, avisos, fal };
+  });
+  const enRango = f => (!p.desde || f >= p.desde) && (!p.hasta || f <= p.hasta) && (!Array.isArray(p.dias) || p.dias.includes(new Date(f + "T12:00").getDay()));
+  const soloLibreta = fechasOrden().filter(f => !(p.fechas || {})[f] && enRango(f)).map(f => ({ f, n: activos(g).filter(e => ["A", "J"].includes(val(S.clases[f], e.id, kA.id))).length })).filter(x => x.n);
+  return { kA, fechas, enAnep, otrosAnep: nombres.length - enAnep.length, sinAnep: activos(g).filter(e => !enAnep.includes(e.id)), soloLibreta };
+}
+function cargarImp(g, txt){
+  const r = leerPaqAnep(txt);
+  if (r.error) { S.imp = { err: r.error }; render(); return; }
+  const im = S.imp = { p: r.p, horas: horasGrupo(g), pisar: false, sel: {} };
+  if (r.p.tipo === "faltas") { const pl = planFaltas(g, r.p, im); if (!pl.error) pl.fechas.forEach(d => { im.sel[d.f] = d.nf > 0; }); }
+  render(); const el = $("#impPaso"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function aplicarFaltas(g){
+  const im = S.imp, pl = planFaltas(g, im.p, im); if (pl.error) return;
+  let marcas = 0, nuevas = 0, fs = 0;
+  for (const d of pl.fechas) {
+    if (!im.sel[d.f]) continue;
+    const ops = d.cambios.concat(im.pisar ? d.difs : []); if (!ops.length && d.existe) continue;
+    let c = S.clases[d.f];
+    if (!c) { c = S.clases[d.f] = { fecha: d.f, tema: "", horas: d.horas, valores: {} }; nuevas++; }
+    c.valores ||= {}; fs++;
+    for (const o of ops) { const vv = c.valores[o.sid] ||= {}; vv[pl.kA.id] = o.v; if (o.v === "P" || o.h >= horasClase(g, c)) delete vv[HKEY(pl.kA.id)]; else vv[HKEY(pl.kA.id)] = o.h; marcas++; }
+    saveClaseSoon(d.f);
+  }
+  S.imp = { hecho: fs ? `Listo: ${fs} fecha${fs === 1 ? "" : "s"} (${nuevas} clase${nuevas === 1 ? "" : "s"} nueva${nuevas === 1 ? "" : "s"}), ${marcas} marca${marcas === 1 ? "" : "s"} de asistencia. Se guarda solo.` : "No había nada para cambiar." };
+  render(); toast("Faltas de ANEP cargadas");
+}
+function planFictas(g, p){
+  const filas = p.filas || [], ids = emparejarAnep(g, filas.map(x => x.nombre)), v = {}; let nd = 0;
+  filas.forEach((x, i) => { if (!ids[i]) return; if (x.nd || x.fictas === null || x.fictas === undefined) { nd++; return; } v[ids[i]] = { f: Number(x.fictas), i: x.inj, j: x.jus }; });
+  return { v, nd, otros: filas.filter((x, i) => !ids[i]).length, sinAnep: activos(g).filter(e => !ids.includes(e.id)) };
+}
+function viewTraer(g){
+  const im = S.imp || {};
+  const intro = `<p class="muted">Con el marcador <b>📒 Migrar desde la Libreta</b>: en el <b>Registro de inasistencias</b> de UTU («Pasaje de Lista») lee las faltas de todas las fechas que elijas; en <b>Cerrar promedios</b> lee el total de faltas fictas. Allá tocá «Copiar para la Libreta» y pegalo acá.</p>`;
+  const pegar = `<div class="row"><button class="btn primary" data-imp-act="pegar">Pegar lo copiado en ANEP</button></div>
+    <details><summary class="muted">Si no se pega solo</summary><textarea class="field imptxt" data-imp="txt" rows="3" placeholder="Pegá acá (Ctrl+V) lo que copió el marcador"></textarea></details>`;
+  let cuerpo = intro + pegar;
+  if (im.err) cuerpo += `<p class="migmsg mal" role="status">${esc(im.err)}</p>`;
+  if (im.hecho) cuerpo += `<p class="migmsg ok" role="status">${esc(im.hecho)}</p>`;
+  if (im.p && im.p.tipo === "faltas") {
+    const p = im.p, pl = planFaltas(g, p, im);
+    if (pl.error) cuerpo = `<p class="migmsg mal">${esc(pl.error)}</p>`;
+    else {
+      const vis = pl.fechas.filter(d => d.nf || d.existe), ocultas = pl.fechas.length - vis.length;
+      const elegidas = vis.filter(d => im.sel[d.f]), ndif = elegidas.reduce((s, d) => s + d.difs.length, 0);
+      const quien = d => Object.entries(d.fal).map(([sid, x]) => `${nomEst(g, sid)} ${x.inj ? "A" + x.inj : ""}${x.inj && x.jus ? " " : ""}${x.jus ? "J" + x.jus : ""}`).join(" · ");
+      const filas = vis.map(d => `<tr><td><input type="checkbox" data-imp="sel" data-f="${d.f}"${im.sel[d.f] ? " checked" : ""} aria-label="Traer el ${fmtDate(d.f)}"></td>
+        <td class="name">${fmtDate(d.f)}</td><td>${d.existe ? "ya está" : `<b>nueva</b> · ${d.horas} h`}</td>
+        <td class="quien">${d.nf ? `<b>${d.nf}</b> <span class="muted">${esc(quien(d))}</span>` : "—"}</td>
+        <td>${d.cambios.length || "—"}</td>
+        <td class="quien">${d.difs.length ? d.difs.map(x => `${esc(nomEst(g, x.sid))}: ${esc(x.antes)} → ${esc(x.ahora)}`).join("<br>") : "—"}${d.avisos.length ? `<br><span class="av">${d.avisos.map(esc).join("<br>")}</span>` : ""}</td></tr>`).join("");
+      cuerpo = `<p class="migmsg ok">Faltas de ${esc(p.asignatura || "ANEP")}${p.grupo ? " · " + esc(p.grupo) : ""}, leídas del ${p.desde ? fmtDate(p.desde) : "?"} al ${p.hasta ? fmtDate(p.hasta) : "?"} (${p.leidas || "?"} fechas).
+        ${pl.enAnep.length} estudiantes del grupo están en la lista de ANEP${pl.otrosAnep ? `; ${pl.otrosAnep === 1 ? "el otro de ANEP no está" : `los otros ${pl.otrosAnep} de ANEP no están`} en este grupo y se ignora${pl.otrosAnep === 1 ? "" : "n"}` : ""}.</p>
+        ${pl.sinAnep.length ? `<p class="migmsg mal">No encontré en ANEP a: ${pl.sinAnep.map(e => esc(e.nombre)).join(", ")}. Sus marcas no se tocan.</p>` : ""}
+        <p class="muted">ANEP solo registra las faltas: una fecha aparece si alguien faltó. Al traerla, los demás estudiantes del grupo quedan presentes (salvo los que ya tengan T). Marcá solo las fechas en que este grupo tuvo clase.${ocultas ? ` Hay ${ocultas} fecha${ocultas === 1 ? "" : "s"} con faltas solo de estudiantes de otro grupo; no se muestra${ocultas === 1 ? "" : "n"}.` : ""}</p>
+        ${vis.length ? `<div class="sheet"><table class="sum impt"><thead><tr><th></th><th class="name">Fecha</th><th>En la libreta</th><th>Faltas de este grupo en ANEP</th><th title="Casilleros vacíos que se completan">Se completan</th><th>Diferencias (libreta → ANEP)</th></tr></thead><tbody>${filas}</tbody></table></div>` : `<p class="muted">No hay fechas con faltas de este grupo en ese rango.</p>`}
+        <div class="row"><label>Horas de cada clase nueva <input class="field cfgnum" data-imp="horas" type="number" min="1" max="12" step="1" value="${esc(im.horas)}"></label>
+          <label class="chk"><input type="checkbox" data-imp="pisar"${im.pisar ? " checked" : ""}> Usar lo de ANEP también donde la libreta tiene otra marca${ndif ? ` (${ndif})` : ""}</label></div>
+        ${pl.soloLibreta.length ? `<p class="muted">En ANEP no hay faltas de las clases ${pl.soloLibreta.map(x => `${fmtDate(x.f)} (${x.n} con falta en la libreta)`).join(", ")}: esas no se tocan. Para pasarlas a ANEP usá el paso 1 de abajo.</p>` : ""}
+        <div class="row"><button class="btn primary" data-imp-act="aplicar"${elegidas.length ? "" : " disabled"}>Traer ${elegidas.length} fecha${elegidas.length === 1 ? "" : "s"}</button><button class="btn ghost" data-imp-act="borrar">Descartar</button></div>`;
+    }
+  }
+  if (im.p && im.p.tipo === "fictas") {
+    const p = im.p, pl = planFictas(g, p), est = activos(g), kA = asisCol(g);
+    const filas = est.map(e => { const a = pl.v[e.id], x = kA ? conteoFaltas(g, e.id, kA.id) : null;
+      return `<tr><td class="name">${esc(e.nombre)}</td><td>${a ? `<b>${fmtN(a.f)}</b>${a.i !== null && a.i !== undefined ? ` <span class="muted">(${a.i} h inj.${a.j !== null && a.j !== undefined ? ` + ${a.j} h just.` : ""})</span>` : ""}` : "—"}</td><td>${x ? fmtN(x.fictas) : "—"}</td></tr>`; }).join("");
+    cuerpo = `<p class="migmsg ok">Total de faltas fictas de ${esc(p.asignatura || "ANEP")}, obtenido el ${esc(p.obtenido || "?")}: ${Object.keys(pl.v).length} estudiantes de este grupo${pl.nd ? `, ${pl.nd} sin dato (N/D)` : ""}${pl.otros ? `; ${pl.otros} de ANEP no ${pl.otros === 1 ? "está" : "están"} en este grupo y se ignora${pl.otros === 1 ? "" : "n"}` : ""}.</p>
+      ${pl.sinAnep.length ? `<p class="migmsg mal">No encontré en ANEP a: ${pl.sinAnep.map(e => esc(e.nombre)).join(", ")}.</p>` : ""}
+      <div class="sheet"><table class="sum impt"><thead><tr><th class="name">Estudiante</th><th>Fictas ANEP</th><th>Fictas en la libreta</th></tr></thead><tbody>${filas}</tbody></table></div>
+      <p class="muted">Se guarda como una columna «Fictas ANEP» en el Resumen, al lado de las que cuenta la libreta. No cambia ninguna clase.</p>
+      <div class="row"><button class="btn primary" data-imp-act="fictas">Guardar el total en la libreta</button><button class="btn ghost" data-imp-act="borrar">Descartar</button></div>`;
+  }
+  return `<div class="migpaso" id="impPaso"><h3>⬇ Traer faltas desde ANEP</h3>${cuerpo}${g.anepFictas ? `<p class="muted">Total de ANEP guardado: obtenido el ${esc(g.anepFictas.obtenido || "?")}. <button class="btn sm ghost" data-imp-act="sinFictas">Quitarlo</button></p>` : ""}</div>`;
+}
+document.addEventListener("click", async ev => {
+  const t = ev.target.closest("[data-imp-act]"), g = grupo(); if (!t || !g) return;
+  const a = t.dataset.impAct;
+  if (a === "abrir") { (S.mig ||= {}).open = true; render(); const el = $("#impPaso"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (a === "pegar") { let txt = ""; try { txt = await navigator.clipboard.readText(); } catch(e) { S.imp = { err: "El navegador no dejó leer lo copiado: pegalo en el recuadro «Si no se pega solo»." }; render(); return; } cargarImp(g, txt); return; }
+  if (a === "borrar") { S.imp = null; render(); return; }
+  if (a === "aplicar") { aplicarFaltas(g); return; }
+  if (a === "fictas") { const pl = planFictas(g, S.imp.p); g.anepFictas = { obtenido: S.imp.p.obtenido || "", v: pl.v }; saveGrupoSoon(); S.imp = { hecho: `Listo: total de ANEP de ${Object.keys(pl.v).length} estudiantes. Está en el Resumen, columna «Fictas ANEP».` }; render(); return; }
+  if (a === "sinFictas") { delete g.anepFictas; saveGrupoSoon(); render(); return; }
+});
+document.addEventListener("input", ev => {
+  const t = ev.target, g = grupo(); if (!g || !t.dataset || t.dataset.imp !== "txt" || !t.value.trim()) return;
+  cargarImp(g, t.value);
+});
+document.addEventListener("change", ev => {
+  const t = ev.target, g = grupo(); if (t.id === "groupSel") { S.imp = null; return; }
+  if (!g || !t.dataset || !t.dataset.imp || !S.imp) return;
+  const k = t.dataset.imp;
+  if (k === "sel") { S.imp.sel[t.dataset.f] = t.checked; render(); return; }
+  if (k === "pisar") { S.imp.pisar = t.checked; render(); return; }
+  if (k === "horas") { const n = Number(t.value); if (Number.isInteger(n) && n >= 1 && n <= 12) S.imp.horas = n; render(); return; }
 });
  
 /* ---------- vista: configuración ---------- */
@@ -1285,8 +1448,9 @@ function viewConfig(g){
         <div style="display:grid;gap:8px">
           <h3>Horas y límite de faltas fictas</h3>
           <div class="row"><label for="ghoras">Horas por clase</label><input class="field cfgnum" id="ghoras" data-act="ghoras" type="number" min="1" max="12" step="1" value="${esc(horasGrupo(g))}"><span class="muted">Es el valor de cada clase nueva; en cada clase se puede cambiar.</span></div>
-          <div class="row"><label for="glim">Porcentaje</label><input class="field cfgnum" id="glim" data-act="glim" type="number" min="1" max="100" step="1" value="${esc(g.limiteFictas ?? LIMITE_DEF)}"><span class="muted">%</span><span class="muted">de las horas dictadas</span></div>
-          <p class="muted" style="margin:0;font-size:.88rem">Las faltas se cuentan por horas: un ausente en una clase de 3 horas son 3 faltas. Fictas = horas A + horas J/2 + tardes/2. El límite se calcula sobre las horas dictadas hasta hoy (las clases registradas): ahora son ${limiteFictas(g).base} horas, así que el límite es <b id="limTxt">${fmtN(limiteFictas(g).max)}</b> fictas.</p>
+          <div class="row"><label for="glim">Porcentaje</label><input class="field cfgnum" id="glim" data-act="glim" type="number" min="1" max="100" step="any" value="${esc(g.limiteFictas ?? LIMITE_DEF)}"><span class="muted">%</span><span class="muted">de las horas dictadas</span></div>
+          <div class="row"><label for="gbase">Horas del curso</label><input class="field cfgnum" id="gbase" data-act="gbase" type="number" min="1" max="2000" step="1" value="${esc(g.horasBase ?? "")}" placeholder="${horasRegistradas(g)}"><span class="muted">Opcional. Vacío = las horas de las clases registradas.</span></div>
+          <p class="muted" style="margin:0;font-size:.88rem">Las faltas se cuentan por horas: un ausente en una clase de 3 horas son 3 faltas. Fictas = horas A + horas J/2 + tardes/2. El límite se calcula sobre las horas del curso si las ponés, o si no sobre las horas dictadas hasta hoy (las clases registradas): ahora son ${limiteFictas(g).base} horas, así que el límite es <b id="limTxt">${fmtN(limiteFictas(g).max)}</b> fictas.</p>
         </div>
         <div>${conf("delg", "¿Borrar el grupo con todas sus clases? No se puede deshacer.", "delg-yes") || `<button class="btn sm danger" data-act="ask" data-k="delg">Borrar grupo</button>`}</div>
       </section>
@@ -1503,14 +1667,20 @@ document.addEventListener("input", ev => {
     const n = Number(t.value); const key = { glim: "limiteFictas", ghoras: "horasPorClase" }[t.dataset.act];
     if (t.value === "" ) delete g[key]; else if (Number.isFinite(n) && n > 0 && n <= (key === "limiteFictas" ? 100 : 12)) g[key] = n; else return;
     saveGrupoSoon(); const lt = $("#limTxt"); if (lt) lt.textContent = fmtN(limiteFictas(g).max); return; }
+  if (t.dataset.act === "gbase") { const n = Number(t.value); if (t.value === "") delete g.horasBase; else if (Number.isInteger(n) && n >= 1 && n <= 2000) g.horasBase = n; else return;
+    saveGrupoSoon(); const lt = $("#limTxt"); if (lt) lt.textContent = fmtN(limiteFictas(g).max); return; }
   if (t.dataset.act === "peso") { const n = Number(t.value); if (t.value !== "" && !(Number.isFinite(n) && n >= 0)) return;
     g.pesos ||= {}; if (t.value === "") delete g.pesos[t.dataset.k]; else g.pesos[t.dataset.k] = n; saveGrupoSoon(); pesosPct(g); return; }
   if (t.dataset.act === "gname") { g.nombre = t.value; saveGrupoSoon(); const o = $("#groupSel").selectedOptions[0]; if (o) o.textContent = t.value; return; }
 });
+let limPend = false; // el límite cambió en el Resumen: se redibuja recién al salir de esa fila (si no, se pierde el casillero de al lado)
+const limRender = () => setTimeout(() => { const a = document.activeElement; if (limPend && !(a && a.closest && a.closest(".limrow"))) { limPend = false; render(); } }, 0);
+document.addEventListener("focusout", ev => { if (limPend && ev.target.closest && ev.target.closest(".limrow")) limRender(); });
 document.addEventListener("change", async ev => {
   const t = ev.target, g = grupo();
   if (t.id === "groupSel") { S.gid = t.value; S.confirm = null; S.loading = true; render(); await loadClases(); S.loading = false; render(); return; }
   if (t.id === "fecha" && t.value) { S.fecha = t.value; S.confirm = null; render(); return; }
+  if ((t.dataset.act === "glim" || t.dataset.act === "gbase") && S.tab === "resumen") { limPend = true; limRender(); return; } // recolorear las fictas al salir de la fila
   if (t.dataset.act === "coltipo") { const k = g.columnas.find(k => k.id === t.dataset.c); k.tipo = t.value; saveGrupoSoon(); return; }
   if (t.id === "xlsIn" && t.files[0]) { importXlsNames(t.files[0]); t.value = ""; return; }
   if (t.id === "jsonIn" && t.files[0]) { importJson(t.files[0]); t.value = ""; return; }

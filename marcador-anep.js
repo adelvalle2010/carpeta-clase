@@ -3,6 +3,9 @@
      · asistencia  → Registro de inasistencias de UTU (Pasaje de Lista): horas injustificadas y justificadas de una fecha
      · evaluacion  → Portafolio Docente → Evaluación grupal: tipo de actividad, fecha, descripción y notas
      · cierre      → Portafolio Docente → Cerrar promedios: calificación y juicio conceptual del período abierto
+   Y al revés («⬇ De esta pantalla a la Libreta»): en el Registro de inasistencias lee las faltas de un rango de fechas
+   (pide la misma pantalla con otra fecha, de a tres por vez) y en Cerrar promedios lee el total de fictas; copia un paquete
+   «tipo: faltas | fictas» que se pega en la Libreta (Resumen → «⬇ Traer de ANEP»).
    Nunca aprieta «Guardar» y no envía datos a ningún lado. Después de cambiar este archivo: node armar-anep.js */
 (function () {
   "use strict";
@@ -132,12 +135,83 @@
     marcados.forEach(function (e) { marca(e, ""); }); marcados = [];
   }
 
+  /* ---- llevar a la Libreta: faltas día a día (Registro de inasistencias de UTU) y total de fictas (Cerrar promedios) ---- */
+  var RE_FECHA = /^20\d\d(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/;
+  var dos = function (n) { return String(n).padStart(2, "0"); };
+  var isoDe = function (d) { return d.getFullYear() + "-" + dos(d.getMonth() + 1) + "-" + dos(d.getDate()); };
+  var isoDeDmy = function (s) { var p = String(s || "").trim().split("/"); return p.length === 3 ? (p[2].length === 2 ? "20" + p[2] : p[2]) + "-" + dos(p[1]) + "-" + dos(p[0]) : ""; };
+  function esRegistroUtu() { return !!(byId("vFECHA") && document.querySelector('input[name="Grid1ContainerDataV"]')); }
+  function esCierre() { return !!document.querySelector("tr.filaalumno td.tdasis"); }
+  function urlDeFecha(iso) { // misma dirección de esta pantalla, con otra fecha
+    var q = location.search.slice(1).split(","), actual = isoDeDmy(byId("vFECHA") ? byId("vFECHA").defaultValue : "").replace(/-/g, "");
+    var idx = q.map(function (x, i) { return RE_FECHA.test(x) ? i : -1; }).filter(function (i) { return i >= 0; });
+    if (!idx.length) return null;
+    var i = idx.filter(function (k) { return q[k] === actual; })[0]; if (i === undefined) i = idx[0];
+    q[i] = iso.replace(/-/g, ""); return location.pathname + "?" + q.join(",");
+  }
+  function leerFechaUtu(iso) {
+    var url = urlDeFecha(iso); if (!url) return Promise.reject(new Error("formato"));
+    return fetch(url, { credentials: "include" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }).then(function (html) {
+      var doc = new DOMParser().parseFromString(html, "text/html"), inp = doc.querySelector('input[name="Grid1ContainerDataV"]');
+      if (!inp) throw new Error("sesion");
+      var rows = JSON.parse(inp.value || "[]"); if (!Array.isArray(rows)) throw new Error("formato");
+      return rows.map(function (r) {
+        if (!Array.isArray(r) || r.length < 18 || !/^\d+$/.test(String(r[16])) || !/^\d+$/.test(String(r[17])) || !/[A-Za-zÁÉÍÓÚÑ]{2}/.test(String(r[13])) || /^C\.?\s?I\b/i.test(String(r[13]))) throw new Error("formato");
+        return { nombre: String(r[13]).replace(/\s+/g, " ").trim(), inj: Number(r[16]), jus: Number(r[17]) };
+      });
+    });
+  }
+  var lectura = null;
+  function leerFaltas(desde, hasta, dias, avance) {
+    var fechas = [], d = new Date(desde + "T12:00"), fin = new Date(hasta + "T12:00");
+    for (; d <= fin; d.setDate(d.getDate() + 1)) if (dias.indexOf(d.getDay()) >= 0) fechas.push(isoDe(d));
+    var st = lectura = { parar: false, hechas: 0, total: fechas.length, fallidas: [], seguidas: 0, res: {}, nombres: {}, error: "" }, i = 0;
+    function uno() {
+      if (st.parar || i >= fechas.length) return Promise.resolve();
+      var f = fechas[i++];
+      return leerFechaUtu(f).then(function (filas) {
+        st.seguidas = 0;
+        filas.forEach(function (x) { st.nombres[x.nombre] = 1; });
+        var con = filas.filter(function (x) { return x.inj || x.jus; });
+        if (con.length) st.res[f] = con;
+      }, function (e) {
+        st.fallidas.push(f); st.seguidas++;
+        if (e.message === "formato" || st.seguidas >= 6) { st.parar = true; st.error = e.message === "formato" ? "formato" : e.message === "sesion" ? "sesion" : "red"; }
+      }).then(function () { st.hechas++; avance(st); return new Promise(function (r) { setTimeout(r, 120); }); }).then(uno);
+    }
+    return Promise.all([uno(), uno(), uno()]).then(function () { return st; }); // de a tres pedidos por vez
+  }
+  function paqueteFaltas(st, desde, hasta, dias) {
+    return { app: "libreta-anep", v: 1, tipo: "faltas", origen: "utu", asignatura: ((byId("MATCODDES") || {}).value || "").replace(/^\d+-/, "").trim(), grupo: (byId("GRPCOD_0001") || {}).value || "",
+      desde: desde, hasta: hasta, dias: dias, leidas: st.hechas - st.fallidas.length, fallidas: st.fallidas, estudiantes: Object.keys(st.nombres), fechas: st.res };
+  }
+  function leerTotales() {
+    var obtenido = "", asign = "";
+    var filas = Array.prototype.map.call(document.querySelectorAll("tr.filaalumno"), function (tr) {
+      var td = tr.querySelector("td.tdasis"), sp = td && td.querySelector(".calif_inas_fictas_update"), tt = td && td.querySelector(".data-tooltip");
+      var ne = tt && tt.querySelector(".nombreEstudiante"), nom = ne ? ne.textContent : ((tr.querySelector("td.nombre") || {}).textContent || "").replace(/^\s*\d+\.?\s+/, "");
+      var txt = tt ? tt.innerHTML.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ") : ""; // los <br> separan «6» de «Justificadas»
+      var num = sp ? Array.prototype.filter.call(sp.childNodes, function (n) { return n.nodeType === 3; }).map(function (n) { return n.nodeValue; }).join("").trim() : "";
+      var mo = /Fecha de obtenci[oó]n:\s*([\d\/]+(?:\s+[\d:]+)?)/i.exec(txt); if (mo && !obtenido) obtenido = mo[1];
+      var ma = /Detalle inasistencias de\s*(.+?):/i.exec(txt); if (ma && !asign) asign = ma[1].trim();
+      var n = function (re) { var m = re.exec(txt); return m ? Number(m[1].replace(",", ".")) : null; };
+      var f = Number(num.replace(",", ".")), ok = num !== "" && isFinite(f);
+      return { nombre: nom.replace(/\s+/g, " ").trim(), fictas: ok ? f : null, inj: n(/Injustificadas:\s*(\d+(?:[.,]\d+)?)/i), jus: n(/(?:^|[^a-z])Justificadas:\s*(\d+(?:[.,]\d+)?)/i), nd: !ok };
+    });
+    return { app: "libreta-anep", v: 1, tipo: "fictas", obtenido: obtenido, asignatura: asign, filas: filas };
+  }
+
   /* ---- cuadro ---- */
   var host = document.createElement("div");
   host.style.cssText = "position:fixed;top:12px;right:12px;z-index:2147483647";
   var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
-  root.innerHTML = '<style>.p{width:370px;max-height:88vh;overflow:auto;background:#fff;color:#1b2333;border:2px solid #2a4ea8;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.3);font:14px/1.45 system-ui,sans-serif;padding:12px 14px;position:relative;text-align:left}h2{margin:0 26px 6px 0;font-size:16px;color:#2a4ea8}textarea{width:100%;box-sizing:border-box;height:64px;font:12px ui-monospace,monospace}label{display:block;margin:6px 0}button{font:inherit;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;background:#2a4ea8;color:#fff;margin:6px 6px 0 0}button.alt{background:#e9edf5;color:#1b2333}button:disabled{opacity:.5;cursor:default}.x{position:absolute;top:4px;right:6px;background:none;color:#1b2333;font-size:20px;padding:0 6px;margin:0}.pq{background:#e8e4f8;border-radius:6px;padding:6px 8px;margin:6px 0}.r{margin-top:8px;font-size:13px}.r ul{margin:4px 0 0;padding-left:18px}.ok{color:#1f7a4d}.av{color:#946200}.mal{color:#b3332b}small{color:#5d6880;display:block;margin-top:6px}</style>' +
-    '<div class="p"><button class="x" title="Cerrar">×</button><h2>📒 Migrar desde la Libreta</h2><div class="pq">Buscando lo copiado…</div><textarea placeholder="Si no aparece solo, pegá acá lo copiado en la Libreta (Ctrl+V)"></textarea><label><input type="checkbox" class="rp"> Reemplazar lo que ya esté escrito</label><button class="go">Completar</button><button class="alt un" disabled>Deshacer</button><div class="r"></div><small>No se guarda nada: revisá y apretá «Guardar» en la pantalla.</small></div>';
+  root.innerHTML = '<style>.p{width:370px;max-height:88vh;overflow:auto;background:#fff;color:#1b2333;border:2px solid #2a4ea8;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.3);font:14px/1.45 system-ui,sans-serif;padding:12px 14px;position:relative;text-align:left}h2{margin:0 26px 6px 0;font-size:16px;color:#2a4ea8}textarea{width:100%;box-sizing:border-box;height:64px;font:12px ui-monospace,monospace}label{display:block;margin:6px 0}button{font:inherit;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;background:#2a4ea8;color:#fff;margin:6px 6px 0 0}button.alt{background:#e9edf5;color:#1b2333}button:disabled{opacity:.5;cursor:default}.x{position:absolute;top:4px;right:6px;background:none;color:#1b2333;font-size:20px;padding:0 6px;margin:0}.pq{background:#e8e4f8;border-radius:6px;padding:6px 8px;margin:6px 0}.r{margin-top:8px;font-size:13px}.r ul{margin:4px 0 0;padding-left:18px}h3{margin:4px 0;font-size:14px;color:#2a4ea8}.tr{border-top:1px solid #d9dfea;margin-top:10px;padding-top:6px}label.inl{display:inline-block;margin:3px 8px 3px 0}input[type=date]{font:inherit;font-size:13px}.out{height:46px}.ok{color:#1f7a4d}.av{color:#946200}.mal{color:#b3332b}small{color:#5d6880;display:block;margin-top:6px}</style>' +
+    '<div class="p"><button class="x" title="Cerrar">×</button><h2>📒 Migrar desde la Libreta</h2><h3>⬆ De la Libreta a esta pantalla</h3><div class="pq">Buscando lo copiado…</div><textarea placeholder="Si no aparece solo, pegá acá lo copiado en la Libreta (Ctrl+V)"></textarea><label><input type="checkbox" class="rp"> Reemplazar lo que ya esté escrito</label><button class="go">Completar</button><button class="alt un" disabled>Deshacer</button><div class="r"></div><small>No se guarda nada: revisá y apretá «Guardar» en la pantalla.</small>' +
+    '<div class="tr" hidden><h3>⬇ De esta pantalla a la Libreta</h3>' +
+    '<div class="trutu" hidden><small style="margin:0 0 4px">Lee las faltas guardadas en este registro, fecha por fecha. Solo lee: no cambia nada.</small><label class="inl">Desde <input type="date" class="d1"></label><label class="inl">hasta <input type="date" class="d2"></label><div class="dias">Días: ' +
+    ["L", "M", "X", "J", "V", "S"].map(function (d, i) { return '<label class="inl"><input type="checkbox" value="' + (i + 1) + '">' + d + "</label>"; }).join("") + '</div><button class="leer">Leer faltas</button><button class="alt det" hidden>Detener</button></div>' +
+    '<div class="trci" hidden><small style="margin:0 0 4px">Lee el total de faltas fictas de cada estudiante (columna In.Fictas). Para tenerlo al día, actualizá antes esa columna con su ícono.</small><button class="leer2">Leer el total de faltas</button></div>' +
+    '<div class="r trr"></div><button class="cp" hidden>Copiar para la Libreta</button><textarea class="out" readonly hidden></textarea></div></div>';
   var q = function (s) { return root.querySelector(s); };
   var paquete = null;
   function ver() {
@@ -167,6 +241,53 @@
       lista("av", "Para revisar:", r.avisos) +
       (r.resto ? '<div class="av">' + r.resto + " estudiante" + (r.resto === 1 ? "" : "s") + " de esta pantalla no venía" + (r.resto === 1 ? "" : "n") + " en el paquete" + (paquete.tipo === "asistencia" ? "" : " (casillero vacío en amarillo)") + ".</div>" : "");
   });
-  window.__migrarLibreta = { mostrar: function () { if (!host.isConnected) document.body.appendChild(host); leerPortapapeles(); }, _probar: { pantalla: pantalla, completar: completar, deshacer: deshacer, emparejar: emparejar, leerPaquete: leerPaquete } };
+  var PREF = "libreta-anep-traer", prefs = {};
+  try { prefs = JSON.parse(localStorage.getItem(PREF) || "{}") || {}; } catch (e) {}
+  function prepararTraer() {
+    var utu = esRegistroUtu(), ci = !utu && esCierre();
+    q(".tr").hidden = !(utu || ci); q(".trutu").hidden = !utu; q(".trci").hidden = !ci;
+    if (utu && !q(".d2").value) {
+      var hoy = isoDeDmy(byId("vFECHA").value) || isoDe(new Date());
+      q(".d2").value = hoy; q(".d1").value = prefs.desde && prefs.desde < hoy ? prefs.desde : hoy.slice(0, 4) + "-03-01";
+      var dias = Array.isArray(prefs.dias) && prefs.dias.length ? prefs.dias : [1, 2, 3, 4, 5];
+      Array.prototype.forEach.call(root.querySelectorAll(".dias input"), function (c) { c.checked = dias.indexOf(Number(c.value)) >= 0; });
+    }
+  }
+  function mostrarSalida(paq, html) {
+    q(".trr").innerHTML = html;
+    var txt = "LIBRETA-ANEP " + JSON.stringify(paq);
+    q(".out").value = txt; q(".out").hidden = false; q(".cp").hidden = false; q(".cp").textContent = "Copiar para la Libreta";
+  }
+  q(".cp").addEventListener("click", function () {
+    var t = q(".out").value, listo = function () { q(".cp").textContent = "✓ Copiado"; q(".trr").insertAdjacentHTML("beforeend", '<div class="ok">Copiado. En la Libreta: Resumen del grupo → «⬇ Traer de ANEP» → «Pegar lo copiado en ANEP».</div>'); };
+    var aMano = function () { q(".out").select(); try { if (document.execCommand("copy")) return listo(); } catch (e) {} q(".trr").insertAdjacentHTML("beforeend", '<div class="av">No pude copiar solo: el texto quedó seleccionado abajo, copialo con Ctrl+C.</div>'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(listo, aMano); else aMano();
+  });
+  q(".det").addEventListener("click", function () { if (lectura) lectura.parar = true; });
+  q(".leer").addEventListener("click", function () {
+    var d1 = q(".d1").value, d2 = q(".d2").value, dias = Array.prototype.filter.call(root.querySelectorAll(".dias input"), function (c) { return c.checked; }).map(function (c) { return Number(c.value); });
+    if (!d1 || !d2 || d1 > d2) { q(".trr").innerHTML = '<span class="mal">Revisá las fechas: «desde» tiene que ser anterior a «hasta».</span>'; return; }
+    if (!dias.length) { q(".trr").innerHTML = '<span class="mal">Marcá al menos un día de la semana.</span>'; return; }
+    try { localStorage.setItem(PREF, JSON.stringify({ desde: d1, dias: dias })); } catch (e) {}
+    q(".leer").disabled = true; q(".det").hidden = false; q(".cp").hidden = true; q(".out").hidden = true;
+    leerFaltas(d1, d2, dias, function (st) { q(".trr").textContent = "Leyendo " + st.hechas + " de " + st.total + " fechas…"; }).then(function (st) {
+      q(".leer").disabled = false; q(".det").hidden = true;
+      if (st.error === "formato") { q(".trr").innerHTML = '<span class="mal">No pude leer este registro: la pantalla de UTU cambió. Avisale a quien armó el marcador.</span>'; return; }
+      if (st.error && !Object.keys(st.nombres).length) { q(".trr").innerHTML = '<span class="mal">' + (st.error === "sesion" ? "Parece que se cerró la sesión: volvé a entrar al Portafolio, abrí «Pasaje de Lista» y probá de nuevo." : "No pude conectarme con el registro de UTU. Probá de nuevo en un rato.") + "</span>"; return; }
+      var fs = Object.keys(st.res).sort(), horas = 0;
+      fs.forEach(function (f) { st.res[f].forEach(function (x) { horas += x.inj + x.jus; }); });
+      var paq = paqueteFaltas(st, d1, d2, dias);
+      mostrarSalida(paq, '<span class="ok">Leí ' + paq.leidas + " fecha" + (paq.leidas === 1 ? "" : "s") + ": <b>" + fs.length + "</b> con faltas (" + horas + " h en total).</span>" +
+        (fs.length ? '<div style="font-size:12px">' + fs.map(function (f) { return dmy(f) + " (" + st.res[f].length + ")"; }).join(" · ") + "</div>" : "") +
+        (st.parar && !st.error ? '<div class="av">Detenido antes de terminar: el paquete tiene solo lo leído.</div>' : "") +
+        (st.fallidas.length ? '<div class="av">No pude leer ' + st.fallidas.length + " fecha" + (st.fallidas.length === 1 ? "" : "s") + ": " + st.fallidas.map(dmy).join(", ") + (st.error === "sesion" ? ". Parece que se cerró la sesión." : "") + "</div>" : ""));
+    });
+  });
+  q(".leer2").addEventListener("click", function () {
+    var paq = leerTotales(), con = paq.filas.filter(function (x) { return !x.nd; }).length;
+    if (!paq.filas.length) { q(".trr").innerHTML = '<span class="mal">No encontré la columna In.Fictas.</span>'; return; }
+    mostrarSalida(paq, '<span class="ok">' + paq.filas.length + " estudiantes, " + con + " con dato" + (paq.obtenido ? " (obtenido el " + esc(paq.obtenido) + ")" : "") + ".</span>");
+  });
+  window.__migrarLibreta = { mostrar: function () { prepararTraer(); if (!host.isConnected) document.body.appendChild(host); leerPortapapeles(); }, _probar: { leerFechaUtu: leerFechaUtu, leerTotales: leerTotales, urlDeFecha: urlDeFecha, pantalla: pantalla, completar: completar, deshacer: deshacer, emparejar: emparejar, leerPaquete: leerPaquete } };
   window.__migrarLibreta.mostrar();
 })();

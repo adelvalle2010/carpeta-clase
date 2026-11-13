@@ -107,3 +107,16 @@ La libreta no puede escribir dentro del Portafolio (es otro sitio y usa la sesi�
 - El **link del grupo** en el Portafolio es opcional y sirve para abrir cada pantalla desde la libreta (`anepUrl`).
 
 Archivos: `marcador-anep.js` (fuente del marcador), `anep.plantilla.html` y `armar-anep.js` (`node armar-anep.js` regenera `anep.html`).
+
+## Traer faltas desde ANEP
+
+En **Resumen del grupo → ⬇ Traer de ANEP** se pega lo que copia el marcador en dos pantallas:
+
+| Pantalla de ANEP | Qué lee el marcador | Qué hace la libreta |
+|---|---|---|
+| «Pasaje de Lista» (Registro de inasistencias de UTU) | Las faltas (horas injustificadas y justificadas) de cada fecha de un rango y días de la semana elegidos. Pide la misma pantalla con otra fecha, de a tres por vez; solo lee. | Muestra las fechas con faltas de este grupo, crea las clases que no existan, marca presentes al resto (respeta las T) y lista las diferencias; solo las pisa si se marca «Usar lo de ANEP…». |
+| Calificaciones → Cerrar promedios | El total de faltas fictas (columna In.Fictas), con horas injustificadas, justificadas y fecha de obtención. | Lo guarda en `anepFictas` y lo muestra en la columna «Fictas ANEP» del Resumen. |
+
+Los nombres se emparejan aunque ANEP los abrevie («ACOSTA SABRINA» → «ACOSTA IRUTE, SABRINA MIKAELA»); los estudiantes de ANEP que no están en el grupo (por ejemplo, el grupo del otro semestre) se ignoran.
+
+El **límite de faltas fictas** se edita en el Resumen o en «Estudiantes y columnas»: porcentaje (`limiteFictas`) y, opcionalmente, las horas del curso (`horasBase`); si no se ponen, el límite se calcula sobre las horas de las clases registradas.
