@@ -259,6 +259,7 @@
     var txt = "LIBRETA-ANEP " + JSON.stringify(paq);
     q(".out").value = txt; q(".out").hidden = true; q(".cp").hidden = false; q(".ab").hidden = false; q(".cp").textContent = "Copiar";
     q(".trr").insertAdjacentHTML("beforeend", '<div>Tocá <b>Abrir en la Libreta</b>: se abre con estos datos listos para revisar.</div>');
+    try { q(".ab").scrollIntoView({ block: "nearest" }); } catch (e) {} // que el botón quede a la vista dentro del cuadro
   }
   q(".cp").addEventListener("click", function () {
     var t = q(".out").value, listo = function () { q(".cp").textContent = "✓ Copiado"; q(".trr").insertAdjacentHTML("beforeend", '<div class="ok">Copiado. En la Libreta: Resumen del grupo → «⬇ Traer de ANEP» → «Pegar lo copiado en ANEP».</div>'); };
