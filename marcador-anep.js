@@ -243,13 +243,13 @@
     return new Promise(function (ok) {
       var w = window.PF ? PF("tablaDesarrollo") : null, leer = function () {
         var tb = document.querySelector('[id$="tablaDesarrollo_data"]'), set = {};
-        if (tb) Array.prototype.forEach.call(tb.rows, function (r) { if (r.cells.length > 1) { var d = parseInt(r.cells[0].textContent, 10), m = parseInt(r.cells[1].textContent, 10); if (d && m) set[d + "/" + m] = 1; } });
+        if (tb) Array.prototype.forEach.call(tb.rows, function (r) { if (r.cells.length > 1) { var num = function (c) { var x = String(c.innerText || c.textContent).match(/\d+/g); return x ? parseInt(x[x.length - 1], 10) : 0; }; var d = num(r.cells[0]), m = num(r.cells[1]); if (d && m) set[d + "/" + m] = 1; } });
         return set;
       };
       try {
         var total = w && w.cfg.paginator ? w.cfg.paginator.rowCount : 0, tb = document.querySelector('[id$="tablaDesarrollo_data"]');
         if (w && w.paginator && tb && tb.rows.length < total) {
-          w.paginator.setRowsPerPage(1000);
+          w.paginator.setRowsPerPage(Math.max(total, 10));
           var t0 = Date.now(), espera = function () { var t = document.querySelector('[id$="tablaDesarrollo_data"]'); if ((t && t.rows.length >= total) || Date.now() - t0 > 8000) ok(leer()); else setTimeout(espera, 250); };
           return setTimeout(espera, 300);
         }
@@ -324,6 +324,9 @@
       completarDesarrollo(paquete, q(".rp").checked).then(function (r) {
         q(".go").disabled = false; q(".un").disabled = !restaurar.length;
         el.innerHTML = r.error ? '<span class="mal">' + esc(r.error) + "</span>" : r.html;
+      }, function (e) {
+        q(".go").disabled = false; q(".un").disabled = !restaurar.length;
+        el.innerHTML = '<span class="mal">No pude completar: ' + esc(e && e.message || e) + ". Revisá la pantalla antes de guardar.</span>";
       });
       return;
     }
