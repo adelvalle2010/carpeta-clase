@@ -20,8 +20,23 @@ table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:1px soli
 <p>Mostrá la barra de marcadores (<code>Ctrl+Shift+B</code>) y <b>arrastrá este botón hasta la barra</b>:</p>
 <p><a class="bm" href="__MARCADOR__" onclick="alert('No se hace clic acá: arrastrá el botón hasta la barra de marcadores.');return false">📒 Migrar desde la Libreta</a></p>
 <small>Funciona en Chrome, Edge y Firefox, en la computadora. Si ya tenías una versión anterior, borrala de la barra y arrastrá la nueva.</small>
+<details style="margin-top:10px"><summary><b>Si arrastrar no funciona</b></summary>
+<ol>
+<li>Tocá este botón: <button type="button" id="copiarBm" style="font:inherit;padding:4px 10px;cursor:pointer">Copiar el código del marcador</button> <span id="copiadoBm" class="muted"></span></li>
+<li>Hacé clic derecho en la barra de marcadores → <b>Agregar página…</b></li>
+<li>En <b>Nombre</b> escribí <code>📒 Migrar desde la Libreta</code>; en <b>URL</b> pegá el código (<code>Ctrl+V</code>) y tocá <b>Guardar</b>.</li>
+</ol></details>
+<p class="nota"><b>Importante:</b> el marcador se toca <b>estando en una pantalla de ANEP</b> (Pasaje de Lista, Evaluación grupal o Cerrar promedios), no en la Libreta.</p>
 
-<h2>2. Copiar en la Libreta</h2>
+<h2>De ANEP a la Libreta: traer faltas</h2>
+<ol>
+<li>En el Portafolio abrí <b>«Pasaje de Lista»</b> (faltas de cada día) o <b>Calificaciones → Cerrar promedios</b> (total de faltas fictas).</li>
+<li>Tocá el marcador. En la parte <b>«⬇ De esta pantalla a la Libreta»</b> elegí desde qué fecha y qué días, y tocá <b>Leer faltas</b> (en Cerrar promedios: <b>Leer el total de faltas</b>).</li>
+<li>Tocá <b>Abrir en la Libreta</b>. La libreta se abre con la vista previa: revisá las fechas y apretá <b>Traer</b>.</li>
+</ol>
+<p class="muted">Solo lee: no cambia nada en ANEP. Lee las faltas que ya están guardadas en el registro de UTU.</p>
+
+<h2>De la Libreta a ANEP: 1. Copiar en la Libreta</h2>
 <p>En la pestaña <b>Resumen del grupo</b>, tocá <b>⇪ Migrar a ANEP</b> y usá el botón de lo que quieras pasar. Cada botón copia un paquete distinto:</p>
 <table>
 <tr><th>En la Libreta</th><th>Qué lleva</th><th>Dónde se pega</th></tr>
@@ -30,7 +45,7 @@ table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:1px soli
 <tr><td><b>Copiar cierre</b></td><td>El promedio redondeado a entero y el juicio conceptual de cada estudiante.</td><td>Calificaciones → <b>Cerrar promedios</b>, con el período a cerrar desplegado.</td></tr>
 </table>
 
-<h2>3. Completar en ANEP</h2>
+<h2>De la Libreta a ANEP: 2. Completar en ANEP</h2>
 <ol>
 <li>Abrí la pantalla que corresponde y tocá el marcador <b>📒 Migrar desde la Libreta</b>.</li>
 <li>El cuadro muestra qué paquete encontró (si el navegador pregunta, permití leer el portapapeles; si no aparece, pegalo con <code>Ctrl+V</code>).</li>
@@ -49,4 +64,12 @@ table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:1px soli
 
 <h2>Privacidad</h2>
 <p>Todo pasa dentro del navegador: el marcador no envía datos a ningún lado y no guarda nada. No es una herramienta oficial de ANEP ni de UTU; si alguna de esas pantallas cambia, puede dejar de encontrar los casilleros.</p>
-</main></body></html>
+</main>
+<script>
+document.getElementById("copiarBm").addEventListener("click", function () {
+  var code = document.querySelector("a.bm").getAttribute("href"), out = document.getElementById("copiadoBm");
+  var ok = function () { out.textContent = "✓ Copiado"; };
+  var aMano = function () { var t = document.createElement("textarea"); t.value = code; document.body.appendChild(t); t.select(); var r = false; try { r = document.execCommand("copy"); } catch (e) {} t.remove(); out.textContent = r ? "✓ Copiado" : "No se pudo copiar: hacé clic derecho en el botón azul de arriba → «Copiar dirección del enlace»."; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(ok, aMano); else aMano();
+});
+</script></body></html>

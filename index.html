@@ -135,6 +135,7 @@ input.txt{width:100%;min-width:160px}
 table.migt td.jc,table.migt th.jc{min-width:280px;width:55%;text-align:left} table.migt textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:0;height:3.4em;font:inherit;font-size:.9rem;padding:5px 8px}
 @media print{.mig{display:none}}
 .limrow{gap:6px;font-size:.92rem} .limrow .muted{font-size:.85rem;flex-basis:100%} input.inl{width:4.6em;padding:3px 6px;text-align:right}
+.pasosimp{margin:0;padding-left:22px;display:grid;gap:4px;font-size:.93rem} .pasosimp a{color:var(--accent)}
 table.impt td.quien{text-align:left;font-size:.85rem;min-width:220px;white-space:normal} table.impt .av{color:var(--warn)} .imptxt{width:100%;box-sizing:border-box;font:12px ui-monospace,monospace}
 .mig label.chk{flex-direction:row;align-items:center;gap:6px;color:var(--ink)}
 .banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
@@ -196,7 +197,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v9 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v10 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn">+ Grupo</button>
@@ -619,7 +620,16 @@ async function loadAll(){
   S.gid = (S.grupos.find(g => g.id === last) || S.grupos[0] || {}).id || null;
   await loadClases();
   S.loading = false; if (!fallo) idleStatus(); render();
+  recibirDeAnep();
 }
+function recibirDeAnep(){ // el marcador abre la libreta con #anep={…}: se muestra la vista previa (nada se aplica sin tocar «Traer»)
+  const h = location.hash; if (!h.startsWith("#anep=")) return;
+  let txt = ""; try { txt = decodeURIComponent(h.slice(6)); } catch(e) {}
+  try { history.replaceState(null, "", location.pathname + location.search); } catch(e) {}
+  const g = grupo(); if (!g) { toast("Primero creá o conectá un grupo"); return; }
+  S.tab = "resumen"; (S.mig ||= {}).open = true; cargarImp(g, "LIBRETA-ANEP " + txt);
+}
+window.addEventListener("hashchange", () => { if (!S.loading) recibirDeAnep(); });
 async function loadClases(){
   S.clases = {};
   if (!S.gid) return;
@@ -1322,9 +1332,13 @@ function planFaltas(g, p, im){
 function cargarImp(g, txt){
   const r = leerPaqAnep(txt);
   if (r.error) { S.imp = { err: r.error }; render(); return; }
-  const im = S.imp = { p: r.p, horas: horasGrupo(g), pisar: false, sel: {} };
-  if (r.p.tipo === "faltas") { const pl = planFaltas(g, r.p, im); if (!pl.error) pl.fechas.forEach(d => { im.sel[d.f] = d.nf > 0; }); }
+  S.imp = { p: r.p, pisar: false };
+  prepImp(g);
   render(); const el = $("#impPaso"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function prepImp(g){ // fechas tildadas por defecto: las que tienen faltas de este grupo
+  const im = S.imp; im.gid = g.id; im.horas = horasGrupo(g); im.sel = {};
+  if (im.p.tipo === "faltas") { const pl = planFaltas(g, im.p, im); if (!pl.error) pl.fechas.forEach(d => { im.sel[d.f] = d.nf > 0; }); }
 }
 function aplicarFaltas(g){
   const im = S.imp, pl = planFaltas(g, im.p, im); if (pl.error) return;
@@ -1347,9 +1361,14 @@ function planFictas(g, p){
   return { v, nd, otros: filas.filter((x, i) => !ids[i]).length, sinAnep: activos(g).filter(e => !ids.includes(e.id)) };
 }
 function viewTraer(g){
+  if (S.imp && S.imp.p && S.imp.gid !== g.id) prepImp(g);
   const im = S.imp || {};
-  const intro = `<p class="muted">Con el marcador <b>📒 Migrar desde la Libreta</b>: en el <b>Registro de inasistencias</b> de UTU («Pasaje de Lista») lee las faltas de todas las fechas que elijas; en <b>Cerrar promedios</b> lee el total de faltas fictas. Allá tocá «Copiar para la Libreta» y pegalo acá.</p>`;
-  const pegar = `<div class="row"><button class="btn primary" data-imp-act="pegar">Pegar lo copiado en ANEP</button></div>
+  const intro = im.p ? "" : `<ol class="pasosimp">
+      <li><b>Una sola vez:</b> <a href="anep.html" target="_blank" rel="noopener">instalá el marcador «📒 Migrar desde la Libreta» ↗</a> en la barra de marcadores de Chrome.</li>
+      <li>En el Portafolio de ANEP abrí <b>«Pasaje de Lista»</b> (para las faltas de cada día) o <b>Calificaciones → Cerrar promedios</b> (para el total de faltas).</li>
+      <li>Con esa pantalla abierta, tocá el marcador en la barra. Se abre un cuadro: en la parte <b>«⬇ De esta pantalla a la Libreta»</b> tocá «Leer faltas» (o «Leer el total de faltas»).</li>
+      <li>Tocá <b>«Abrir en la Libreta»</b>: la libreta se abre con los datos para revisar, y apretás «Traer».</li></ol>`;
+  const pegar = im.p ? "" : `<div class="row"><button class="btn" data-imp-act="pegar">Pegar lo copiado en ANEP</button><span class="muted">Solo si en el marcador usaste «Copiar» en vez de «Abrir en la Libreta».</span></div>
     <details><summary class="muted">Si no se pega solo</summary><textarea class="field imptxt" data-imp="txt" rows="3" placeholder="Pegá acá (Ctrl+V) lo que copió el marcador"></textarea></details>`;
   let cuerpo = intro + pegar;
   if (im.err) cuerpo += `<p class="migmsg mal" role="status">${esc(im.err)}</p>`;
@@ -1367,7 +1386,7 @@ function viewTraer(g){
         <td>${d.cambios.length || "—"}</td>
         <td class="quien">${d.difs.length ? d.difs.map(x => `${esc(nomEst(g, x.sid))}: ${esc(x.antes)} → ${esc(x.ahora)}`).join("<br>") : "—"}${d.avisos.length ? `<br><span class="av">${d.avisos.map(esc).join("<br>")}</span>` : ""}</td></tr>`).join("");
       cuerpo = `<p class="migmsg ok">Faltas de ${esc(p.asignatura || "ANEP")}${p.grupo ? " · " + esc(p.grupo) : ""}, leídas del ${p.desde ? fmtDate(p.desde) : "?"} al ${p.hasta ? fmtDate(p.hasta) : "?"} (${p.leidas || "?"} fechas).
-        ${pl.enAnep.length} estudiantes del grupo están en la lista de ANEP${pl.otrosAnep ? `; ${pl.otrosAnep === 1 ? "el otro de ANEP no está" : `los otros ${pl.otrosAnep} de ANEP no están`} en este grupo y se ignora${pl.otrosAnep === 1 ? "" : "n"}` : ""}.</p>
+        ${pl.enAnep.length === 1 ? "1 estudiante del grupo está" : pl.enAnep.length + " estudiantes del grupo están"} en la lista de ANEP${pl.otrosAnep ? `; ${pl.otrosAnep === 1 ? "el otro de ANEP no está" : `los otros ${pl.otrosAnep} de ANEP no están`} en este grupo y se ignora${pl.otrosAnep === 1 ? "" : "n"}` : ""}.</p>
         ${pl.sinAnep.length ? `<p class="migmsg mal">No encontré en ANEP a: ${pl.sinAnep.map(e => esc(e.nombre)).join(", ")}. Sus marcas no se tocan.</p>` : ""}
         <p class="muted">ANEP solo registra las faltas: una fecha aparece si alguien faltó. Al traerla, los demás estudiantes del grupo quedan presentes (salvo los que ya tengan T). Marcá solo las fechas en que este grupo tuvo clase.${ocultas ? ` Hay ${ocultas} fecha${ocultas === 1 ? "" : "s"} con faltas solo de estudiantes de otro grupo; no se muestra${ocultas === 1 ? "" : "n"}.` : ""}</p>
         ${vis.length ? `<div class="sheet"><table class="sum impt"><thead><tr><th></th><th class="name">Fecha</th><th>En la libreta</th><th>Faltas de este grupo en ANEP</th><th title="Casilleros vacíos que se completan">Se completan</th><th>Diferencias (libreta → ANEP)</th></tr></thead><tbody>${filas}</tbody></table></div>` : `<p class="muted">No hay fechas con faltas de este grupo en ese rango.</p>`}
@@ -1404,7 +1423,7 @@ document.addEventListener("input", ev => {
   cargarImp(g, t.value);
 });
 document.addEventListener("change", ev => {
-  const t = ev.target, g = grupo(); if (t.id === "groupSel") { S.imp = null; return; }
+  const t = ev.target, g = grupo(); if (t.id === "groupSel") { if (S.imp && S.imp.p) S.imp.gid = null; else S.imp = null; return; } // al cambiar de grupo se recalcula
   if (!g || !t.dataset || !t.dataset.imp || !S.imp) return;
   const k = t.dataset.imp;
   if (k === "sel") { S.imp.sel[t.dataset.f] = t.checked; render(); return; }

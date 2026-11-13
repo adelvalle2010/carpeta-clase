@@ -16,6 +16,7 @@
   var vis = function (e) { return !!(e && (e.offsetWidth || e.offsetHeight || e.getClientRects().length)); };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var byId = function (id) { return document.getElementById(id); };
+  var LIBRETA = "https://adelvalle2010.github.io/carpeta-clase/";
   var NOMBRES = { asistencia: "asistencia", evaluacion: "evaluación", cierre: "cierre de promedios" };
   var DONDE = { asistencia: "«Pasaje de Lista» (Registro de inasistencias de UTU)", evaluacion: "Calificaciones → Evaluación grupal → Nueva evaluación grupal", cierre: "Calificaciones → Cerrar promedios" };
 
@@ -211,7 +212,7 @@
     '<div class="trutu" hidden><small style="margin:0 0 4px">Lee las faltas guardadas en este registro, fecha por fecha. Solo lee: no cambia nada.</small><label class="inl">Desde <input type="date" class="d1"></label><label class="inl">hasta <input type="date" class="d2"></label><div class="dias">Días: ' +
     ["L", "M", "X", "J", "V", "S"].map(function (d, i) { return '<label class="inl"><input type="checkbox" value="' + (i + 1) + '">' + d + "</label>"; }).join("") + '</div><button class="leer">Leer faltas</button><button class="alt det" hidden>Detener</button></div>' +
     '<div class="trci" hidden><small style="margin:0 0 4px">Lee el total de faltas fictas de cada estudiante (columna In.Fictas). Para tenerlo al día, actualizá antes esa columna con su ícono.</small><button class="leer2">Leer el total de faltas</button></div>' +
-    '<div class="r trr"></div><button class="cp" hidden>Copiar para la Libreta</button><textarea class="out" readonly hidden></textarea></div></div>';
+    '<div class="r trr"></div><button class="ab" hidden>Abrir en la Libreta ↗</button><button class="alt cp" hidden>Copiar</button><textarea class="out" readonly hidden></textarea></div></div>';
   var q = function (s) { return root.querySelector(s); };
   var paquete = null;
   function ver() {
@@ -256,12 +257,17 @@
   function mostrarSalida(paq, html) {
     q(".trr").innerHTML = html;
     var txt = "LIBRETA-ANEP " + JSON.stringify(paq);
-    q(".out").value = txt; q(".out").hidden = false; q(".cp").hidden = false; q(".cp").textContent = "Copiar para la Libreta";
+    q(".out").value = txt; q(".out").hidden = true; q(".cp").hidden = false; q(".ab").hidden = false; q(".cp").textContent = "Copiar";
+    q(".trr").insertAdjacentHTML("beforeend", '<div>Tocá <b>Abrir en la Libreta</b>: se abre con estos datos listos para revisar.</div>');
   }
   q(".cp").addEventListener("click", function () {
     var t = q(".out").value, listo = function () { q(".cp").textContent = "✓ Copiado"; q(".trr").insertAdjacentHTML("beforeend", '<div class="ok">Copiado. En la Libreta: Resumen del grupo → «⬇ Traer de ANEP» → «Pegar lo copiado en ANEP».</div>'); };
-    var aMano = function () { q(".out").select(); try { if (document.execCommand("copy")) return listo(); } catch (e) {} q(".trr").insertAdjacentHTML("beforeend", '<div class="av">No pude copiar solo: el texto quedó seleccionado abajo, copialo con Ctrl+C.</div>'); };
+    var aMano = function () { q(".out").hidden = false; q(".out").select(); try { if (document.execCommand("copy")) return listo(); } catch (e) {} q(".trr").insertAdjacentHTML("beforeend", '<div class="av">No pude copiar solo: el texto quedó seleccionado abajo, copialo con Ctrl+C.</div>'); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(listo, aMano); else aMano();
+  });
+  q(".ab").addEventListener("click", function () { // pasa el paquete en la dirección (#anep=…): no hace falta copiar ni pegar
+    var w = window.open(LIBRETA + "#anep=" + encodeURIComponent(q(".out").value.replace(/^LIBRETA-ANEP\s*/, "")), "_blank");
+    if (!w) q(".trr").insertAdjacentHTML("beforeend", '<div class="av">El navegador bloqueó la ventana nueva: permití las ventanas emergentes de este sitio o usá «Copiar».</div>');
   });
   q(".det").addEventListener("click", function () { if (lectura) lectura.parar = true; });
   q(".leer").addEventListener("click", function () {
@@ -269,7 +275,7 @@
     if (!d1 || !d2 || d1 > d2) { q(".trr").innerHTML = '<span class="mal">Revisá las fechas: «desde» tiene que ser anterior a «hasta».</span>'; return; }
     if (!dias.length) { q(".trr").innerHTML = '<span class="mal">Marcá al menos un día de la semana.</span>'; return; }
     try { localStorage.setItem(PREF, JSON.stringify({ desde: d1, dias: dias })); } catch (e) {}
-    q(".leer").disabled = true; q(".det").hidden = false; q(".cp").hidden = true; q(".out").hidden = true;
+    q(".leer").disabled = true; q(".det").hidden = false; q(".cp").hidden = true; q(".ab").hidden = true; q(".out").hidden = true;
     leerFaltas(d1, d2, dias, function (st) { q(".trr").textContent = "Leyendo " + st.hechas + " de " + st.total + " fechas…"; }).then(function (st) {
       q(".leer").disabled = false; q(".det").hidden = true;
       if (st.error === "formato") { q(".trr").innerHTML = '<span class="mal">No pude leer este registro: la pantalla de UTU cambió. Avisale a quien armó el marcador.</span>'; return; }
@@ -288,6 +294,8 @@
     if (!paq.filas.length) { q(".trr").innerHTML = '<span class="mal">No encontré la columna In.Fictas.</span>'; return; }
     mostrarSalida(paq, '<span class="ok">' + paq.filas.length + " estudiantes, " + con + " con dato" + (paq.obtenido ? " (obtenido el " + esc(paq.obtenido) + ")" : "") + ".</span>");
   });
-  window.__migrarLibreta = { mostrar: function () { prepararTraer(); if (!host.isConnected) document.body.appendChild(host); leerPortapapeles(); }, _probar: { leerFechaUtu: leerFechaUtu, leerTotales: leerTotales, urlDeFecha: urlDeFecha, pantalla: pantalla, completar: completar, deshacer: deshacer, emparejar: emparejar, leerPaquete: leerPaquete } };
+  var enLibreta = location.href.indexOf(LIBRETA) === 0 || /^Libreta de Clase/.test(document.title);
+  if (enLibreta) root.querySelector(".p").innerHTML = '<button class="x" title="Cerrar">×</button><h2>📒 Migrar desde la Libreta</h2><p>Esta es tu <b>Libreta</b>. El marcador se toca <b>en las pantallas de ANEP</b>, no acá:</p><ul style="padding-left:18px;margin:4px 0"><li><b>Para llevar datos a ANEP:</b> acá, en Resumen → «⇪ Migrar a ANEP», tocá un botón «Copiar…»; después abrí la pantalla de ANEP y tocá el marcador allá.</li><li><b>Para traer faltas de ANEP:</b> abrí «Pasaje de Lista» o «Cerrar promedios» en ANEP y tocá el marcador allá.</li></ul>', q(".x").addEventListener("click", function () { host.remove(); });
+  window.__migrarLibreta = { mostrar: function () { if (enLibreta) { if (!host.isConnected) document.body.appendChild(host); return; } prepararTraer(); if (!host.isConnected) document.body.appendChild(host); leerPortapapeles(); }, _probar: { leerFechaUtu: leerFechaUtu, leerTotales: leerTotales, urlDeFecha: urlDeFecha, pantalla: pantalla, completar: completar, deshacer: deshacer, emparejar: emparejar, leerPaquete: leerPaquete } };
   window.__migrarLibreta.mostrar();
 })();
