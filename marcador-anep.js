@@ -106,6 +106,10 @@
     if (!pg) { r.error = "Esta pantalla no tiene nada para completar. Para este paquete abrí " + DONDE[p.tipo] + "."; return r; }
     if (pg.tipo !== p.tipo) { r.error = "El paquete copiado es de " + NOMBRES[p.tipo] + ", y esta pantalla es de " + NOMBRES[pg.tipo] + ". Abrí " + DONDE[p.tipo] + ", o copiá el otro paquete en la Libreta."; return r; }
     if (!pg.filas.length) { r.error = p.tipo === "cierre" ? "No encontré casilleros abiertos: desplegá el período a cerrar (por ejemplo Oct-Nov) y probá de nuevo." : "No encontré casilleros para completar en esta pantalla."; return r; }
+    if (p.tipo === "asistencia") {
+      var mucho = p.filas.filter(function (f) { return (f.inj || 0) + (f.jus || 0) > 8; });
+      if (mucho.length) { r.error = "El paquete trae " + mucho.length + " estudiante" + (mucho.length === 1 ? "" : "s") + " con más de 8 horas de falta en el día (por ejemplo " + mucho[0].nombre + ": " + ((mucho[0].inj || 0) + (mucho[0].jus || 0)) + " h), y UTU acepta como máximo 8. Revisá las horas de esa clase en la libreta y volvé a copiar."; return r; }
+    }
     if (p.tipo === "asistencia" && !mismaFecha(p.fecha, pg.fecha)) { r.error = "El paquete es del " + dmy(p.fecha) + " y esta pantalla está en " + pg.fecha + ". Cambiá la fecha de la pantalla a " + dmy(p.fecha) + ", esperá a que recargue la lista y tocá «Completar» otra vez."; return r; }
     if (p.tipo === "evaluacion") {
       if (pg.tipoCalif && pg.tipoCalif.value !== "numerico_1_10") { r.error = "En «Tipos de calificaciones» elegí «Calificaciones del 1 al 10» y tocá «Completar» otra vez."; return r; }

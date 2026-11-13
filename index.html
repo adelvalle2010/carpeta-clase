@@ -241,7 +241,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
   <header class="top">
-    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v12 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v13 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
@@ -780,7 +780,7 @@ function viewClase(g){
         <div class="muted" id="vozTxt" style="font-size:.85rem" hidden></div>
       </div>
       <div class="row spread">
-        <div class="row"><label for="horas" class="muted">Horas</label><input class="field cfgnum" id="horas" type="number" min="1" max="12" step="1" value="${esc(horasClase(g, c))}" title="Horas de clase de este día: cada ausencia cuenta esa cantidad de faltas"></div>
+        <div class="row"><label for="horas" class="muted">Horas</label><input class="field cfgnum" id="horas" type="number" min="1" max="8" step="1" value="${esc(horasClase(g, c))}" title="Horas de clase de este día: cada ausencia cuenta esa cantidad de faltas"></div>
         <div class="row">${asis ? `<button class="btn sm" data-act="allP" data-c="${asis.id}">Todos presentes</button>` : ""}${conf}</div>
       </div>
       ${vozBox()}
@@ -1264,6 +1264,8 @@ function paqueteAnep(g, tipo){
   const { m, est, kEval, proms } = migState(g), base = { app: "libreta-anep", v: 1, tipo, grupo: g.nombre };
   if (tipo === "asistencia") {
     const k = asisCol(g), c = S.clases[m.fAsis]; if (!k || !c) return { error: "No hay una clase con asistencia para esa fecha." };
+    const hc = horasClase(g, c);
+    if (hc > 8) return { error: `La clase del ${fmtDate(m.fAsis)} figura con ${hc} horas, y en UTU se cargan como máximo 8 por día. Corregí las horas de esa clase (en «Clase del día», campo Horas) y volvé a copiar.` };
     const filas = est.map(e => { const v = val(c, e.id, k.id), h = horasFalta(g, c, e.id, k.id); return { nombre: e.nombre, inj: v === "A" ? h : 0, jus: v === "J" ? h : 0, marca: v || "" }; });
     return { ...base, fecha: m.fAsis, horas: horasClase(g, c), filas };
   }
@@ -1471,7 +1473,7 @@ function viewTraer(g){
         ${pl.sinAnep.length ? `<p class="migmsg mal">No encontré en ANEP a: ${pl.sinAnep.map(e => esc(e.nombre)).join(", ")}. Sus marcas no se tocan.</p>` : ""}
         <p class="muted">ANEP solo registra las faltas: una fecha aparece si alguien faltó. Al traerla, los demás estudiantes del grupo quedan presentes (salvo los que ya tengan T). Marcá solo las fechas en que este grupo tuvo clase.${ocultas ? ` Hay ${ocultas} fecha${ocultas === 1 ? "" : "s"} con faltas solo de estudiantes de otro grupo; no se muestra${ocultas === 1 ? "" : "n"}.` : ""}</p>
         ${vis.length ? `<div class="sheet"><table class="sum impt"><thead><tr><th></th><th class="name">Fecha</th><th>En la libreta</th><th>Faltas de este grupo en ANEP</th><th title="Casilleros vacíos que se completan">Se completan</th><th>Diferencias (libreta → ANEP)</th></tr></thead><tbody>${filas}</tbody></table></div>` : `<p class="muted">No hay fechas con faltas de este grupo en ese rango.</p>`}
-        <div class="row"><label>Horas de cada clase nueva <input class="field cfgnum" data-imp="horas" type="number" min="1" max="12" step="1" value="${esc(im.horas)}"></label>
+        <div class="row"><label>Horas de cada clase nueva <input class="field cfgnum" data-imp="horas" type="number" min="1" max="8" step="1" value="${esc(im.horas)}"></label>
           <label class="chk"><input type="checkbox" data-imp="pisar"${im.pisar ? " checked" : ""}> Usar lo de ANEP también donde la libreta tiene otra marca${ndif ? ` (${ndif})` : ""}</label></div>
         ${pl.soloLibreta.length ? `<p class="muted">En ANEP no hay faltas de las clases ${pl.soloLibreta.map(x => `${fmtDate(x.f)} (${x.n} con falta en la libreta)`).join(", ")}: esas no se tocan. Para pasarlas a ANEP usá el paso 1 de abajo.</p>` : ""}
         <div class="row"><button class="btn primary" data-imp-act="aplicar"${elegidas.length ? "" : " disabled"}>Traer ${elegidas.length} fecha${elegidas.length === 1 ? "" : "s"}</button><button class="btn ghost" data-imp-act="borrar">Descartar</button></div>`;
@@ -1509,7 +1511,7 @@ document.addEventListener("change", ev => {
   const k = t.dataset.imp;
   if (k === "sel") { S.imp.sel[t.dataset.f] = t.checked; render(); return; }
   if (k === "pisar") { S.imp.pisar = t.checked; render(); return; }
-  if (k === "horas") { const n = Number(t.value); if (Number.isInteger(n) && n >= 1 && n <= 12) S.imp.horas = n; render(); return; }
+  if (k === "horas") { const n = Number(t.value); if (Number.isInteger(n) && n >= 1 && n <= 8) S.imp.horas = n; render(); return; }
 });
  
 /* ---------- vista: configuración ---------- */
@@ -1547,7 +1549,7 @@ function viewConfig(g){
         <div class="item"><input class="field" id="gname" data-act="gname" value="${esc(g.nombre)}" aria-label="Nombre del grupo"></div>
         <div style="display:grid;gap:8px">
           <h3>Horas y límite de faltas fictas</h3>
-          <div class="row"><label for="ghoras">Horas por clase</label><input class="field cfgnum" id="ghoras" data-act="ghoras" type="number" min="1" max="12" step="1" value="${esc(horasGrupo(g))}"><span class="muted">Es el valor de cada clase nueva; en cada clase se puede cambiar.</span></div>
+          <div class="row"><label for="ghoras">Horas por clase</label><input class="field cfgnum" id="ghoras" data-act="ghoras" type="number" min="1" max="8" step="1" value="${esc(horasGrupo(g))}"><span class="muted">Es el valor de cada clase nueva; en cada clase se puede cambiar.</span></div>
           <div class="row"><label for="glim">Porcentaje</label><input class="field cfgnum" id="glim" data-act="glim" type="number" min="1" max="100" step="any" value="${esc(g.limiteFictas ?? LIMITE_DEF)}"><span class="muted">%</span><span class="muted">de las horas dictadas</span></div>
           <div class="row"><label for="gbase">Horas del curso</label><input class="field cfgnum" id="gbase" data-act="gbase" type="number" min="1" max="2000" step="1" value="${esc(g.horasBase ?? "")}" placeholder="${horasRegistradas(g)}"><span class="muted">Opcional. Vacío = las horas de las clases registradas.</span></div>
           <p class="muted" style="margin:0;font-size:.88rem">Las faltas se cuentan por horas: un ausente en una clase de 3 horas son 3 faltas. Fictas = horas A + horas J/2 + tardes/2. El límite se calcula sobre las horas del curso si las ponés, o si no sobre las horas dictadas hasta hoy (las clases registradas): ahora son ${limiteFictas(g).base} horas, así que el límite es <b id="limTxt">${fmtN(limiteFictas(g).max)}</b> fictas.</p>
@@ -1748,7 +1750,7 @@ document.addEventListener("keydown", ev => {
 document.addEventListener("input", ev => {
   const t = ev.target, g = grupo(); if (!g) return;
   if (t.id === "tema") { guardarTema(); return; }
-  if (t.id === "horas") { const n = Number(t.value); if (!(Number.isInteger(n) && n >= 1 && n <= 12)) return;
+  if (t.id === "horas") { const n = Number(t.value); if (!(Number.isInteger(n) && n >= 1 && n <= 8)) { toast("Las horas de una clase van de 1 a 8"); return; }
     S.clases[S.fecha].horas = n; saveClaseSoon(S.fecha);
     for (const e of activos(g)) refrescarAsis(g, e.id);
     updateStats(); return; }
@@ -1765,7 +1767,7 @@ document.addEventListener("input", ev => {
   if (t.dataset.act === "colname") { const k = g.columnas.find(k => k.id === t.dataset.c); k.nombre = t.value; saveGrupoSoon(); return; }
   if (t.dataset.act === "glim" || t.dataset.act === "ghoras") {
     const n = Number(t.value); const key = { glim: "limiteFictas", ghoras: "horasPorClase" }[t.dataset.act];
-    if (t.value === "" ) delete g[key]; else if (Number.isFinite(n) && n > 0 && n <= (key === "limiteFictas" ? 100 : 12)) g[key] = n; else return;
+    if (t.value === "" ) delete g[key]; else if (Number.isFinite(n) && n > 0 && n <= (key === "limiteFictas" ? 100 : 8)) g[key] = n; else { if (key === "horasPorClase") toast("Las horas por clase van de 1 a 8"); return; }
     saveGrupoSoon(); const lt = $("#limTxt"); if (lt) lt.textContent = fmtN(limiteFictas(g).max); return; }
   if (t.dataset.act === "gbase") { const n = Number(t.value); if (t.value === "") delete g.horasBase; else if (Number.isInteger(n) && n >= 1 && n <= 2000) g.horasBase = n; else return;
     saveGrupoSoon(); const lt = $("#limTxt"); if (lt) lt.textContent = fmtN(limiteFictas(g).max); return; }
