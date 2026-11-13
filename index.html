@@ -606,6 +606,8 @@ async function loadAll(){
   $("#gsBanner").hidden = true;
   if (Store.mode === "sheets") Store.call("ping").then(info => { if (!(info && info.version >= SCRIPT_VERSION)) {
     const b = $("#gsBanner"); const vr = info && info.version ? "la versión " + info.version : "una versión sin número (la primera)"; b.innerHTML = `La URL conectada responde con ${vr} del script, y la libreta necesita la versión ${SCRIPT_VERSION}. Por eso la hoja de cada grupo no muestra los totales de faltas. Pegá el <a href="${SCRIPT_URL_REPO}" target="_blank" rel="noopener">código nuevo</a> en Apps Script y hacé <b>Implementar → Gestionar implementaciones → Editar → Versión: Nueva versión</b>. Después, en la planilla, usá el menú <b>Libreta → Rehacer hojas de los grupos</b>.`; b.hidden = false; } }).catch(() => {});
+  let last = null; try { last = localStorage.getItem(LSKEY + ":ultimo"); } catch(e) {}
+  const pre = Store.mode === "sheets" && last ? Store.clases(last).catch(() => null) : null; // se pide a la vez que los grupos: carga en la mitad de tiempo
   try { S.grupos = await Store.grupos(); }
   catch(e) { console.error(e); fallo = true; setStatus("error", Store.mode === "sheets" ? "No se pudo leer Google Sheets: " + (e.message || "error") : "No se pudieron leer los datos"); }
   S.grupos.sort((a,b) => (a.creado || "").localeCompare(b.creado || ""));
@@ -616,9 +618,8 @@ async function loadAll(){
     g.conductaAgregada = true; const { id, ...body } = g;
     try { await Store.saveGrupo({ id, ...body }); } catch(e) { console.error(e); }
   }
-  let last = null; try { last = localStorage.getItem(LSKEY + ":ultimo"); } catch(e) {}
   S.gid = (S.grupos.find(g => g.id === last) || S.grupos[0] || {}).id || null;
-  await loadClases();
+  await loadClases(S.gid === last ? pre : null);
   S.loading = false; if (!fallo) idleStatus(); render();
   recibirDeAnep();
 }
@@ -630,10 +631,11 @@ function recibirDeAnep(){ // el marcador abre la libreta con #anep={…}: se mue
   S.tab = "resumen"; (S.mig ||= {}).open = true; cargarImp(g, "LIBRETA-ANEP " + txt);
 }
 window.addEventListener("hashchange", () => { if (!S.loading) recibirDeAnep(); });
-async function loadClases(){
+async function loadClases(pre){
   S.clases = {};
   if (!S.gid) return;
-  try { S.clases = await Store.clases(S.gid); } catch(e) { console.error(e); setStatus("error", "No se pudieron leer las clases"); }
+  const ya = pre ? await pre : null;
+  try { S.clases = ya || await Store.clases(S.gid); } catch(e) { console.error(e); setStatus("error", "No se pudieron leer las clases"); }
   try { localStorage.setItem(LSKEY + ":ultimo", S.gid); } catch(e) {}
 }
  
