@@ -160,7 +160,10 @@ input.txt{width:100%;min-width:160px}
 .migpaso{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:10px} .migpaso h3{margin:0;font-size:1rem} .migpaso p{margin:0}
 .mig label{display:inline-flex;flex-direction:column;gap:3px;font-size:.85rem;color:var(--muted)} .mig label.grow{display:flex;flex:1 1 260px} .mig label .field{color:var(--ink);font-size:.95rem}
 .migmsg{border-radius:var(--r);padding:8px 12px;font-size:.92rem} .migmsg.ok{background:var(--info-soft)} .migmsg.mal{border:1px solid var(--bad);color:var(--bad)} .migmsg a{color:var(--accent)}
-table.migt td.jc,table.migt th.jc{min-width:280px;width:55%;text-align:left} table.migt textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:0;height:3.4em;font:inherit;font-size:.9rem;padding:5px 8px}
+table.migt td.jc,table.migt th.jc{min-width:280px;width:55%;text-align:left} table.migt textarea.auto{color:var(--muted);font-style:italic}
+.niv{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.niv.n5{background:var(--ok-soft);color:var(--ok)} .niv.n4{background:var(--accent-soft);color:var(--accent)} .niv.n3{background:var(--info-soft);color:var(--info)} .niv.n2{background:var(--warn-soft);color:var(--warn)} .niv.n1{background:var(--bad-soft);color:var(--bad)}
+table.migt textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:0;height:3.4em;font:inherit;font-size:.9rem;padding:5px 8px}
 @media print{.mig{display:none}}
 .limrow{gap:6px;font-size:.92rem} .limrow .muted{font-size:.85rem;flex-basis:100%} input.inl{width:4.6em;padding:3px 6px;text-align:right}
 .pasosimp{margin:0;padding-left:22px;display:grid;gap:4px;font-size:.93rem} .pasosimp a{color:var(--accent)}
@@ -241,7 +244,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
   <header class="top">
-    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v14 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v15 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
@@ -1237,6 +1240,11 @@ function viewResumen(g){
 const ANEP_TIPOS = ["Carpeta", "Escritos", "Orales", "Parcial", "Práctico", "Tarea domiciliaria", "Teórico"];
 const ANEP_PISTAS = [[/carpeta|cuaderno/, "Carpeta"], [/escrit|prueba/, "Escritos"], [/oral/, "Orales"], [/parcial/, "Parcial"], [/practic|proyecto|laboratorio|taller/, "Práctico"], [/tarea|deber|domicil/, "Tarea domiciliaria"], [/teoric/, "Teórico"]];
 const notaAnep = n => Math.max(1, Math.min(10, Math.round(Number(n)))); // ANEP: enteros de 1 a 10 (7,5 → 8)
+// EBI: la calificación de 1 a 10 se traduce en «Niveles de Avance»; es el juicio automático del cierre
+const NIVELES_AVANCE = [[9, "Avance Destacado", "n5"], [7, "Avance Significativo", "n4"], [5, "Avance Moderado", "n3"], [3, "Avance Escaso", "n2"], [1, "Avance Mínimo", "n1"]];
+const nivelAvance = n => NIVELES_AVANCE.find(([min]) => notaAnep(n) >= min) || NIVELES_AVANCE[NIVELES_AVANCE.length - 1];
+const juicioAuto = p => p === null || p === undefined ? "" : nivelAvance(p)[1];
+const juicioManual = (g, sid) => ((g.juicios || {})[sid] || "").trim();
 const anepKey = k => k.key || colKey(k);
 function tipoAnep(g, k){
   const t = (g.anepTipos || {})[anepKey(k)]; if (ANEP_TIPOS.includes(t)) return t;
@@ -1290,7 +1298,7 @@ function paqueteAnep(g, tipo){
     return { ...base, filas };
   }
   const k = proms.find(x => x.id === m.colCierre); if (!k) return { error: "El grupo no tiene columnas de nota." };
-  const filas = resumenData(g).map(r => { const p = (r.cols[k.id] || {}).prom; return { nombre: r.e.nombre, nota: p === null || p === undefined ? "" : notaAnep(p), juicio: ((g.juicios || {})[r.e.id] || "").trim() }; }).filter(x => x.nota !== "" || x.juicio);
+  const filas = resumenData(g).map(r => { const p = (r.cols[k.id] || {}).prom; return { nombre: r.e.nombre, nota: p === null || p === undefined ? "" : notaAnep(p), juicio: juicioManual(g, r.e.id) || juicioAuto(p) }; }).filter(x => x.nota !== "" || x.juicio);
   if (!filas.length) return { error: "Todavía no hay promedios ni juicios para migrar." };
   return { ...base, promedio: k.todas ? "ponderado" : k.nombre, filas };
 }
@@ -1347,9 +1355,9 @@ function viewMigrar(g){
     const k = proms.find(x => x.id === m.colCierre), data = resumenData(g), J = g.juicios || {};
     ci = `<div class="row"><label>Promedio a migrar <select class="field" data-mig="colCierre">${proms.map(x => opt(x.id, x.todas ? "Ponderado de todas las notas" : x.nombre, m.colCierre)).join("")}</select></label>
       <button class="btn primary" data-mig-act="copy" data-k="cierre">Copiar cierre</button></div>
-      <div class="sheet"><table class="sum migt"><thead><tr><th class="name">Estudiante</th><th>Promedio</th><th title="Promedio redondeado a entero, como lo pide ANEP">Calificación</th><th class="jc">Juicio conceptual</th></tr></thead><tbody>${data.map((r, i) => { const p = (r.cols[k.id] || {}).prom, tiene = p !== null && p !== undefined;
-        return `<tr><td class="name"><span class="idx">${i + 1}</span>${esc(r.e.nombre)}</td><td>${tiene ? p.toFixed(1) : "—"}</td><td>${tiene ? `<b class="sit ${sit(notaAnep(p))}">${notaAnep(p)}</b>` : "—"}</td><td class="jc"><textarea class="field" rows="2" data-mig="juicio" data-sid="${esc(r.e.id)}" maxlength="1000" aria-label="Juicio conceptual de ${esc(r.e.nombre)}">${esc(J[r.e.id] || "")}</textarea></td></tr>`; }).join("")}</tbody></table></div>
-      <p class="muted">Los juicios se guardan solos en la libreta. Se migran la calificación y el juicio del período que esté abierto en «Cerrar promedios».</p>${paso("cierre", "Cerrar promedios")}`;
+      <div class="sheet"><table class="sum migt"><thead><tr><th class="name">Estudiante</th><th>Promedio</th><th title="Promedio redondeado a entero, como lo pide ANEP">Calificación</th><th title="Nivel de Avance de EBI según la calificación">Nivel de avance</th><th class="jc">Juicio conceptual</th></tr></thead><tbody>${data.map((r, i) => { const p = (r.cols[k.id] || {}).prom, tiene = p !== null && p !== undefined, man = juicioManual(g, r.e.id), auto = juicioAuto(p), niv = tiene ? nivelAvance(p) : null;
+        return `<tr><td class="name"><span class="idx">${i + 1}</span>${esc(r.e.nombre)}</td><td>${tiene ? p.toFixed(1) : "—"}</td><td>${tiene ? `<b class="sit ${sit(notaAnep(p))}">${notaAnep(p)}</b>` : "—"}</td><td>${niv ? `<span class="niv ${niv[2]}">${esc(niv[1])}</span>` : "—"}</td><td class="jc"><textarea class="field${man ? "" : " auto"}" rows="2" data-mig="juicio" data-sid="${esc(r.e.id)}" data-auto="${esc(auto)}" maxlength="1000" placeholder="${tiene ? "" : "Sin promedio todavía"}" aria-label="Juicio conceptual de ${esc(r.e.nombre)}">${esc(man || auto)}</textarea>${man && auto ? `<button type="button" class="btn sm ghost" style="margin-top:4px" data-mig-act="juicioAuto" data-sid="${esc(r.e.id)}" title="Volver al juicio automático: ${esc(auto)}">↺ Automático</button>` : ""}</td></tr>`; }).join("")}</tbody></table></div>
+      <p class="muted">El juicio se genera solo según el promedio: 9 y 10 <b>Avance Destacado</b>, 7 y 8 <b>Avance Significativo</b>, 5 y 6 <b>Avance Moderado</b>, 3 y 4 <b>Avance Escaso</b>, 1 y 2 <b>Avance Mínimo</b> (en gris mientras sea automático). Si lo cambiás, queda tu texto; con «↺ Automático» o borrándolo vuelve el del nivel. Se migran la calificación y el juicio del período que esté abierto en «Cerrar promedios».</p>${paso("cierre", "Cerrar promedios")}`;
   }
   return `<section class="panel mig" id="migPanel">
     <div class="row spread"><h2>Libreta ⇄ Portafolio de ANEP</h2><div class="row"><a class="btn sm ghost" href="anep.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${ic("ayuda")}Manual y video</a><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div></div>
@@ -1367,10 +1375,13 @@ document.addEventListener("click", ev => {
   const m = S.mig ||= {};
   if (t.dataset.migAct === "toggle") { m.open = !m.open; m.msg = null; render(); if (m.open) { const p = $("#migPanel"); if (p) p.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
   if (t.dataset.migAct === "copy") copiarPaquete(g, t.dataset.k);
+  if (t.dataset.migAct === "juicioAuto") { if (g.juicios) delete g.juicios[t.dataset.sid]; saveGrupoSoon(); render(); }
 });
 document.addEventListener("input", ev => {
   const t = ev.target, g = grupo(); if (!g || !t.dataset || !t.dataset.mig) return;
-  if (t.dataset.mig === "juicio") { g.juicios ||= {}; if (t.value.trim()) g.juicios[t.dataset.sid] = t.value; else delete g.juicios[t.dataset.sid]; saveGrupoSoon(); return; }
+  if (t.dataset.mig === "juicio") { g.juicios ||= {}; const v = t.value.trim(), auto = t.dataset.auto || "";
+    if (v && v !== auto) g.juicios[t.dataset.sid] = t.value; else delete g.juicios[t.dataset.sid]; // igual al automático o vacío = automático
+    t.classList.toggle("auto", !v || v === auto); saveGrupoSoon(); return; }
   if (t.dataset.mig === "desc") { (S.mig ||= {}).desc = t.value; return; }
 });
 document.addEventListener("change", ev => {
