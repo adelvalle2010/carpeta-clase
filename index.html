@@ -236,6 +236,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-imprimir" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/></symbol>
 <symbol id="i-planilla" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
 <symbol id="i-recursos" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 20a2 2 0 0 0 2 2h13v-4M9 8h6"/></symbol>
+<symbol id="i-ayuda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 1c0 1.7-2.5 2.2-2.5 3.7M12 17h.01"/></symbol>
 <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></symbol>
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
@@ -247,6 +248,7 @@ tr.flash td{animation:flash 1.6s ease-out}
       <a class="btn sm ghost" href="https://adelvalle2010.github.io/miCuadernoDeRecursos/" title="Abrir Mi Cuaderno de Recursos: marcadores, pizarrones y actividades" style="text-decoration:none;color:inherit"><svg class="ic" aria-hidden="true"><use href="#i-recursos"/></svg>Cuaderno de recursos</a>
       <span class="status" id="status"><span class="dot"></span><span id="statusTxt">Conectando…</span></span>
       <button class="btn sm ghost" id="refrescarBtn" title="Volver a leer los datos de Google Sheets" aria-label="Actualizar" hidden><svg class="ic" aria-hidden="true"><use href="#i-refrescar"/></svg></button>
+      <a class="btn sm ghost" href="anep.html" target="_blank" rel="noopener" title="Manual de ayuda y video tutorial: usar la libreta y migrar al Portafolio de ANEP" style="text-decoration:none;color:inherit"><svg class="ic" aria-hidden="true"><use href="#i-ayuda"/></svg>Ayuda</a>
       <span class="temas" role="group" aria-label="Estilo de la página">
         <button type="button" data-tema="light" title="Estilo claro" aria-label="Estilo claro"><svg class="ic" aria-hidden="true"><use href="#i-sol"/></svg></button>
         <button type="button" data-tema="dark" title="Estilo oscuro" aria-label="Estilo oscuro"><svg class="ic" aria-hidden="true"><use href="#i-luna"/></svg></button>
@@ -1303,7 +1305,7 @@ function viewMigrar(g){
     const sinMarcar = vs.filter(v => !v).length, tardes = vs.filter(v => v === "T").length;
     asis = `<div class="row"><label>Clase <select class="field" data-mig="fAsis">${[...fs].reverse().map(f => opt(f, fmtDate(f) + " · " + horasClase(g, S.clases[f]) + " h", m.fAsis)).join("")}</select></label>
       <button class="btn primary" data-mig-act="copy" data-k="asistencia">Copiar asistencia</button></div>
-      <p class="muted">${vs.filter(v => v === "A").length} ausentes y ${vs.filter(v => v === "J").length} con falta justificada, en horas.${tardes ? ` ${tardes === 1 ? "La llegada tarde no se migra" : `Las ${tardes} llegadas tarde no se migran`}: el registro de UTU solo lleva horas de falta.` : ""}${sinMarcar ? ` <b>${sinMarcar} sin marcar</b> van como presentes.` : ""} En UTU se carga una fecha por vez: poné la misma fecha allá antes de tocar el marcador.</p>${paso("asistencia", "Pasaje de Lista")}`;
+      <p class="muted">${(n => n === 1 ? "1 ausente" : n + " ausentes")(vs.filter(v => v === "A").length)} y ${vs.filter(v => v === "J").length} con falta justificada; en ANEP van en horas.${tardes ? ` ${tardes === 1 ? "La llegada tarde no se migra" : `Las ${tardes} llegadas tarde no se migran`}: el registro de UTU solo lleva horas de falta.` : ""}${sinMarcar ? ` <b>${sinMarcar} sin marcar</b> van como presentes.` : ""} En UTU se carga una fecha por vez: poné la misma fecha allá antes de tocar el marcador.</p>${paso("asistencia", "Pasaje de Lista")}`;
   }
   let ev = `<p class="muted">El grupo todavía no tiene columnas de nota.</p>`;
   if (kEval) {
@@ -1326,7 +1328,7 @@ function viewMigrar(g){
       <p class="muted">Los juicios se guardan solos en la libreta. Se migran la calificación y el juicio del período que esté abierto en «Cerrar promedios».</p>${paso("cierre", "Cerrar promedios")}`;
   }
   return `<section class="panel mig" id="migPanel">
-    <div class="row spread"><h2>Libreta ⇄ Portafolio de ANEP</h2><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div>
+    <div class="row spread"><h2>Libreta ⇄ Portafolio de ANEP</h2><div class="row"><a class="btn sm ghost" href="anep.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${ic("ayuda")}Manual y video</a><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div></div>
     <p class="muted" style="margin:0">Cada botón copia un paquete; en la pantalla de ANEP, el marcador <b>📒 Migrar desde la Libreta</b> lo completa. <a href="anep.html" target="_blank" rel="noopener">Instalar el marcador (una sola vez) ↗</a>. El marcador <b>nunca aprieta «Guardar»</b>: revisás y guardás vos.</p>
     <label class="grow">Link del grupo en el Portafolio (opcional, para abrir cada pantalla desde acá) <input class="field" data-mig="url" value="${esc(g.anepUrl || "")}" placeholder="https://portafoliodocente.anep.edu.uy/paginas/calif_page.xhtml?libretaId=…"></label>
     ${viewTraer(g)}

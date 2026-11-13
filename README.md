@@ -120,3 +120,7 @@ En **Resumen del grupo → ⬇ Traer de ANEP** se pega lo que copia el marcador 
 Los nombres se emparejan aunque ANEP los abrevie («ACOSTA SABRINA» → «ACOSTA IRUTE, SABRINA MIKAELA»); los estudiantes de ANEP que no están en el grupo (por ejemplo, el grupo del otro semestre) se ignoran.
 
 El **límite de faltas fictas** se edita en el Resumen o en «Estudiantes y columnas»: porcentaje (`limiteFictas`) y, opcionalmente, las horas del curso (`horasBase`); si no se ponen, el límite se calcula sobre las horas de las clases registradas.
+
+## Ayuda y video tutorial
+
+El botón **Ayuda** de la libreta abre [`anep.html`](https://adelvalle2010.github.io/carpeta-clase/anep.html): el manual para migrar al Portafolio de ANEP y el video [`tutorial-libreta.mp4`](tutorial-libreta.mp4), que recorre toda la aplicación con un grupo de ejemplo (nombres inventados).

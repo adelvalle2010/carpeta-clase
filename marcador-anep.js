@@ -247,8 +247,8 @@
     var r = completar(paquete, q(".rp").checked), el = q(".r");
     if (r.error) { el.innerHTML = '<span class="mal">' + esc(r.error) + "</span>"; return; }
     q(".un").disabled = !hechos.length;
-    var que = paquete.tipo === "asistencia" ? "casilleros de horas" : "casilleros";
-    el.innerHTML = '<span class="ok"><b>' + r.puestos + "</b> " + que + " completados" + (r.iguales ? " (" + r.iguales + " ya estaban igual)" : "") + ".</span>" +
+    var uno = r.puestos === 1, que = (uno ? "casillero" : "casilleros") + (paquete.tipo === "asistencia" ? " de horas" : "");
+    el.innerHTML = '<span class="ok"><b>' + r.puestos + "</b> " + que + (uno ? " completado" : " completados") + (r.iguales ? " (" + r.iguales + (r.iguales === 1 ? " ya estaba igual)" : " ya estaban igual)") : "") + ".</span>" +
       lista("av", "Ya tenían otro valor y no se tocaron (en naranja; marcá «Reemplazar» para pisarlos):", r.ocupados) +
       lista("mal", "No los encontré en esta pantalla:", r.sin) +
       lista("av", "Nombre dudoso (coincide con más de un estudiante), completalo a mano:", r.dudosos) +
