@@ -143,23 +143,36 @@
   var isoDeDmy = function (s) { var p = String(s || "").trim().split("/"); return p.length === 3 ? (p[2].length === 2 ? "20" + p[2] : p[2]) + "-" + dos(p[1]) + "-" + dos(p[0]) : ""; };
   function esRegistroUtu() { return !!(byId("vFECHA") && document.querySelector('input[name="Grid1ContainerDataV"]')); }
   function esCierre() { return !!document.querySelector("tr.filaalumno td.tdasis"); }
-  function urlDeFecha(iso) { // misma dirección de esta pantalla, con otra fecha
-    var q = location.search.slice(1).split(","), actual = isoDeDmy(byId("vFECHA") ? byId("vFECHA").defaultValue : "").replace(/-/g, "");
+  var BASE_UTU = "libreta-anep-utu";
+  function urlDeFecha(iso) { // la misma dirección de esta pantalla, con otra fecha
+    var d = iso.replace(/-/g, ""), q = location.search.slice(1).split(",");
     var idx = q.map(function (x, i) { return RE_FECHA.test(x) ? i : -1; }).filter(function (i) { return i >= 0; });
-    if (!idx.length) return null;
-    var i = idx.filter(function (k) { return q[k] === actual; })[0]; if (i === undefined) i = idx[0];
-    q[i] = iso.replace(/-/g, ""); return location.pathname + "?" + q.join(",");
+    if (idx.length && q.length >= 11) {
+      var actual = isoDeDmy(byId("vFECHA") ? byId("vFECHA").defaultValue : "").replace(/-/g, "");
+      var i = idx.filter(function (k) { return q[k] === actual; })[0]; if (i === undefined) i = idx[0];
+      try { localStorage.setItem(BASE_UTU, JSON.stringify({ path: location.pathname, q: q, i: i })); } catch (e) {}
+      q[i] = d; return location.pathname + "?" + q.join(",");
+    }
+    // después de «Guardar» o «Renovar» la dirección queda sin los datos del curso: se arman con la planilla y el usuario de la pantalla
+    try {
+      var r = JSON.parse(document.querySelector('input[name="Grid1ContainerDataV"]').value)[0], st = JSON.parse(document.querySelector('input[name="GXState"]').value);
+      var u = String(st.vCSUSUARIOCODIGO || "").trim();
+      if (r && r.length >= 11 && /^\d+$/.test(u)) return location.pathname + "?" + [r[1], r[2], r[3], r[5], r[8], r[6], r[7], r[4], r[9], r[10], d, u, "null"].join(",");
+    } catch (e) {}
+    try { var b = JSON.parse(localStorage.getItem(BASE_UTU) || "null"); if (b && b.path === location.pathname) { b.q[b.i] = d; return b.path + "?" + b.q.join(","); } } catch (e) {}
+    return null;
   }
   function leerFechaUtu(iso) {
-    var url = urlDeFecha(iso); if (!url) return Promise.reject(new Error("formato"));
+    var url = urlDeFecha(iso); if (!url) return Promise.reject(new Error("direccion"));
     return fetch(url, { credentials: "include" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }).then(function (html) {
       var doc = new DOMParser().parseFromString(html, "text/html"), inp = doc.querySelector('input[name="Grid1ContainerDataV"]');
       if (!inp) throw new Error("sesion");
       var rows = JSON.parse(inp.value || "[]"); if (!Array.isArray(rows)) throw new Error("formato");
-      return rows.map(function (r) {
-        if (!Array.isArray(r) || r.length < 18 || !/^\d+$/.test(String(r[16])) || !/^\d+$/.test(String(r[17])) || !/[A-Za-zÁÉÍÓÚÑ]{2}/.test(String(r[13])) || /^C\.?\s?I\b/i.test(String(r[13]))) throw new Error("formato");
-        return { nombre: String(r[13]).replace(/\s+/g, " ").trim(), inj: Number(r[16]), jus: Number(r[17]) };
-      });
+      var num = function (x) { x = String(x == null ? "" : x).trim(); return /^\d+$/.test(x) ? Number(x) : 0; }; // vacío (p. ej. «No debe asistir») = 0
+      var filas = rows.filter(function (r) { return Array.isArray(r) && r.length >= 18 && /[A-Za-zÁÉÍÓÚÑ]{2}/.test(String(r[13])) && !/^C\.?\s?I\s/i.test(String(r[13])); })
+        .map(function (r) { return { nombre: String(r[13]).replace(/\s+/g, " ").trim(), inj: num(r[16]), jus: num(r[17]) }; });
+      if (rows.length && !filas.length) throw new Error("formato");
+      return filas;
     });
   }
   var lectura = null;
@@ -177,7 +190,7 @@
         if (con.length) st.res[f] = con;
       }, function (e) {
         st.fallidas.push(f); st.seguidas++;
-        if (e.message === "formato" || st.seguidas >= 6) { st.parar = true; st.error = e.message === "formato" ? "formato" : e.message === "sesion" ? "sesion" : "red"; }
+        if (e.message === "formato" || e.message === "direccion" || st.seguidas >= 6) { st.parar = true; st.error = e.message === "formato" || e.message === "direccion" ? e.message : e.message === "sesion" ? "sesion" : "red"; }
       }).then(function () { st.hechas++; avance(st); return new Promise(function (r) { setTimeout(r, 120); }); }).then(uno);
     }
     return Promise.all([uno(), uno(), uno()]).then(function () { return st; }); // de a tres pedidos por vez
@@ -279,7 +292,8 @@
     q(".leer").disabled = true; q(".det").hidden = false; q(".cp").hidden = true; q(".ab").hidden = true; q(".out").hidden = true;
     leerFaltas(d1, d2, dias, function (st) { q(".trr").textContent = "Leyendo " + st.hechas + " de " + st.total + " fechas…"; }).then(function (st) {
       q(".leer").disabled = false; q(".det").hidden = true;
-      if (st.error === "formato") { q(".trr").innerHTML = '<span class="mal">No pude leer este registro: la pantalla de UTU cambió. Avisale a quien armó el marcador.</span>'; return; }
+      if (st.error === "direccion") { q(".trr").innerHTML = '<span class="mal">No reconozco esta pantalla. Volvé a abrir «Pasaje de Lista» desde el Portafolio de ANEP y tocá el marcador otra vez.</span>'; return; }
+      if (st.error === "formato") { q(".trr").innerHTML = '<span class="mal">No pude leer las faltas de este registro. Volvé a abrir «Pasaje de Lista» desde el Portafolio y probá otra vez; si sigue igual, puede que la pantalla de UTU haya cambiado.</span>'; return; }
       if (st.error && !Object.keys(st.nombres).length) { q(".trr").innerHTML = '<span class="mal">' + (st.error === "sesion" ? "Parece que se cerró la sesión: volvé a entrar al Portafolio, abrí «Pasaje de Lista» y probá de nuevo." : "No pude conectarme con el registro de UTU. Probá de nuevo en un rato.") + "</span>"; return; }
       var fs = Object.keys(st.res).sort(), horas = 0;
       fs.forEach(function (f) { st.res[f].forEach(function (x) { horas += x.inj + x.jus; }); });
