@@ -7,30 +7,46 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>try{var t=localStorage.getItem("libreta:tema");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <style>
 html,body{margin:0}
 [hidden]{display:none!important}
 img{max-width:100%}
 /* Layout: barra de grupo arriba, pestañas, y una hoja de registro con columna de nombres fija (como la libreta del docente). */
 :root{
-  --bg:#f3f5f9; --paper:#ffffff; --ink:#1b2333; --muted:#5d6880; --line:#d9dfea; --soft:#e9edf5;
-  --accent:#2446a3; --accent-ink:#ffffff; --accent-soft:#e3e9f8;
-  --ok:#1f7a4d; --ok-soft:#dcf1e5; --bad:#b3332b; --bad-soft:#f8e0de; --warn:#946200; --warn-soft:#f8ecc9; --info:#5b4bb0; --info-soft:#e8e4f8;
+  --bg:#f4f6fa; --paper:#ffffff; --ink:#182033; --muted:#566178; --line:#d8deea; --soft:#eaeef6;
+  --accent:#2446a3; --accent-ink:#ffffff; --accent-soft:#e2e8f8;
+  --ok:#1f7a4d; --ok-soft:#dcf1e5; --bad:#b3332b; --bad-soft:#f8e0de; --warn:#8a5a00; --warn-soft:#f8ecc9; --info:#5b4bb0; --info-soft:#e8e4f8;
+  --shadow:0 1px 2px rgba(24,32,51,.06),0 6px 20px -12px rgba(24,32,51,.18);
   --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   --r:8px;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#11151e; --paper:#181e2a; --ink:#e6eaf3; --muted:#9aa5bd; --line:#2c3447; --soft:#212939;
-  --accent:#8fa9ff; --accent-ink:#0e1424; --accent-soft:#25304f;
+/* Oscuro: pizarra azulada, acento celeste */
+@media (prefers-color-scheme: dark){:root:not([data-theme]){
+  --bg:#0f131b; --paper:#171c27; --ink:#e7ebf4; --muted:#9ba6bd; --line:#2a3245; --soft:#1f2636;
+  --accent:#8fa9ff; --accent-ink:#0d1322; --accent-soft:#232d4b;
   --ok:#6fd39f; --ok-soft:#173828; --bad:#ff8f86; --bad-soft:#3d1d1b; --warn:#f0c35a; --warn-soft:#3a2f12; --info:#b9aaff; --info-soft:#2b2550;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.7);
   color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#11151e; --paper:#181e2a; --ink:#e6eaf3; --muted:#9aa5bd; --line:#2c3447; --soft:#212939;
-  --accent:#8fa9ff; --accent-ink:#0e1424; --accent-soft:#25304f;
+  --bg:#0f131b; --paper:#171c27; --ink:#e7ebf4; --muted:#9ba6bd; --line:#2a3245; --soft:#1f2636;
+  --accent:#8fa9ff; --accent-ink:#0d1322; --accent-soft:#232d4b;
   --ok:#6fd39f; --ok-soft:#173828; --bad:#ff8f86; --bad-soft:#3d1d1b; --warn:#f0c35a; --warn-soft:#3a2f12; --info:#b9aaff; --info-soft:#2b2550;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.7);
   color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light}
+/* Cuaderno: papel cálido, tinta azul de lapicera y rojo de corrección, fondo rayado */
+:root[data-theme="cuaderno"]{
+  --bg:#efe8d8; --paper:#fffcf3; --ink:#1d2540; --muted:#665f50; --line:#d9cfb8; --soft:#f1e9d5;
+  --accent:#a3352a; --accent-ink:#fffaf0; --accent-soft:#f5dfd6;
+  --ok:#2c6a43; --ok-soft:#dcebd5; --bad:#a3271f; --bad-soft:#f4d9d2; --warn:#7d5200; --warn-soft:#f3e2b4; --info:#2c4a9a; --info-soft:#dfe5f3;
+  --shadow:0 1px 0 rgba(60,45,20,.08),0 8px 22px -14px rgba(60,45,20,.35);
+  --r:5px; color-scheme:light}
+:root[data-theme="cuaderno"] body{background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(44,74,154,.10) 27px 28px)}
+:root[data-theme="cuaderno"] h1,:root[data-theme="cuaderno"] h2,:root[data-theme="cuaderno"] thead th{color:#23346e}
+:root[data-theme="cuaderno"] .panel{border-radius:6px}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
@@ -44,6 +60,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
  
+.ic{width:1.05em;height:1.05em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;align-self:center;flex:none}
+.logo .ic{width:20px;height:20px}
+.temas{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--paper)}
+.temas button{border:0;background:none;width:30px;height:28px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
+.temas button:hover{color:var(--ink)}
+.temas button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
 .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .brand small.ver{color:var(--accent);letter-spacing:0;text-transform:none}
@@ -54,7 +77,10 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .status.saving .dot{background:var(--warn)} .status.error .dot{background:var(--bad)} .status.local .dot{background:var(--info)}
  
 .btn{border:1px solid var(--line);background:var(--paper);padding:7px 12px;border-radius:var(--r);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{transition:border-color .15s,background-color .15s,transform .1s}
 .btn:hover{border-color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.btn.primary:hover{filter:brightness(1.08)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
 .btn.ghost{background:transparent}
 .btn.danger{color:var(--bad)} .btn.danger:hover{border-color:var(--bad)}
@@ -63,10 +89,12 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 select.field{padding-right:28px}
  
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
-.tab{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;white-space:nowrap}
+.tab{display:inline-flex;align-items:center;gap:7px;transition:color .15s;border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;white-space:nowrap}
+.tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab[aria-selected="true"] .ic{color:var(--accent)}
  
-.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
+.panel{box-shadow:var(--shadow);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .spread{justify-content:space-between}
  
@@ -186,7 +214,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 @media print{
   :root:not(#_){--bg:#fff;--paper:#fff;--ink:#000;--muted:#444;--line:#bbb;--soft:#eee;color-scheme:light}
   body{background:#fff;font-size:12px}
-  .groupbar,.tabs,.banner,.noprint,.btn,.tb,.toast,.legend,.addx,.xdel,.hchip{display:none!important}
+  .logo,.temas,.groupbar,.tabs,.banner,.noprint,.btn,.tb,.toast,.legend,.addx,.xdel,.hchip{display:none!important}
   .wrap{padding:0;max-width:none} .panel{border:0;padding:0}
   .sheet{overflow:visible;border:0} th.name,td.name,thead th{position:static}
   body.ficha-open .wrap{display:none} .modal{position:static;background:none;padding:0;overflow:visible} .modal .ficha{box-shadow:none;max-width:none}
@@ -196,14 +224,34 @@ tr.flash td{animation:flash 1.6s ease-out}
 </head>
 <body>
 <div class="wrap">
+<svg hidden style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-libreta" viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M3 7h3M3 12h3M3 17h3M10 8h5M10 12h5"/></symbol>
+<symbol id="i-dia" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></symbol>
+<symbol id="i-resumen" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/></symbol>
+<symbol id="i-gente" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></symbol>
+<symbol id="i-mas" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-refrescar" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></symbol>
+<symbol id="i-bajar" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+<symbol id="i-subir" viewBox="0 0 24 24"><path d="M12 16V5M7 9l5-5 5 5M5 20h14"/></symbol>
+<symbol id="i-imprimir" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/></symbol>
+<symbol id="i-planilla" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+<symbol id="i-recursos" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 20a2 2 0 0 0 2 2h13v-4M9 8h6"/></symbol>
+<symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></symbol>
+<symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
+</svg>
   <header class="top">
-    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v10 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v11 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
-      <button class="btn" id="newGroupBtn">+ Grupo</button>
-      <a class="btn sm ghost" href="https://adelvalle2010.github.io/miCuadernoDeRecursos/" title="Abrir Mi Cuaderno de Recursos: marcadores, pizarrones y actividades" style="text-decoration:none;color:inherit">📓 Cuaderno de recursos</a>
+      <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
+      <a class="btn sm ghost" href="https://adelvalle2010.github.io/miCuadernoDeRecursos/" title="Abrir Mi Cuaderno de Recursos: marcadores, pizarrones y actividades" style="text-decoration:none;color:inherit"><svg class="ic" aria-hidden="true"><use href="#i-recursos"/></svg>Cuaderno de recursos</a>
       <span class="status" id="status"><span class="dot"></span><span id="statusTxt">Conectando…</span></span>
-      <button class="btn sm ghost" id="refrescarBtn" title="Volver a leer los datos de Google Sheets" aria-label="Actualizar" hidden>↻</button>
+      <button class="btn sm ghost" id="refrescarBtn" title="Volver a leer los datos de Google Sheets" aria-label="Actualizar" hidden><svg class="ic" aria-hidden="true"><use href="#i-refrescar"/></svg></button>
+      <span class="temas" role="group" aria-label="Estilo de la página">
+        <button type="button" data-tema="light" title="Estilo claro" aria-label="Estilo claro"><svg class="ic" aria-hidden="true"><use href="#i-sol"/></svg></button>
+        <button type="button" data-tema="dark" title="Estilo oscuro" aria-label="Estilo oscuro"><svg class="ic" aria-hidden="true"><use href="#i-luna"/></svg></button>
+        <button type="button" data-tema="cuaderno" title="Estilo cuaderno" aria-label="Estilo cuaderno"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></button>
+      </span>
     </div>
   </header>
   <div id="newGroupForm" class="panel" hidden>
@@ -219,9 +267,9 @@ tr.flash td{animation:flash 1.6s ease-out}
   <div id="saveBanner" class="banner" hidden style="background:var(--bad-soft)"></div>
   <div id="gsBanner" class="banner" hidden style="background:var(--warn-soft)"></div>
   <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="clase" aria-selected="true">Clase del día</button>
-    <button class="tab" role="tab" data-tab="resumen" aria-selected="false">Resumen del grupo</button>
-    <button class="tab" role="tab" data-tab="config" aria-selected="false">Estudiantes y columnas</button>
+    <button class="tab" role="tab" data-tab="clase" aria-selected="true"><svg class="ic" aria-hidden="true"><use href="#i-dia"/></svg>Clase del día</button>
+    <button class="tab" role="tab" data-tab="resumen" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-resumen"/></svg>Resumen del grupo</button>
+    <button class="tab" role="tab" data-tab="config" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-gente"/></svg>Estudiantes y columnas</button>
   </nav>
  
   <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
@@ -233,6 +281,12 @@ tr.flash td{animation:flash 1.6s ease-out}
 "use strict";
 /* ---------- utilidades ---------- */
 const $ = s => document.querySelector(s);
+const ic = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+function pintarTema(){ const de = document.documentElement, t = de.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.querySelectorAll(".temas button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tema === t))); }
+document.addEventListener("click", ev => { const b = ev.target.closest(".temas button"); if (!b) return;
+  document.documentElement.setAttribute("data-theme", b.dataset.tema); try { localStorage.setItem("libreta:tema", b.dataset.tema); } catch(e) {} pintarTema(); });
+pintarTema();
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const uid = p => p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -1035,7 +1089,7 @@ function viewFicha(g, sid){
   return `<div class="modal" id="fichaModal" role="dialog" aria-modal="true" aria-labelledby="fichaTit" data-act="fichaFondo">
     <section class="panel ficha">
       <div class="row spread"><div><span class="muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em">${esc(g.nombre)}</span><h2 id="fichaTit">${esc(e.nombre)}</h2></div>
-        <div class="row noprint">${!IN_CLAUDE ? `<button class="btn sm" data-act="imprimir">Imprimir</button>` : ""}<button class="btn sm" data-act="fichaCerrar" aria-label="Cerrar la ficha">✕ Cerrar</button></div></div>
+        <div class="row noprint">${!IN_CLAUDE ? `<button class="btn sm" data-act="imprimir">${ic("imprimir")}Imprimir</button>` : ""}<button class="btn sm" data-act="fichaCerrar" aria-label="Cerrar la ficha">✕ Cerrar</button></div></div>
       <div class="stats">${chips.join("") || `<span class="muted">Todavía no hay datos de este estudiante.</span>`}</div>
       ${fechas.length ? `<div class="sheet"><table class="fichatab"><thead><tr><th>Clase</th><th>Tema</th><th class="c">Asist.</th><th>Actividad</th><th>Notas</th><th class="c">Conducta</th><th>Observaciones</th></tr></thead><tbody>${filas}</tbody></table></div>` : ""}
     </section></div>`;
@@ -1144,7 +1198,7 @@ function viewResumen(g){
   const canDl = !!DL.api;
   return `<section class="panel">
     <div class="row spread"><h2>Resumen de ${esc(g.nombre)}</h2>
-      <div class="row"><button class="btn" data-imp-act="abrir" title="Traer las faltas día a día y el total de fictas desde ANEP">⬇ Traer de ANEP</button><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">⇪ Migrar a ANEP</button>${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
+      <div class="row"><button class="btn" data-imp-act="abrir" title="Traer las faltas día a día y el total de fictas desde ANEP">${ic("bajar")}Traer de ANEP</button><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">${ic("subir")}Migrar a ANEP</button>${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">${ic("imprimir")}Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">${ic("planilla")}Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
     <p class="muted" style="margin:0">${fechas.length} clases, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}. El porcentaje de asistencia cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %. Las faltas se cuentan por horas. <b>Fictas</b> = horas A + horas J/2 + tardes/2; en ámbar al acercarse al límite y en rojo al pasarlo. Con promedio de 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre. Tocá una fecha para abrir esa clase, o un nombre para ver la ficha del estudiante.</p>
     ${viewLimite(g)}
     <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
