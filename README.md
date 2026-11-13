@@ -8,14 +8,22 @@ Es un solo archivo (`index.html`), sin servidor ni instalación.
 
 - **Varios grupos**, cada uno con su lista de estudiantes y sus columnas.
 - **Clase del día:** elegís la fecha, creás la clase y marcás cada celda:
-  - Presente: `P` presente · `A` ausente · `T` tarde · `J` falta justificada
+  - Presente: `P` presente · `A` ausente · `T` tarde · `J` falta justificada (`A2` / `J2`: faltó 2 horas de esa clase)
   - Actividad: `✓` hecho · `½` parcial · `✗` no hecho
   - Nota: de 1 a 10 (verde si es 5 o más, ámbar si es de 1 a 4)
   - Conducta: `MB` muy buena · `B` buena · `R` regular · `M` mala
   - Observación: texto libre
+- **Tema con formato y dictado:** el tema de cada clase se escribe en un cuadro de varias líneas con negrita, cursiva, subrayado, listas y links. El botón 🎤 dicta por voz (Chrome y Edge; el audio lo procesa el servicio de voz del navegador). En Windows también funciona el dictado del sistema con **Windows + H**. En Google Sheets el tema va en una celda combinada a lo alto de la clase, con su formato y links.
+- **Carga por voz de la clase:** el botón **🎤 Cargar por voz** (Chrome y Edge) escucha y marca solo. Se dice primero el nombre y después lo que hay que marcar, y se pueden decir varios seguidos: «Ana presente, Luis ausente dos horas, Mateo nota 8, Sofía conducta muy buena, María observación no trajo la computadora, el resto presente». Alcanza con el nombre o el apellido si no se repite en el grupo; si se repite («Sánchez»), la libreta avisa y pide nombre y apellido. Reconoce variantes de cómo transcribe el dictado («Thiago» por Tihago, «Naomi» por Nahomi). Las notas se pueden decir con palabras («siete y medio») y en las columnas del día («Luis escrito 6»). Lo mismo se puede escribir en el cuadro de al lado. Cada comando queda en un historial y se deshace con **↶ Deshacer** o diciendo «deshacer»; «terminar» apaga el micrófono. Dentro de claude.ai el micrófono no está disponible, pero el cuadro para escribir comandos funciona igual.
+- **Atajos de teclado:** en una celda de asistencia, **P**, **A**, **T** o **J** marcan y pasan solos al estudiante siguiente. En actividad, **S**, **P** o **N**; en conducta, **1** a **4** (MB, B, R, M). **Supr** borra, las flechas ↑ ↓ cambian de estudiante y **Enter** baja en las notas y observaciones.
+- **Ficha del estudiante:** al tocar un nombre (en la clase o en el resumen) se abre su historial: asistencia, fictas, notas, conducta y observaciones de todas las clases. Se cierra con **Esc**.
+- **Clase anterior y siguiente:** las flechas ‹ › al lado de la fecha saltan entre las clases registradas.
+- **Imprimir:** el resumen y la ficha tienen un botón **Imprimir** (también sirve para guardar como PDF). En la versión de claude.ai no está disponible.
 - **Resumen del grupo:** % de asistencia (en rojo si es menos de 75 %), faltas, entregas, promedio, situación (**Aprobado** con 5 o más, **APE** de 1 a 4) y conducta (cantidad de MB/B/R/M y la última registrada).
+- **Faltas por horas y fictas:** cada clase tiene su cantidad de horas (el grupo trae un valor por defecto, por ejemplo 2 o 3, y en cada día se puede cambiar). Un ausente en una clase de 3 horas cuenta 3 faltas. Si faltó solo una parte (se retiró antes o llegó a otra hora), al marcar `A` o `J` aparece un chip con las horas (`3h`): tocándolo baja a `2h`, `1h` y vuelve a `3h`; la celda queda como `A2` o `J2`. Fictas = `horas A + horas J/2 + tardes/2` (cada llegada tarde es media falta). Se ven al lado de cada nombre en la clase del día, en el resumen, en el Excel y en la hoja del grupo en Google Sheets. En *Estudiantes y columnas → Grupo* se configuran las horas por clase, y el porcentaje límite (por defecto 25 %), que se calcula sobre las horas dictadas (las clases registradas). Ámbar al llegar al 80 % del límite, rojo al pasarlo.
 - **Excel:** descarga una planilla con tres hojas (Planilla, Resumen, Detalle).
 - **Estudiantes:** se agregan de a uno, pegando una lista o importando la plantilla de Excel (lee la fila con `fecha | presente | actividad | nota | nombres…`).
+- **Columnas de un solo día:** en la clase del día, abajo de la tabla, se agregan columnas solo para esa clase (botones rápidos **+ Escrito**, **+ Oral**, o una con el nombre y tipo que quieras: nota, entrega o texto). En el resumen se juntan por nombre: todos los "Escrito" dan un promedio de escritos, todos los "Oral" un promedio de orales, y además aparece un **promedio ponderado**. El peso de cada tipo de nota se configura en *Estudiantes y columnas → Ponderación de notas* (por ejemplo Escrito 60, Oral 40); sin configurar, todos pesan igual. Se quitan con la ✕ del encabezado.
 - **Columnas configurables:** por ejemplo "Ejercicio 2" o "Tarea domiciliaria".
 
 ## Dónde se guardan los datos
@@ -34,7 +42,7 @@ En cualquier modo podés usar **Estudiantes y columnas → Respaldo** para expor
 
 1. Creá una planilla nueva en Google Sheets.
 2. Abrí **Extensiones → Apps Script**, borrá lo que haya y pegá el contenido de [`google-apps-script/Codigo.gs`](google-apps-script/Codigo.gs).
-3. Cambiá `CAMBIAR-ESTA-CLAVE` por una clave tuya y guardá (💾).
+3. Guardá (💾). Después, en la planilla, recargá la página y usá el menú **Libreta → Configurar clave** para poner tu clave. Queda guardada aparte, así que al pegar una versión nueva del código no hay que volver a escribirla.
 4. **Implementar → Nueva implementación**, tipo **Aplicación web**:
    - Ejecutar como: **Yo**
    - Quién tiene acceso: **Cualquier usuario**
@@ -46,11 +54,14 @@ En cualquier modo podés usar **Estudiantes y columnas → Respaldo** para expor
 La planilla queda así:
 
 - **`_datos`**: un registro por grupo y por clase. Es lo que lee la libreta; no lo edites a mano.
+- **Una hoja "Resumen" por grupo**: una fila por estudiante con % de asistencia, horas de falta, tardes, fictas, límite, promedio de cada tipo de nota, promedio ponderado y situación.
 - **Una hoja por grupo** con la libreta armada (fecha, tema, dato y una columna por estudiante, con colores). Se rehace sola en cada cambio, así que lo que escribas a mano ahí se pierde.
 
 Notas:
 
 - La URL y la clave quedan guardadas en ese navegador. En otro equipo, conectala una vez más con los mismos datos.
+- Para rehacer a mano las hojas de todos los grupos: en la planilla, menú **Libreta → Rehacer hojas de los grupos** (aparece al recargar la planilla).
+- Si la libreta muestra un aviso amarillo de script desactualizado, pegá el `Codigo.gs` nuevo y creá una nueva versión de la implementación.
 - Si cambiás el código del script: **Implementar → Gestionar implementaciones → Editar (lápiz) → Versión: Nueva versión**. Así la URL sigue siendo la misma.
 - Cualquiera que tenga la URL **y** la clave puede leer y modificar los datos. No publiques la clave.
 
