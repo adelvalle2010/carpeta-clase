@@ -97,7 +97,7 @@ En **Resumen del grupo → ⇪ Migrar a ANEP** la libreta arma tres paquetes y l
 | Botón | Qué lleva | Dónde se completa |
 |---|---|---|
 | Copiar asistencia | Horas de falta injustificada (A) y justificada (J) de una clase | «Pasaje de Lista» (Registro de inasistencias de UTU), con la misma fecha |
-| Copiar evaluación | Notas de una columna en una clase, tipo de actividad de ANEP, fecha y descripción | Calificaciones → Evaluación grupal → Nueva evaluación grupal |
+| Copiar evaluación | Notas de una columna en una clase, tipo de actividad de ANEP, fecha y descripción | Calificaciones → Evaluación grupal → Nueva evaluación grupal, **o** Calificaciones → Evaluación individual (período abierto y «Calificaciones del 1 al 10»): completa tipo, nota, fecha y comentario del casillero de cada estudiante; el botón opcional «Guardar … una por una» aprieta el disquete de cada uno (con confirmación) |
 | Copiar cierre | Promedio redondeado a entero y juicio conceptual | Calificaciones → Cerrar promedios |
 
 La libreta no puede escribir dentro del Portafolio (es otro sitio y usa la sesión de ANEP). Lo completa el marcador **📒 Migrar desde la Libreta**, que se instala una sola vez desde [`anep.html`](https://adelvalle2010.github.io/carpeta-clase/anep.html). El marcador nunca aprieta «Guardar».

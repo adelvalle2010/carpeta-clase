@@ -244,7 +244,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
   <header class="top">
-    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v15 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v16 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
@@ -1253,7 +1253,7 @@ function tipoAnep(g, k){
 function anepLinks(g){
   const m = /libretaId=(\d+)/.exec(g.anepUrl || ""); if (!m) return null;
   const b = "https://portafoliodocente.anep.edu.uy/paginas/";
-  return { asistencia: `${b}pasaje_de_lista_page.xhtml?libretaId=${m[1]}`, evaluacion: `${b}eval_grupal_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, cierre: `${b}promedios_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, desarrollo: `${b}desarrollo_page.xhtml?libretaId=${m[1]}` };
+  return { asistencia: `${b}pasaje_de_lista_page.xhtml?libretaId=${m[1]}`, evaluacion: `${b}eval_grupal_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, individual: `${b}calif_page.xhtml?libretaId=${m[1]}`, cierre: `${b}promedios_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, desarrollo: `${b}desarrollo_page.xhtml?libretaId=${m[1]}` };
 }
 const temaDe = c => c ? String(c.tema || "").trim() : "";
 function temaHtmlDe(c){ // HTML del tema para el editor del Portafolio (ya limpio)
@@ -1329,8 +1329,8 @@ function viewMigrar(g){
   if (!m.open) return "";
   const L = anepLinks(g), kA = asisCol(g);
   const opt = (v, t, sel) => `<option value="${esc(v)}"${v === sel ? " selected" : ""}>${esc(t)}</option>`;
-  const paso = (tipo, donde) => { const x = m.msg && m.msg.tipo === tipo ? m.msg : null; if (!x) return "";
-    return `<p class="migmsg ${x.mal ? "mal" : "ok"}" role="status">${esc(x.txt)}${x.mal ? "" : ` Ahora ${L ? `<a href="${esc(L[tipo])}" target="_blank" rel="noopener">abrí ${donde} ↗</a>` : `abrí ${donde}`} y tocá el marcador <b>📒 Migrar desde la Libreta</b>.`}</p>`; };
+  const paso = (tipo, donde, alt) => { const x = m.msg && m.msg.tipo === tipo ? m.msg : null; if (!x) return "";
+    return `<p class="migmsg ${x.mal ? "mal" : "ok"}" role="status">${esc(x.txt)}${x.mal ? "" : ` Ahora ${L ? `<a href="${esc(L[tipo])}" target="_blank" rel="noopener">abrí ${donde} ↗</a>` : `abrí ${donde}`} y tocá el marcador <b>📒 Migrar desde la Libreta</b>.${alt ? ` O, para cargar estudiante por estudiante, ${L ? `<a href="${esc(L.individual)}" target="_blank" rel="noopener">abrí ${alt} ↗</a>` : `abrí ${alt}`} (desplegá el período y elegí «Calificaciones del 1 al 10»).` : ""}`}</p>`; };
   let asis = `<p class="muted">El grupo no tiene columna de asistencia.</p>`;
   if (kA && fs.length) {
     const c = S.clases[m.fAsis], vs = est.map(e => val(c, e.id, kA.id));
@@ -1348,7 +1348,7 @@ function viewMigrar(g){
       <label>Tipo de actividad en ANEP <select class="field" data-mig="tipo"><option value="">— elegir —</option>${ANEP_TIPOS.map(t => opt(t, t, tipo)).join("")}</select></label></div>
       <div class="row"><label class="grow">Descripción <input class="field" data-mig="desc" value="${esc(m.desc || "")}" maxlength="200"></label>
       <button class="btn primary" data-mig-act="copy" data-k="evaluacion"${fEvals.length ? "" : " disabled"}>Copiar evaluación</button></div>
-      <p class="muted">${cant} nota${cant === 1 ? "" : "s"} en esa clase. El tipo queda guardado para la columna «${esc(kEval.nombre)}». Las notas van como enteros de 1 a 10 (7,5 → 8).</p>${paso("evaluacion", "Evaluación grupal → Nueva evaluación grupal")}`;
+      <p class="muted">${cant} nota${cant === 1 ? "" : "s"} en esa clase. El tipo queda guardado para la columna «${esc(kEval.nombre)}». Las notas van como enteros de 1 a 10 (7,5 → 8).</p>${paso("evaluacion", "Evaluación grupal → Nueva evaluación grupal", "Evaluación individual")}`;
   }
   let ci = `<p class="muted">El cierre necesita al menos una columna de nota.</p>`;
   if (proms.length) {
