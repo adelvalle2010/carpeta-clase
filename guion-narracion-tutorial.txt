@@ -2,7 +2,7 @@ Guion de narración — Video tutorial Libreta de Clase (2:12)
 Cada línea va con su escena; a ritmo tranquilo entra en el tiempo indicado.
 
 [0:00,0 – 0:05,0]  Portada
-¡Hola! En este video te muestro cómo usar la Libreta de Clase: asistencia, notas y conducta de cada clase, guardadas en Google Sheets, y el pase al Portafolio de ANEP.
+¡Hola! Te muestro cómo usar la Libreta de Clase y pasar tus datos al Portafolio de ANEP.
 
 [0:05,0 – 0:12,5]  1 · Armá el grupo
 Primero, armá el grupo. Con el botón «Grupo» lo creás, y en «Estudiantes y columnas» pegás la lista y elegís qué querés registrar.
