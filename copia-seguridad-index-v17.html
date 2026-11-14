@@ -1,0 +1,2017 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Libreta de Clase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>try{var t=localStorage.getItem("libreta:tema");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<style>
+html,body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: barra de grupo arriba, pestañas, y una hoja de registro con columna de nombres fija (como la libreta del docente). */
+:root{
+  --bg:#f4f6fa; --paper:#ffffff; --ink:#182033; --muted:#566178; --line:#d8deea; --soft:#eaeef6;
+  --accent:#2446a3; --accent-ink:#ffffff; --accent-soft:#e2e8f8;
+  --ok:#1f7a4d; --ok-soft:#dcf1e5; --bad:#b3332b; --bad-soft:#f8e0de; --warn:#8a5a00; --warn-soft:#f8ecc9; --info:#5b4bb0; --info-soft:#e8e4f8;
+  --shadow:0 1px 2px rgba(24,32,51,.06),0 6px 20px -12px rgba(24,32,51,.18);
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:8px;
+}
+/* Oscuro: pizarra azulada, acento celeste */
+@media (prefers-color-scheme: dark){:root:not([data-theme]){
+  --bg:#0f131b; --paper:#171c27; --ink:#e7ebf4; --muted:#9ba6bd; --line:#2a3245; --soft:#1f2636;
+  --accent:#8fa9ff; --accent-ink:#0d1322; --accent-soft:#232d4b;
+  --ok:#6fd39f; --ok-soft:#173828; --bad:#ff8f86; --bad-soft:#3d1d1b; --warn:#f0c35a; --warn-soft:#3a2f12; --info:#b9aaff; --info-soft:#2b2550;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.7);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f131b; --paper:#171c27; --ink:#e7ebf4; --muted:#9ba6bd; --line:#2a3245; --soft:#1f2636;
+  --accent:#8fa9ff; --accent-ink:#0d1322; --accent-soft:#232d4b;
+  --ok:#6fd39f; --ok-soft:#173828; --bad:#ff8f86; --bad-soft:#3d1d1b; --warn:#f0c35a; --warn-soft:#3a2f12; --info:#b9aaff; --info-soft:#2b2550;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.7);
+  color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light}
+/* Cuaderno: papel cálido, tinta azul de lapicera y rojo de corrección, fondo rayado */
+:root[data-theme="cuaderno"]{
+  --bg:#efe8d8; --paper:#fffcf3; --ink:#1d2540; --muted:#665f50; --line:#d9cfb8; --soft:#f1e9d5;
+  --accent:#a3352a; --accent-ink:#fffaf0; --accent-soft:#f5dfd6;
+  --ok:#2c6a43; --ok-soft:#dcebd5; --bad:#a3271f; --bad-soft:#f4d9d2; --warn:#7d5200; --warn-soft:#f3e2b4; --info:#2c4a9a; --info-soft:#dfe5f3;
+  --shadow:0 1px 0 rgba(60,45,20,.08),0 8px 22px -14px rgba(60,45,20,.35);
+  --r:5px; color-scheme:light}
+:root[data-theme="cuaderno"] body{background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(44,74,154,.10) 27px 28px)}
+:root[data-theme="cuaderno"] h1,:root[data-theme="cuaderno"] h2,:root[data-theme="cuaderno"] thead th{color:#23346e}
+:root[data-theme="cuaderno"] .panel{border-radius:6px}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.65rem;font-weight:700}
+h2{font-size:1.2rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+.muted{color:var(--muted)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ 
+.ic{width:1.05em;height:1.05em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;align-self:center;flex:none}
+.logo .ic{width:20px;height:20px}
+.temas{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--paper)}
+.temas button{border:0;background:none;width:30px;height:28px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
+.temas button:hover{color:var(--ink)}
+.temas button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand small.ver{color:var(--accent);letter-spacing:0;text-transform:none}
+.brand small{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.groupbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.status.saving .dot{background:var(--warn)} .status.error .dot{background:var(--bad)} .status.local .dot{background:var(--info)}
+ 
+.btn{border:1px solid var(--line);background:var(--paper);padding:7px 12px;border-radius:var(--r);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{transition:border-color .15s,background-color .15s,transform .1s}
+.btn:hover{border-color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)} .btn.danger:hover{border-color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:.85rem}
+.field{border:1px solid var(--line);background:var(--paper);padding:7px 10px;border-radius:var(--r);min-width:0}
+select.field{padding-right:28px}
+ 
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{display:inline-flex;align-items:center;gap:7px;transition:color .15s;border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab[aria-selected="true"] .ic{color:var(--accent)}
+ 
+.panel{box-shadow:var(--shadow);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.spread{justify-content:space-between}
+ 
+.dates{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font-size:.85rem;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+ 
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--soft);border-radius:var(--r);padding:6px 12px;font-size:.88rem;display:flex;gap:6px;align-items:baseline}
+.stat b{font-family:var(--f-mono);font-size:1rem}
+ 
+.sheet{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-width:100%}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle;background:var(--paper)}
+thead th{position:sticky;top:0;background:var(--soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap;z-index:1}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+th.name,td.name{position:sticky;left:0;z-index:2;min-width:170px;max-width:220px;border-right:1px solid var(--line)}
+thead th.name{z-index:3}
+td.name{font-weight:700}
+td.name .idx{color:var(--muted);font-family:var(--f-mono);font-weight:500;margin-right:6px;font-size:.8rem}
+tbody tr:hover td{background:var(--soft)}
+td.c{text-align:center}
+ 
+.cyc{min-width:44px;height:34px;border-radius:7px;border:1px dashed var(--line);background:transparent;font-weight:700;font-family:var(--f-mono)}
+.cyc[data-v="P"],.cyc[data-v="S"]{background:var(--ok-soft);color:var(--ok);border:1px solid transparent}
+.cyc[data-v="A"],.cyc[data-v="N"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
+.cyc[data-v="T"],.cyc[data-v="M"]{background:var(--warn-soft);color:var(--warn);border:1px solid transparent}
+.cyc[data-v="CMB"],.cyc[data-v="CB"]{background:var(--ok-soft);color:var(--ok);border:1px solid transparent}
+.cyc[data-v="CR"]{background:var(--warn-soft);color:var(--warn);border:1px solid transparent}
+.cyc[data-v="CM"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
+.cyc[data-v="CB"]{opacity:.85}
+.temabox{display:grid;gap:6px}
+.tema{border:1px solid var(--line);background:var(--paper);border-radius:var(--r);padding:8px 11px;min-height:4.6em;max-height:40vh;overflow:auto;line-height:1.45;outline:none}
+.tema:focus{border-color:var(--accent)}
+.tema:empty::before{content:attr(data-ph);color:var(--muted)}
+.tema a{color:var(--accent)} .tema ul,.tema ol{margin:4px 0;padding-left:22px} .tema p{margin:0}
+.acolor{font-weight:700;border-bottom:3px solid #d93025;line-height:1}
+.tb.sw{min-width:30px;padding:0}.tb.sw span{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:middle}
+.tbar{display:flex;gap:4px;flex-wrap:wrap}
+.tb{border:1px solid var(--line);background:var(--paper);border-radius:6px;min-width:32px;height:30px;padding:0 8px}
+.tb:hover{border-color:var(--accent)}
+.tb.mic[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+th.xdia{background:var(--accent-soft);color:var(--accent)}
+.xdel{border:0;background:none;color:inherit;padding:0 2px;font-size:.8rem;opacity:.7} .xdel:hover{opacity:1;color:var(--bad)}
+.addx{border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+.asis{display:inline-grid;gap:3px;justify-items:center}
+.hchip{border:1px solid var(--line);background:var(--paper);border-radius:999px;font-family:var(--f-mono);font-size:.72rem;padding:0 7px;line-height:1.5;color:var(--muted)}
+.hchip.parcial{border-color:var(--bad);color:var(--bad);font-weight:700}
+.cyc[data-v="J"]{background:var(--info-soft);color:var(--info);border:1px solid transparent}
+input.nota{width:64px;text-align:center;font-family:var(--f-mono)}
+input.nota.aprob{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+input.nota.ape{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.sit{font-family:var(--f-body);font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sit.Aprobado{background:var(--ok-soft);color:var(--ok)}.sit.APE{background:var(--warn-soft);color:var(--warn)}
+input.nota.bad{border-color:var(--bad);color:var(--bad)}
+input.txt{width:100%;min-width:160px}
+.cellin{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:5px 7px}
+ 
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted)}
+.legend span b{font-family:var(--f-mono);margin-right:3px}
+ 
+.empty{padding:28px 12px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
+.migpaso{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:10px} .migpaso h3{margin:0;font-size:1rem} .migpaso p{margin:0}
+.mig label{display:inline-flex;flex-direction:column;gap:3px;font-size:.85rem;color:var(--muted)} .mig label.grow{display:flex;flex:1 1 260px} .mig label .field{color:var(--ink);font-size:.95rem}
+.migmsg{border-radius:var(--r);padding:8px 12px;font-size:.92rem} .migmsg.ok{background:var(--info-soft)} .migmsg.mal{border:1px solid var(--bad);color:var(--bad)} .migmsg a{color:var(--accent)}
+table.migt td.jc,table.migt th.jc{min-width:280px;width:55%;text-align:left} table.migt textarea.auto{color:var(--muted);font-style:italic}
+.niv{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.niv.n5{background:var(--ok-soft);color:var(--ok)} .niv.n4{background:var(--accent-soft);color:var(--accent)} .niv.n3{background:var(--info-soft);color:var(--info)} .niv.n2{background:var(--warn-soft);color:var(--warn)} .niv.n1{background:var(--bad-soft);color:var(--bad)}
+table.migt textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:0;height:3.4em;font:inherit;font-size:.9rem;padding:5px 8px}
+@media print{.mig{display:none}}
+.limrow{gap:6px;font-size:.92rem} .limrow .muted{font-size:.85rem;flex-basis:100%} input.inl{width:4.6em;padding:3px 6px;text-align:right}
+.pasosimp{margin:0;padding-left:22px;display:grid;gap:4px;font-size:.93rem} .pasosimp a{color:var(--accent)}
+table.impt td.quien{text-align:left;font-size:.85rem;min-width:220px;white-space:normal} table.impt .av{color:var(--warn)} .imptxt{width:100%;box-sizing:border-box;font:12px ui-monospace,monospace}
+.mig label.chk{flex-direction:row;align-items:center;gap:6px;color:var(--ink)}
+.banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
+.confirm{display:inline-flex;gap:6px;align-items:center;background:var(--bad-soft);padding:4px 8px;border-radius:var(--r);font-size:.88rem}
+ 
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px}
+.list{display:grid;gap:6px}
+.item{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.item .field{flex:1 1 160px}
+.item.off .field{text-decoration:line-through;color:var(--muted)}
+textarea.field{width:100%;min-height:110px;resize:vertical}
+.pill{font-size:.75rem;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.sum td{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:center;font-size:.85rem}
+.sum td.name{font-family:var(--f-body);text-align:left;font-size:.92rem}
+.sum th.d{cursor:pointer}
+.sum th.d:hover{color:var(--accent)}
+.mini{display:inline-flex;gap:3px;align-items:center}
+.mini i{font-style:normal;padding:1px 5px;border-radius:4px}
+.mini i.P,.mini i.S{background:var(--ok-soft);color:var(--ok)} .mini i.A,.mini i.N{background:var(--bad-soft);color:var(--bad)}
+.mini i.CMB,.mini i.CB{background:var(--ok-soft);color:var(--ok)} .mini i.CR{background:var(--warn-soft);color:var(--warn)} .mini i.CM{background:var(--bad-soft);color:var(--bad)}
+.mini i.T,.mini i.M{background:var(--warn-soft);color:var(--warn)} .mini i.J{background:var(--info-soft);color:var(--info)}
+.lowatt{color:var(--bad);font-weight:700}
+.fic{font-family:var(--f-mono);font-size:.75rem;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:6px;white-space:nowrap;background:var(--soft);color:var(--muted)}
+.fic.warn{background:var(--warn-soft);color:var(--warn)} .fic.bad{background:var(--bad-soft);color:var(--bad)}
+.sum td.ficcol{font-weight:700}
+.sum td.ficcol.warn{background:var(--warn-soft);color:var(--warn)} .sum td.ficcol.bad{background:var(--bad-soft);color:var(--bad)}
+.cfgnum{width:90px;text-align:center;font-family:var(--f-mono)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:.9rem;z-index:20}
+.vozbox{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:10px 12px;display:grid;gap:8px}
+.vozbox .btn[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.vozlog{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:.86rem;max-height:9.5em;overflow:auto}
+.vozlog:empty{display:none}
+.vozlog li.ok{color:var(--ok)} .vozlog li.no{color:var(--warn)}
+.vozayuda{font-size:.86rem;display:grid;gap:4px;margin-top:6px} .vozayuda p,.vozayuda ul{margin:0} .vozayuda ul{padding-left:18px;display:grid;gap:3px}
+details summary{cursor:pointer}
+tr.flash td{animation:flash 1.6s ease-out}
+@keyframes flash{0%{background:var(--accent-soft)}100%{background:var(--paper)}}
+.nm{border:0;background:none;padding:0;font:inherit;font-weight:700;color:inherit;text-align:left;cursor:pointer}
+.nm:hover{color:var(--accent);text-decoration:underline}
+.lnk{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;white-space:nowrap}
+.navc{min-width:34px;justify-content:center}
+.modal{position:fixed;inset:0;background:rgba(10,14,22,.5);display:grid;justify-items:center;align-items:start;overflow:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;z-index:30}
+.modal .ficha{max-width:1000px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.stat.warn{background:var(--warn-soft);color:var(--warn)} .stat.bad{background:var(--bad-soft);color:var(--bad)}
+.fichatab td{vertical-align:top} .fichatab .tcell{min-width:180px;max-width:360px;white-space:pre-wrap}
+
+/* ---- Resumen del grupo ---- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rs{display:grid;gap:16px}
+.rs-head{display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between;align-items:flex-start}
+.rs-head h2{margin:0 0 2px}.rs-head p{margin:0;font-size:.9rem}
+.rs-link{border:0;background:none;color:var(--accent);font:inherit;font-size:.88rem;text-decoration:underline;cursor:pointer;padding:0 0 0 8px}
+.rs-acts{display:flex;flex-wrap:wrap;gap:8px 16px}
+.rs-grupo{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--soft)}
+.rs-grupo .btn{border-radius:999px}
+.rs-gl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-right:2px}
+.rs-help{background:var(--soft);border-radius:var(--r);padding:10px 16px;font-size:.9rem}.rs-help ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.rs-st{padding:12px 16px;display:grid;gap:2px;border-right:1px solid var(--line)}.rs-st:last-child{border-right:0}
+.rs-st b{font-family:var(--f-display);font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.rs-st span{font-size:.84rem;color:var(--muted)}
+.rs-st.warn b{color:var(--warn)}.rs-st.bad b{color:var(--bad)}
+.rs .limrow{background:var(--soft);border-radius:var(--r);padding:8px 14px;margin:0}
+.rs-tools{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.rs-search input{width:210px}
+.rs-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rs-cnt{font-family:var(--f-mono);font-size:.78rem;opacity:.8;margin-left:2px}
+.rs-ord{display:flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted)}.rs-ord select{width:auto}
+.rs-seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-left:auto}
+.rs-seg button{border:0;background:var(--paper);padding:6px 14px;font:inherit;font-size:.86rem;cursor:pointer;color:var(--ink)}
+.rs-seg button+button{border-left:1px solid var(--line)}
+.rs-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.rs-tab thead th.rs-g{text-align:center;border-bottom:1px solid var(--line);letter-spacing:.05em}
+.rs-tab thead tr:nth-child(2) th{top:34px}
+.rs-hint{text-transform:none;letter-spacing:0;font-weight:400;margin-left:8px}
+.rs-tab td{padding:9px 10px}
+.rs-tab td.name{white-space:nowrap;min-width:230px;max-width:none}.rs-tab th.name{min-width:230px}
+.rs-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle;background:var(--warn)}
+.rs-dot.bad{background:var(--bad)}
+.rs-v{font-weight:700}.rs-of{color:var(--muted);font-size:.78rem;margin-left:4px}
+.rs-pct,.rs-fic{min-width:96px}
+.rs-bar{display:block;height:5px;border-radius:3px;background:var(--soft);margin:5px auto 0;max-width:84px;overflow:hidden}
+.rs-bar i{display:block;height:100%;background:var(--ok);border-radius:3px}
+.rs-bar.warn i{background:var(--warn)}.rs-bar.bad i{background:var(--bad)}
+.rs-tab td.rs-fic.warn,.rs-tab td.rs-fic.bad{background:transparent}
+.rs-fic.warn .rs-v{color:var(--warn)}.rs-fic.bad .rs-v{color:var(--bad)}
+.rs-prom{font-family:var(--f-display);font-size:1.1rem;font-weight:700}.rs-prom.bad{color:var(--bad)}
+.rs-tab tbody tr[hidden]{display:none}
+@media (max-width:700px){.rs-stats{grid-template-columns:1fr 1fr}.rs-st{padding:10px 12px}.rs-st b{font-size:1.4rem}.rs-tab td.name,.rs-tab th.name{min-width:150px;white-space:normal}.rs-seg{margin-left:0}.rs-search input{width:100%}.rs-search{flex:1 1 100%}.rs-st{border-bottom:1px solid var(--line)}}
+@media print{.rs-tools,.rs-acts,.rs-link{display:none!important}.rs-stats{border:1px solid #bbb}}
+@media (prefers-reduced-motion:no-preference){.chip,.btn,.cyc{transition:background .12s,border-color .12s}}
+@media (prefers-reduced-motion:reduce){tr.flash td{animation:none}}
+@media print{
+  :root:not(#_){--bg:#fff;--paper:#fff;--ink:#000;--muted:#444;--line:#bbb;--soft:#eee;color-scheme:light}
+  body{background:#fff;font-size:12px}
+  .logo,.temas,.groupbar,.tabs,.banner,.noprint,.btn,.tb,.toast,.legend,.addx,.xdel,.hchip{display:none!important}
+  .wrap{padding:0;max-width:none} .panel{border:0;padding:0}
+  .sheet{overflow:visible;border:0} th.name,td.name,thead th{position:static}
+  body.ficha-open .wrap{display:none} .modal{position:static;background:none;padding:0;overflow:visible} .modal .ficha{box-shadow:none;max-width:none}
+}
+@media (max-width:560px){h1{font-size:1.35rem}.panel{padding:14px}th.name,td.name{min-width:130px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg hidden style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-libreta" viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M3 7h3M3 12h3M3 17h3M10 8h5M10 12h5"/></symbol>
+<symbol id="i-dia" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></symbol>
+<symbol id="i-resumen" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/></symbol>
+<symbol id="i-gente" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></symbol>
+<symbol id="i-mas" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-refrescar" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></symbol>
+<symbol id="i-bajar" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+<symbol id="i-subir" viewBox="0 0 24 24"><path d="M12 16V5M7 9l5-5 5 5M5 20h14"/></symbol>
+<symbol id="i-imprimir" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/></symbol>
+<symbol id="i-planilla" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+<symbol id="i-recursos" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 20a2 2 0 0 0 2 2h13v-4M9 8h6"/></symbol>
+<symbol id="i-ayuda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 1c0 1.7-2.5 2.2-2.5 3.7M12 17h.01"/></symbol>
+<symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></symbol>
+<symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
+</svg>
+  <header class="top">
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v17 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="groupbar">
+      <select id="groupSel" class="field" aria-label="Grupo"></select>
+      <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
+      <a class="btn sm ghost" href="https://adelvalle2010.github.io/miCuadernoDeRecursos/" title="Abrir Mi Cuaderno de Recursos: marcadores, pizarrones y actividades" style="text-decoration:none;color:inherit"><svg class="ic" aria-hidden="true"><use href="#i-recursos"/></svg>Cuaderno de recursos</a>
+      <span class="status" id="status"><span class="dot"></span><span id="statusTxt">Conectando…</span></span>
+      <button class="btn sm ghost" id="refrescarBtn" title="Volver a leer los datos de Google Sheets" aria-label="Actualizar" hidden><svg class="ic" aria-hidden="true"><use href="#i-refrescar"/></svg></button>
+      <a class="btn sm ghost" href="anep.html" target="_blank" rel="noopener" title="Manual de ayuda y video tutorial: usar la libreta y migrar al Portafolio de ANEP" style="text-decoration:none;color:inherit"><svg class="ic" aria-hidden="true"><use href="#i-ayuda"/></svg>Ayuda</a>
+      <span class="temas" role="group" aria-label="Estilo de la página">
+        <button type="button" data-tema="light" title="Estilo claro" aria-label="Estilo claro"><svg class="ic" aria-hidden="true"><use href="#i-sol"/></svg></button>
+        <button type="button" data-tema="dark" title="Estilo oscuro" aria-label="Estilo oscuro"><svg class="ic" aria-hidden="true"><use href="#i-luna"/></svg></button>
+        <button type="button" data-tema="cuaderno" title="Estilo cuaderno" aria-label="Estilo cuaderno"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></button>
+      </span>
+    </div>
+  </header>
+  <div id="newGroupForm" class="panel" hidden>
+    <form class="row" id="ngForm">
+      <label for="ngName">Nombre del nuevo grupo</label>
+      <input class="field" id="ngName" placeholder="Ej.: 2.º BT Informática — Colón" required style="flex:1 1 240px">
+      <button class="btn primary">Crear grupo</button>
+      <button type="button" class="btn ghost" id="ngCancel">Cancelar</button>
+    </form>
+  </div>
+  <div id="localBanner" class="banner" hidden>Esta vista no tiene acceso al guardado en la nube, así que los datos se guardan solo en este navegador. Para guardarlos en una planilla de Google Sheets, conectala en <b>Estudiantes y columnas → Google Sheets</b>, o exportá un respaldo seguido.</div>
+ 
+  <div id="saveBanner" class="banner" hidden style="background:var(--bad-soft)"></div>
+  <div id="gsBanner" class="banner" hidden style="background:var(--warn-soft)"></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="clase" aria-selected="true"><svg class="ic" aria-hidden="true"><use href="#i-dia"/></svg>Clase del día</button>
+    <button class="tab" role="tab" data-tab="resumen" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-resumen"/></svg>Resumen del grupo</button>
+    <button class="tab" role="tab" data-tab="config" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-gente"/></svg>Estudiantes y columnas</button>
+  </nav>
+ 
+  <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div id="fichaBox"></div>
+ 
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const ic = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+function pintarTema(){ const de = document.documentElement, t = de.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.querySelectorAll(".temas button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tema === t))); }
+document.addEventListener("click", ev => { const b = ev.target.closest(".temas button"); if (!b) return;
+  document.documentElement.setAttribute("data-theme", b.dataset.tema); try { localStorage.setItem("libreta:tema", b.dataset.tema); } catch(e) {} pintarTema(); });
+pintarTema();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = p => p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const clone = o => JSON.parse(JSON.stringify(o));
+const pad = n => String(n).padStart(2, "0");
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+const fmtDate = (f, long) => { const [y,m,d] = f.split("-").map(Number); const dt = new Date(y, m-1, d);
+  return long ? `${["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][dt.getDay()]} ${d}/${pad(m)}/${y}` : `${DIAS[dt.getDay()]} ${d}/${pad(m)}`; };
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
+ 
+const TIPOS = {
+  asistencia: { label: "Asistencia (P/A/T/J)", ciclo: ["", "P", "A", "T", "J"] },
+  entrega:    { label: "Entrega (Sí/Parcial/No)", ciclo: ["", "S", "M", "N"] },
+  conducta:   { label: "Conducta (MB/B/R/M)", ciclo: ["", "CMB", "CB", "CR", "CM"] },
+  nota:       { label: "Nota (1 a 10)" },
+  texto:      { label: "Texto libre" }
+};
+const NOTA_MAX = 10, APRUEBA = 5; // 5 o más aprueba; de 1 a 4 va al APE de diciembre
+const sit = n => n >= APRUEBA ? "Aprobado" : "APE";
+/* Las faltas se cuentan por horas de clase.
+   Faltas fictas = horas injustificadas (A) + horas justificadas (J) / 2 + llegadas tarde (T) / 2 (cada tarde es media falta). */
+const LIMITE_DEF = 25, AVISO = 0.8; // límite por defecto: 25 % de las horas; aviso ámbar al llegar al 80 % del límite
+const SCRIPT_VERSION = 8; // versión mínima de Codigo.gs que arma los totales de faltas por horas
+const horasGrupo = g => Number(g.horasPorClase) > 0 ? Number(g.horasPorClase) : 1;
+const horasClase = (g, c) => Number(c && c.horas) > 0 ? Number(c.horas) : horasGrupo(g);
+/* Horas de falta de un estudiante en una clase: A o J cuentan todas las horas del día,
+   salvo que se haya indicado menos con el chip de horas (se guarda en valores[sid][kid + "__h"]). */
+const HKEY = kid => kid + "__h";
+function horasFalta(g, c, sid, kid){
+  const v = val(c, sid, kid); if (v !== "A" && v !== "J") return 0;
+  const h = horasClase(g, c), x = Number(((c.valores || {})[sid] || {})[HKEY(kid)]);
+  return x >= 1 && x < h ? x : h;
+}
+const marcaFalta = (g, c, sid, kid) => { const v = val(c, sid, kid); if (v !== "A" && v !== "J") return SHOW[v] ?? v; const hf = horasFalta(g, c, sid, kid); return hf < horasClase(g, c) ? v + hf : v; };
+const horasRegistradas = g => Object.values(S.clases).reduce((s, c) => s + horasClase(g, c), 0);
+const fmtN = n => String(Math.round(n * 10) / 10).replace(".", ",");
+/* Columnas de un solo día (escrito, oral…): se guardan en la clase, en c.extra = [{ id, nombre, tipo }].
+   En el resumen se juntan por nombre y tipo: todos los "Escrito" forman una columna con su promedio. */
+const TIPOS_DIA = ["nota", "entrega", "texto"];
+const colKey = k => k.tipo + ":" + String(k.nombre || "").trim().toLowerCase();
+/* ---------- tema con formato: se guarda c.temaHtml (limpio) y c.tema (texto plano) ---------- */
+const PALETA = [["Rojo", "#d93025"], ["Naranja", "#e37400"], ["Verde", "#188038"], ["Azul", "#1a73e8"], ["Violeta", "#9334e6"], ["Rosa", "#d01884"], ["Gris", "#80868b"]];
+const COLORES_OK = new Set(PALETA.map(p => p[1]));
+function hexColor(c){
+  c = String(c || "").trim().toLowerCase(); if (/^#[0-9a-f]{6}$/.test(c)) return c;
+  const m = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c); return m ? "#" + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, "0")).join("") : "";
+}
+const TAGS_OK = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", A: "a", UL: "ul", OL: "ol", LI: "li", BR: "br", DIV: "div", P: "div" };
+function limpiarHtml(html){
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const walk = n => [...n.childNodes].map(ch => {
+    if (ch.nodeType === 3) return esc(ch.nodeValue);
+    if (ch.nodeType !== 1 || ch.tagName === "SCRIPT" || ch.tagName === "STYLE") return "";
+    const w = ch.style || {}; let inner = walk(ch);
+    if (ch.tagName === "SPAN" || ch.tagName === "FONT") {
+      if (/bold|[6-9]00/.test(w.fontWeight)) inner = `<b>${inner}</b>`; if (w.fontStyle === "italic") inner = `<i>${inner}</i>`; if (/underline/.test(w.textDecoration || w.textDecorationLine)) inner = `<u>${inner}</u>`;
+      const col = hexColor(w.color || ch.getAttribute("color")); if (COLORES_OK.has(col)) inner = `<span style="color:${col}">${inner}</span>`;
+      return inner; }
+    const cc = hexColor(w.color); if (COLORES_OK.has(cc)) inner = `<span style="color:${cc}">${inner}</span>`;
+    const t = TAGS_OK[ch.tagName]; if (!t) return inner;
+    if (t === "br") return "<br>";
+    if (t === "a") { const h = ch.getAttribute("href") || ""; return /^(https?:|mailto:)/i.test(h) ? `<a href="${esc(h)}" target="_blank" rel="noopener">${inner}</a>` : inner; }
+    return `<${t}>${inner}</${t}>`;
+  }).join("");
+  return walk(doc.body.firstChild).replace(/(<br>)+$/, "");
+}
+function textoPlano(el){
+  let out = "";
+  const walk = n => { for (const ch of n.childNodes) {
+    if (ch.nodeType === 3) { out += ch.nodeValue; continue; }
+    if (ch.nodeType !== 1) continue;
+    const tg = ch.tagName; if (tg === "SCRIPT" || tg === "STYLE") continue;
+    if (tg === "BR") { out += "\n"; continue; }
+    const bloque = /^(DIV|P|LI|UL|OL)$/.test(tg);
+    if (bloque && out && !out.endsWith("\n")) out += "\n";
+    if (tg === "LI") out += "• ";
+    walk(ch);
+    if (tg === "A") { const h = ch.getAttribute("href"); if (h && /^(https?:|mailto:)/i.test(h) && h !== ch.textContent.trim()) out += ` (${h})`; }
+    if (bloque && !out.endsWith("\n")) out += "\n";
+  } };
+  walk(el); return out.replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+function guardarTema(){
+  const el = $("#tema"), c = S.clases[S.fecha]; if (!el || !c) return;
+  const html = limpiarHtml(el.innerHTML), plano = textoPlano(el);
+  c.tema = plano; if (plano && /<(b|i|u|a|ul|ol|li|span)[ >]/.test(html)) c.temaHtml = html; else delete c.temaHtml;
+  if (!plano) el.innerHTML = "";
+  saveClaseSoon(S.fecha);
+}
+let temaSel = null;
+const guardarSel = () => { const s = getSelection(); if (s.rangeCount && $("#tema") && $("#tema").contains(s.anchorNode)) temaSel = s.getRangeAt(0).cloneRange(); };
+const volverSel = () => { const el = $("#tema"); if (!el) return;
+  const sel = getSelection(); if (document.activeElement === el && sel.rangeCount && el.contains(sel.anchorNode)) return; // ya está en el editor: no tocar (se perdería el formato pendiente)
+  el.focus(); if (temaSel) { const s = getSelection(); s.removeAllRanges(); s.addRange(temaSel); } };
+document.addEventListener("selectionchange", guardarSel);
+/* dictado por voz (Chrome / Edge) */
+const RecVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
+const VOZ = !!RecVoz && !(window.claude && window.claude.use); // dentro de claude.ai la página no puede usar el micrófono
+let rec = null;
+let ultimoDictado = { n: "", t: 0 };
+/* Comandos de puntuación dichos en voz alta ("coma", "punto", "punto y aparte"…).
+   "punto" solo se toma como signo al final de la frase o antes de "y seguido", para no romper frases como "el punto de partida". */
+function puntuar(t){
+  let x = " " + t.trim() + " ";
+  const reemplazos = [
+    [/\s+(punto y aparte|punto aparte|nueva línea|nuevo párrafo|salto de línea)\s+/gi, ".\n"],
+    [/\s+punto y coma\s+/gi, "; "],
+    [/\s+dos puntos\s+/gi, ": "],
+    [/\s+puntos suspensivos\s+/gi, "… "],
+    [/\s+(punto y seguido|punto seguido)\s+/gi, ". "],
+    [/\s+coma\s+/gi, ", "],
+    [/\s+(abrir|abre) (signo de )?pregunta\s+/gi, " ¿"],
+    [/\s+(cerrar|cierra) (signo de )?pregunta\s+/gi, "? "],
+    [/\s+(signo de pregunta|signo de interrogación)\s+/gi, "? "],
+    [/\s+(abrir|abre) (signo de )?exclamación\s+/gi, " ¡"],
+    [/\s+(cerrar|cierra) (signo de )?exclamación\s+/gi, "! "],
+    [/\s+(abrir|abre) paréntesis\s+/gi, " ("],
+    [/\s+(cerrar|cierra) paréntesis\s+/gi, ") "],
+    [/\s+punto\s*$/i, ". "]
+  ];
+  for (const [re, v] of reemplazos) x = x.replace(re, v);
+  x = x.replace(/\s+([.,;:?!…)])/g, "$1").replace(/([¿¡(])\s+/g, "$1").replace(/ *\n */g, "\n").replace(/[ \t]+/g, " ");
+  x = x.replace(/([.?!…]\s+|\n|[¿¡])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase()); // mayúscula después de punto
+  return x.replace(/^ +| +$/g, "");
+}
+/* Inserta el texto dictado donde estaba el cursor (o al final), directamente en el documento:
+   sin pasar por el teclado del celular, que si está escribiendo puede duplicar el texto. */
+function insertarDictado(txt){
+  const el = $("#tema"); if (!el) return;
+  let rg = temaSel && el.contains(temaSel.startContainer) ? temaSel.cloneRange() : null;
+  if (!rg) { rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); }
+  rg.deleteContents();
+  const frag = document.createDocumentFragment(); let ultimo = null;
+  txt.split("\n").forEach((parte, i) => { if (i) frag.appendChild(document.createElement("br")); if (parte) frag.appendChild(document.createTextNode(parte)); });
+  ultimo = frag.lastChild; rg.insertNode(frag);
+  if (ultimo) { rg.setStartAfter(ultimo); rg.collapse(true); } temaSel = rg;
+  if (document.activeElement === el) { const s = getSelection(); s.removeAllRanges(); s.addRange(rg); }
+  el.normalize();
+}
+function vozToggle(){
+  const btn = $("#micBtn"), info = $("#vozTxt");
+  if (rec) { rec.activo = false; rec.stop(); return; }
+  if (recCmd) { recCmd.activo = false; recCmd.stop(); } // un solo dictado a la vez
+  /* En Chrome de Android el modo continuo devuelve el texto acumulado varias veces.
+     Ahí se dicta frase por frase (y se reinicia solo), y además se descarta lo que ya se escribió. */
+  const ANDROID = /Android/i.test(navigator.userAgent);
+  let error = "", escrito = ""; // escrito: lo que ya se insertó en esta sesión de dictado
+  const fin = msg => { rec = null; if (btn) btn.setAttribute("aria-pressed", "false"); if (info) { info.textContent = msg || ""; info.hidden = !msg; } };
+  const escribir = t => {
+    let txt = puntuar(t); if (!txt.trim()) return;
+    const norm = x => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
+    const e = norm(escrito), n = norm(txt);
+    if (e && (e === n || e.endsWith(n))) return;                 // repetido: no hacer nada
+    if (e && n.startsWith(e)) txt = txt.slice(Math.min(txt.length, escrito.length)).trim(); // acumulado: solo lo nuevo
+    if (!txt) return;
+    const ahora = Date.now(); if (norm(txt) === ultimoDictado.n && ahora - ultimoDictado.t < 5000) return; // misma frase dos veces seguidas
+    ultimoDictado = { n: norm(txt), t: ahora };
+    const el = $("#tema"); const antes = textoPlano(el);
+    if (/[.,;:]\s*$/.test(antes) && /^[.,;:]/.test(txt)) txt = txt.slice(1); // "…request punto" + "punto y aparte…": un solo punto
+    if (!antes || /[.!?…]\s*$/.test(antes) || /\n$/.test(antes)) txt = txt.replace(/^\p{Ll}/u, m => m.toUpperCase());
+    insertarDictado((antes && !/\s$/.test(antes) && !/^[.,;:?!…)\n]/.test(txt) ? " " : "") + txt);
+    escrito = (escrito + " " + txt).trim();
+    guardarTema();
+  };
+  const arrancar = () => {
+    const r = new RecVoz(); r.lang = "es-UY"; r.continuous = !ANDROID; r.interimResults = !ANDROID; r.activo = true; r.maxAlternatives = 1;
+    r.onstart = () => { btn.setAttribute("aria-pressed", "true"); info.hidden = false; info.textContent = ANDROID ? "Escuchando… el texto aparece después de cada pausa. Tocá 🎤 de nuevo para terminar." : "Escuchando… hablá y tocá 🎤 de nuevo para terminar."; };
+    r.onresult = ev => {
+      let prov = "";
+      if (ANDROID) { // una sola frase por sesión: el último resultado final es la frase completa
+        const res = ev.results[ev.results.length - 1];
+        if (res.isFinal) escribir(res[0].transcript); else prov = res[0].transcript;
+      } else {
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          if (ev.results[i].isFinal) escribir(ev.results[i][0].transcript); else prov += ev.results[i][0].transcript;
+        }
+      }
+      if (info && !ANDROID) info.textContent = prov ? "… " + prov : "Escuchando…";
+    };
+    r.onerror = ev => { error = ev.error === "not-allowed" || ev.error === "service-not-allowed" ? "El navegador no tiene permiso para usar el micrófono. Habilitalo con el candado de la barra de direcciones." : ev.error === "network" ? "El dictado necesita conexión a internet." : ev.error === "no-speech" && !ANDROID ? "No se escuchó nada. Probá de nuevo." : ""; if (error) r.activo = false; };
+    r.onend = () => {
+      if (r.activo && ANDROID && rec === r) { escrito = ""; try { arrancar(); return; } catch(e) {} } // sigue escuchando la próxima frase
+      fin(error);
+    };
+    rec = r;
+    try { volverSel(); r.start(); } catch(e) { fin("No se pudo iniciar el dictado."); }
+  };
+  if (ANDROID) { guardarSel(); const el = $("#tema"); if (el && document.activeElement === el) el.blur(); } // cierra el teclado mientras se dicta
+  arrancar();
+}
+function colsClase(g, c){ // las del día van antes de las columnas de texto libre (Observación)
+  const base = g.columnas || [], ex = (c && c.extra) || [], i = base.findIndex(k => k.tipo === "texto");
+  return i < 0 ? base.concat(ex) : [...base.slice(0, i), ...ex, ...base.slice(i)];
+}
+function colsResumen(g){
+  const out = [...(g.columnas || [])], vistos = new Set(out.map(colKey));
+  for (const f of fechasOrden()) for (const k of S.clases[f].extra || []) { const key = colKey(k); if (vistos.has(key)) continue; vistos.add(key); out.push({ id: "x:" + key, key, nombre: k.nombre, tipo: k.tipo, dia: true }); }
+  if (out.filter(k => k.tipo === "nota").length > 1) out.push({ id: "__todas", nombre: "ponderado", tipo: "nota", todas: true });
+  return out;
+}
+/* Ponderación de notas por categoría (g.pesos = { "nota:escrito": 60, … }); sin peso, cada categoría vale 1. */
+const pesoNota = (g, k) => { const p = (g.pesos || {})[k.key || colKey(k)]; return p === undefined || p === "" ? 1 : Number(p) || 0; };
+const catsNota = g => colsResumen(g).filter(k => k.tipo === "nota" && !k.todas);
+function valR(c, sid, k){
+  if (!k.key) return val(c, sid, k.id);
+  const x = (c.extra || []).find(y => colKey(y) === k.key); return x ? val(c, sid, x.id) : "";
+}
+const asisCol = g => (g.columnas || []).find(k => k.tipo === "asistencia");
+function conteoFaltas(g, sid, kid){
+  let a = 0, j = 0, t = 0;
+  for (const f of Object.keys(S.clases)) { const c = S.clases[f], v = val(c, sid, kid), h = horasFalta(g, c, sid, kid); if (v === "A") a += h; else if (v === "J") j += h; else if (v === "T") t++; }
+  return { a, j, t, fictas: a + j / 2 + t / 2 };
+}
+function limiteFictas(g){
+  const pct = Number(g.limiteFictas) > 0 ? Number(g.limiteFictas) : LIMITE_DEF;
+  const base = Number(g.horasBase) > 0 ? Number(g.horasBase) : horasRegistradas(g); // horas del curso fijadas a mano, o las dictadas (clases registradas)
+  return { pct, base, max: base * pct / 100 };
+}
+function nivelFictas(g, fictas){
+  const L = limiteFictas(g); if (!L.base || !fictas) return "";
+  return fictas > L.max ? "bad" : fictas >= L.max * AVISO ? "warn" : "";
+}
+function badgeFictas(g, e){
+  const k = asisCol(g); if (!k) return "";
+  const x = conteoFaltas(g, e.id, k.id), L = limiteFictas(g);
+  return `<span class="fic ${nivelFictas(g, x.fictas)}" id="fb-${esc(e.id)}" title="Faltas fictas: ${x.a} h injustificadas + ${x.j} h justificadas ÷ 2 + ${x.t} tardes ÷ 2. Límite: ${fmtN(L.max)} (${L.pct} % de ${L.base} horas)">${fmtN(x.fictas)} f</span>`;
+}
+const SHOW = { P:"P", A:"A", T:"T", J:"J", S:"✓", M:"½", N:"✗", CMB:"MB", CB:"B", CR:"R", CM:"M", "":"·" };
+const LONG = { P:"Presente", A:"Ausente", T:"Tarde", J:"Falta justificada", S:"Hecho", M:"Parcial", N:"No hecho", CMB:"Muy buena", CB:"Buena", CR:"Regular", CM:"Mala" };
+const CONDUCTA = ["CMB", "CB", "CR", "CM"];
+const defaultCols = () => [
+  { id: "presente", nombre: "Presente", tipo: "asistencia" },
+  { id: "actividad", nombre: "Actividad", tipo: "entrega" },
+  { id: "nota", nombre: "Nota", tipo: "nota" },
+  { id: "conducta", nombre: "Conducta", tipo: "conducta" },
+  { id: "obs", nombre: "Observación", tipo: "texto" }
+];
+ 
+/* ---------- almacenamiento: nube de claude.ai (db), Google Sheets o navegador ---------- */
+const LSKEY = "libreta-clase:v1", GSKEY = LSKEY + ":sheets";
+const IN_CLAUDE = !!(window.claude && window.claude.use);
+const CAN_SHEETS = !IN_CLAUDE; // dentro de claude.ai la página no puede conectarse a sitios externos
+const SCRIPT_URL_REPO = "https://github.com/adelvalle2010/material-programacion-avanzada/blob/main/libreta-de-clase/google-apps-script/Codigo.gs";
+const Store = {
+  db: null, gs: null, mode: "local",
+  async init(){
+    try { if (IN_CLAUDE) this.db = await window.claude.use("db"); } catch(e) { this.db = null; }
+    if (!this.db && CAN_SHEETS) { try { const o = JSON.parse(localStorage.getItem(GSKEY)); if (o && o.url && o.clave) this.gs = o; } catch(e) {} }
+    this.mode = this.db ? "db" : this.gs ? "sheets" : "local";
+  },
+  async call(accion, extra, cfg){
+    // Google Apps Script atiende de a un pedido por vez (si hay otra pestaña de la libreta leyendo, responde «ocupada»)
+    // y a veces tarda en arrancar: se espera hasta 40 s y se reintenta dos veces antes de mostrar el error.
+    const lectura = accion === "ping" || accion === "grupos" || accion === "clases";
+    for (let intento = 0; ; intento++) {
+      try { return await this._call1(accion, extra, cfg); }
+      catch(e) {
+        const ocupada = e && e.code === "unavailable" && !e.red, red = e && e.red;
+        if (intento >= 2 || !(ocupada || (red && lectura))) throw e;
+        await new Promise(r => setTimeout(r, 2500 * (intento + 1)));
+      }
+    }
+  },
+  async _call1(accion, extra, cfg){
+    cfg = cfg || this.gs; let r, j;
+    const ctl = typeof AbortController === "function" ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), 40000) : 0;
+    try { r = await fetch(cfg.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion, clave: cfg.clave, ...(extra || {}) }), signal: ctl ? ctl.signal : undefined }); }
+    catch(e) { clearTimeout(tm); throw { code: "unavailable", red: true, message: e && e.name === "AbortError" ? "Google Sheets tardó demasiado en responder." : "No se pudo contactar a Google Sheets. Revisá la conexión a internet." }; }
+    try { j = await r.json(); } catch(e) { clearTimeout(tm); throw { code: "sheets_bad", message: "Esa URL no responde como el script de la libreta. Revisá que termine en /exec y que el acceso sea «Cualquier usuario»." }; }
+    clearTimeout(tm);
+    if (!j.ok) throw { code: j.error || "sheets_error", message: j.mensaje || "Google Sheets devolvió un error." };
+    return j.data;
+  },
+  _ls(){ try { return JSON.parse(localStorage.getItem(LSKEY)) || { grupos:{}, clases:{} }; } catch(e) { return { grupos:{}, clases:{} }; } },
+  _lsw(o){ try { localStorage.setItem(LSKEY, JSON.stringify(o)); } catch(e) { throw { code:"local_failed", message:"El navegador no permitió guardar." }; } },
+  async retry(fn){ try { return await fn(); } catch(e) { if (e && e.code === "unavailable") { await new Promise(r => setTimeout(r, 400 + Math.random()*600)); return fn(); } throw e; } },
+  async grupos(){
+    if (this.db) { const s = await this.retry(() => this.db.collection("grupos").get()); return s.docs.map(d => ({ id: d.id, ...clone(d.data()) })); }
+    if (this.gs) return this.call("grupos");
+    const o = this._ls(); return Object.entries(o.grupos).map(([id, g]) => ({ id, ...g }));
+  },
+  async saveGrupo(g){
+    const { id, ...body } = g;
+    if (this.db) return this.retry(() => this.db.doc("grupos/" + id).set(body));
+    if (this.gs) return this.call("guardarGrupo", { grupo: id, datos: body });
+    const o = this._ls(); o.grupos[id] = body; this._lsw(o);
+  },
+  async deleteGrupo(id, fechas){
+    if (this.db) { for (const f of fechas) await this.retry(() => this.db.doc(`grupos/${id}/clases/${f}`).delete()); return this.retry(() => this.db.doc("grupos/" + id).delete()); }
+    if (this.gs) return this.call("borrarGrupo", { grupo: id });
+    const o = this._ls(); delete o.grupos[id]; delete o.clases[id]; this._lsw(o);
+  },
+  async clases(gid){
+    if (this.db) { const s = await this.retry(() => this.db.collection(`grupos/${gid}/clases`).get()); const r = {}; s.docs.forEach(d => r[d.id] = clone(d.data())); return r; }
+    if (this.gs) return this.call("clases", { grupo: gid });
+    const o = this._ls(); return clone(o.clases[gid] || {});
+  },
+  async saveClase(gid, c){
+    if (this.db) return this.retry(() => this.db.doc(`grupos/${gid}/clases/${c.fecha}`).set(c));
+    if (this.gs) return this.call("guardarClase", { grupo: gid, clase: c });
+    const o = this._ls(); (o.clases[gid] ||= {})[c.fecha] = c; this._lsw(o);
+  },
+  async deleteClase(gid, f){
+    if (this.db) return this.retry(() => this.db.doc(`grupos/${gid}/clases/${f}`).delete());
+    if (this.gs) return this.call("borrarClase", { grupo: gid, fecha: f });
+    const o = this._ls(); if (o.clases[gid]) delete o.clases[gid][f]; this._lsw(o);
+  },
+  async importar(grupos){ // grupos con sus clases adentro, de una sola vez
+    if (this.gs) return this.call("importar", { grupos });
+    for (const gr of grupos) { const { clases, ...g } = gr; await this.saveGrupo(g); for (const [f, c] of Object.entries(clases || {})) await this.saveClase(g.id, { ...c, fecha: f }); }
+  },
+  localTiene(){ const o = this._ls(); return Object.keys(o.grupos).length; },
+  localTodo(){ const o = this._ls(); return Object.entries(o.grupos).map(([id, g]) => ({ id, ...g, clases: o.clases[id] || {} })); }
+};
+ 
+/* ---------- estado ---------- */
+const S = { grupos: [], gid: null, clases: {}, fecha: todayStr(), tab: "clase", confirm: null, loading: true };
+const grupo = () => S.grupos.find(g => g.id === S.gid);
+const activos = g => (g.estudiantes || []).filter(e => e.activo !== false);
+const fechasOrden = () => Object.keys(S.clases).sort();
+ 
+/* guardado con espera (debounce) por documento */
+const pend = new Map(); let inflight = 0;
+function setStatus(kind, txt){ const el = $("#status"); el.className = "status " + kind; $("#statusTxt").textContent = txt; }
+function idleStatus(){
+  if (Store.mode === "local") setStatus("local", "Guardado en este navegador");
+  else if (Store.mode === "sheets") { const d = new Date(); setStatus("", `Guardado en Google Sheets ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
+  else { const d = new Date(); setStatus("", `Guardado ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
+}
+const fallidos = new Map(); // guardados que fallaron: se pueden reintentar y avisan antes de cerrar la página
+function bannerFallidos(msg){
+  const b = $("#saveBanner"); if (!b) return;
+  if (!fallidos.size) { b.hidden = true; return; }
+  b.hidden = false;
+  b.innerHTML = `<b>Hay ${fallidos.size} cambio${fallidos.size === 1 ? "" : "s"} sin guardar.</b> ${esc(msg || "")} No cierres ni recargues la página hasta guardarlos. <button class="btn sm" data-act="reintentar">Reintentar ahora</button>`;
+}
+async function correr(key, fn){
+  inflight++;
+  try { await fn(); fallidos.delete(key); if (!--inflight && !pend.size) { fallidos.size ? setStatus("error", "Hay cambios sin guardar") : idleStatus(); } bannerFallidos(); }
+  catch(e) { inflight--; console.error(e); fallidos.set(key, fn);
+    const msg = e && e.code === "quota_exceeded" ? "Sin espacio para guardar." : Store.mode === "sheets" && e && e.message ? "Google Sheets respondió: " + e.message : "Revisá la conexión.";
+    setStatus("error", "No se guardó"); bannerFallidos(msg); }
+}
+function schedule(key, fn){
+  setStatus("saving", "Guardando…");
+  fallidos.delete(key); // el guardado nuevo de ese documento reemplaza al que falló
+  clearTimeout(pend.get(key)); pend.set(key, setTimeout(() => { pend.delete(key); correr(key, fn); }, 650));
+}
+const saveGrupoSoon = () => { const g = clone(grupo()); schedule("g:" + g.id, () => Store.saveGrupo(g)); };
+const saveClaseSoon = f => { const gid = S.gid; const c = clone(S.clases[f]); c.actualizado = new Date().toISOString(); schedule(`c:${gid}:${f}`, () => Store.saveClase(gid, c)); };
+/* Al volver a la pestaña (o cada 2 minutos si está a la vista), se releen los datos de Google Sheets,
+   para ver lo que se cargó desde otro equipo. No se hace si hay cambios pendientes de guardar. */
+let ultimaLectura = Date.now();
+async function refrescar(forzar){
+  if (Store.mode !== "sheets" || S.loading || pend.size || inflight || fallidos.size) return;
+  if (!forzar && Date.now() - ultimaLectura < 30000) return;
+  const ae = document.activeElement; if (!forzar && ae && (ae.id === "tema" || /INPUT|TEXTAREA|SELECT/.test(ae.tagName))) return; // no interrumpir mientras escribe
+  ultimaLectura = Date.now();
+  try {
+    const grupos = await Store.grupos(), gid = S.gid, clases = gid ? await Store.clases(gid) : {};
+    if (pend.size || inflight || fallidos.size || S.gid !== gid) return; // editó mientras se leía: no pisar
+    grupos.sort((a, b) => (a.creado || "").localeCompare(b.creado || ""));
+    const antes = JSON.stringify([S.grupos, S.clases]);
+    S.grupos = grupos; S.clases = clases;
+    if (!grupo()) S.gid = (S.grupos[0] || {}).id || null;
+    if (JSON.stringify([S.grupos, S.clases]) !== antes) { render(); toast("Datos actualizados desde Google Sheets"); }
+    idleStatus();
+  } catch(e) { console.error(e); }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refrescar(); });
+setInterval(() => { if (document.visibilityState === "visible") refrescar(); }, 120000);
+window.addEventListener("beforeunload", e => { if (pend.size || inflight || fallidos.size) { e.preventDefault(); e.returnValue = ""; } });
+ 
+/* ---------- arranque ---------- */
+async function boot(){
+  render();
+  await Store.init();
+  await loadAll();
+}
+async function loadAll(){
+  S.loading = true; S.loadError = null; S.grupos = []; render();
+  $("#localBanner").hidden = Store.mode !== "local";
+  $("#refrescarBtn").hidden = Store.mode !== "sheets"; ultimaLectura = Date.now();
+  setStatus("saving", Store.mode === "sheets" ? "Leyendo Google Sheets…" : "Cargando…");
+  let fallo = false;
+  $("#gsBanner").hidden = true;
+  let last = null; try { last = localStorage.getItem(LSKEY + ":ultimo"); } catch(e) {}
+  const pre = Store.mode === "sheets" && last ? Store.clases(last).catch(() => null) : null; // se pide a la vez que los grupos: carga en la mitad de tiempo
+  try { S.grupos = await Store.grupos(); }
+  catch(e) { console.error(e); fallo = true; S.loadError = e && e.message || "error"; setStatus("error", Store.mode === "sheets" ? "No se pudo leer Google Sheets" : "No se pudieron leer los datos"); }
+  S.grupos.sort((a,b) => (a.creado || "").localeCompare(b.creado || ""));
+  for (const g of S.grupos) { // agrega una sola vez la columna Conducta a los grupos creados antes de que existiera
+    if (g.conductaAgregada || (g.columnas || []).some(k => k.tipo === "conducta")) continue;
+    g.columnas ||= []; const i = g.columnas.findIndex(k => k.tipo === "texto");
+    g.columnas.splice(i < 0 ? g.columnas.length : i, 0, { id: "conducta", nombre: "Conducta", tipo: "conducta" });
+    g.conductaAgregada = true; const { id, ...body } = g;
+    try { await Store.saveGrupo({ id, ...body }); } catch(e) { console.error(e); }
+  }
+  S.gid = (S.grupos.find(g => g.id === last) || S.grupos[0] || {}).id || null;
+  await loadClases(S.gid === last ? pre : null);
+  S.loadError = fallo ? (S.loadError || "No se pudo leer Google Sheets.") : null;
+  S.loading = false; if (!fallo) idleStatus(); render();
+  if (!fallo) recibirDeAnep();
+  if (Store.mode === "sheets" && !fallo) chequearScript();
+}
+function chequearScript(){
+  Store.call("ping").then(info => { if (!(info && info.version >= SCRIPT_VERSION)) {
+    const b = $("#gsBanner"); const vr = info && info.version ? "la versión " + info.version : "una versión sin número (la primera)"; b.innerHTML = `La URL conectada responde con ${vr} del script, y la libreta necesita la versión ${SCRIPT_VERSION}. Por eso la hoja de cada grupo no muestra los totales de faltas. Pegá el <a href="${SCRIPT_URL_REPO}" target="_blank" rel="noopener">código nuevo</a> en Apps Script y hacé <b>Implementar → Gestionar implementaciones → Editar → Versión: Nueva versión</b>. Después, en la planilla, usá el menú <b>Libreta → Rehacer hojas de los grupos</b>.`; b.hidden = false; } }).catch(() => {});
+
+}
+function recibirDeAnep(){ // el marcador abre la libreta con #anep={…}: se muestra la vista previa (nada se aplica sin tocar «Traer»)
+  const h = location.hash; if (!h.startsWith("#anep=")) return;
+  let txt = ""; try { txt = decodeURIComponent(h.slice(6)); } catch(e) {}
+  try { history.replaceState(null, "", location.pathname + location.search); } catch(e) {}
+  const g = grupo(); if (!g) { toast("Primero creá o conectá un grupo"); return; }
+  S.tab = "resumen"; (S.mig ||= {}).open = true; cargarImp(g, "LIBRETA-ANEP " + txt);
+}
+window.addEventListener("hashchange", () => { if (!S.loading) recibirDeAnep(); });
+async function loadClases(pre){
+  S.clases = {};
+  if (!S.gid) return;
+  const ya = pre ? await pre : null;
+  try { S.clases = ya || await Store.clases(S.gid); } catch(e) { console.error(e); setStatus("error", "No se pudieron leer las clases"); }
+  try { localStorage.setItem(LSKEY + ":ultimo", S.gid); } catch(e) {}
+}
+ 
+/* ---------- render general ---------- */
+function render(){
+  if (rec) { rec.activo = false; try { rec.stop(); } catch(e) {} rec = null; }
+  const sel = $("#groupSel");
+  sel.innerHTML = S.grupos.length ? S.grupos.map(g => `<option value="${esc(g.id)}"${g.id===S.gid?" selected":""}>${esc(g.nombre)}</option>`).join("") : `<option>Sin grupos</option>`;
+  sel.disabled = !S.grupos.length;
+  const g = grupo();
+  $("#groupLabel").textContent = S.loading ? "Cargando…" : g ? `${activos(g).length} estudiantes · ${Object.keys(S.clases).length} clases registradas` : "Sin grupo";
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === S.tab)));
+  const v = $("#view");
+  if (S.loadError && !S.grupos.length) { v.innerHTML = `<div class="panel"><div class="empty"><h2>No se pudieron leer tus datos de Google Sheets</h2>
+    <p>${esc(S.loadError)}</p><p class="muted">Tus datos siguen en la planilla: no se perdió nada. Suele pasar si Google tarda en responder o si hay otra pestaña de la libreta abierta leyendo al mismo tiempo. Cerrá las otras pestañas de la libreta y tocá <b>Reintentar</b>.</p>
+    <button class="btn primary" id="reintentarBtn">${ic("refrescar")}Reintentar</button></div></div>`; return; }
+  if (S.loading) { v.innerHTML = `<div class="panel"><div class="empty">Cargando tus datos guardados…</div></div>`; return; }
+  if (!g) { v.innerHTML = `<div class="panel"><div class="empty"><h2>Todavía no hay grupos</h2><p>Creá un grupo con <b>+ Grupo</b>. Después cargás la lista de estudiantes pegándola o importando tu planilla de Excel.</p><button class="btn primary" data-act="newgroup">Crear el primer grupo</button>${Store.mode === "sheets" && Store.localTiene() ? `<p style="margin:8px 0 0">La planilla de Google Sheets está vacía, pero este navegador tiene datos guardados.</p><button class="btn" data-act="gsSubir">Copiar a Sheets lo guardado en este navegador</button>` : ""}${S.gsMsg ? `<p class="muted">${esc(S.gsMsg)}</p>` : ""}</div></div>${CAN_SHEETS && Store.mode !== "sheets" ? `<div style="height:18px"></div><div class="banner"><b>¿Ya tenés tus grupos en una planilla de Google Sheets?</b> Conectala acá abajo y aparecen solos. No hace falta crear ningún grupo.</div><div style="height:18px"></div>${viewSheets()}` : ""}`; return; }
+  v.innerHTML = S.tab === "clase" ? viewClase(g) : S.tab === "resumen" ? viewResumen(g) : viewConfig(g);
+  if (S.tab === "clase") updateStats();
+  if (S.tab === "config") pesosPct(g);
+  pintarFicha();
+}
+ 
+/* ---------- vista: clase del día ---------- */
+function viewClase(g){
+  const fechas = fechasOrden().reverse();
+  const c = S.clases[S.fecha];
+  const est = activos(g), cols = colsClase(g, c);
+  const chips = fechas.map(f => `<button class="chip" data-act="pick" data-f="${f}" aria-pressed="${f===S.fecha}">${fmtDate(f)}</button>`).join("");
+  let body;
+  if (!est.length) body = `<div class="empty">Este grupo no tiene estudiantes todavía.<button class="btn primary" data-act="tab" data-t="config">Cargar estudiantes</button></div>`;
+  else if (!c) body = `<div class="empty"><h3>No hay registro para el ${fmtDate(S.fecha, true)}</h3><p>Creá la clase para empezar a marcar asistencia, actividades y notas.</p><button class="btn primary" data-act="create">Crear clase del ${fmtDate(S.fecha)}</button></div>`;
+  else {
+    const esDia = k => (c.extra || []).includes(k);
+    const head = `<tr><th class="name">Estudiante</th>${cols.map(k => `<th class="${k.tipo==="texto"?"":"c"}${esDia(k) ? " xdia" : ""}">${esc(k.nombre)}${esDia(k) ? ` <button class="xdel" data-act="ask" data-k="delx:${esc(k.id)}" title="Quitar esta columna de este día" aria-label="Quitar la columna ${esc(k.nombre)}">✕</button>` : ""}</th>`).join("")}</tr>`;
+    const usados = new Map([["nota:escrito", { nombre: "Escrito", tipo: "nota" }], ["nota:oral", { nombre: "Oral", tipo: "nota" }]]);
+    for (const f of fechasOrden()) for (const k of S.clases[f].extra || []) if (!usados.has(colKey(k))) usados.set(colKey(k), { nombre: k.nombre, tipo: k.tipo });
+    const enDia = new Set((c.extra || []).map(colKey));
+    const rapidos = [...usados].filter(([key]) => !enDia.has(key)).map(([, k]) => `<button class="btn sm" data-act="addx" data-n="${esc(k.nombre)}" data-t="${k.tipo}">+ ${esc(k.nombre)}</button>`).join("");
+    const xconf = S.confirm && S.confirm.startsWith("delx:") ? (c.extra || []).find(k => k.id === S.confirm.slice(5)) : null;
+    const barra = `<div class="row addx">
+        <span class="muted">Columnas solo para este día:</span>${rapidos}
+        <form class="row" id="addX"><input class="field" id="xName" placeholder="Otra (ej.: Trabajo práctico)" aria-label="Nombre de la columna del día" style="flex:1 1 170px"><select class="field" id="xTipo" aria-label="Tipo">${TIPOS_DIA.map(t => `<option value="${t}">${TIPOS[t].label}</option>`).join("")}</select><button class="btn sm">Agregar</button></form>
+        ${xconf ? `<span class="confirm">¿Quitar «${esc(xconf.nombre)}» de este día y lo anotado ahí? <button class="btn sm danger" data-act="delx-yes">Quitar</button><button class="btn sm" data-act="cancel">No</button></span>` : ""}
+      </div>`;
+    const rows = est.map((e, i) => `<tr data-sid="${esc(e.id)}"><td class="name"><span class="idx">${i+1}</span><button class="nm" data-act="ficha" data-sid="${esc(e.id)}" title="Ver la ficha de ${esc(e.nombre)}">${esc(e.nombre)}</button>${badgeFictas(g, e)}</td>${cols.map(k => cell(c, e, k)).join("")}</tr>`).join("");
+    const asis = cols.find(k => k.tipo === "asistencia");
+    const conf = S.confirm === "delclase" ? `<span class="confirm">¿Borrar esta clase y todo lo marcado? <button class="btn sm danger" data-act="delclase-yes">Borrar</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn sm danger ghost" data-act="ask" data-k="delclase">Borrar clase</button>`;
+    body = `
+      <div class="temabox">
+        <div class="row spread"><span class="muted" id="temaLbl">Tema</span>
+          <div class="tbar" role="toolbar" aria-label="Formato del tema">
+            <button class="tb" data-cmd="bold" title="Negrita (Ctrl+B)" aria-label="Negrita"><b>N</b></button>
+            <button class="tb" data-cmd="italic" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><i>K</i></button>
+            <button class="tb" data-cmd="underline" title="Subrayado (Ctrl+U)" aria-label="Subrayado"><u>S</u></button>
+            <button class="tb" data-cmd="colores" title="Color del texto" aria-label="Color del texto" aria-expanded="false"><span class="acolor">A</span></button>
+            <button class="tb" data-cmd="insertUnorderedList" title="Lista con viñetas" aria-label="Lista">•≡</button>
+            <button class="tb" data-cmd="link" title="Insertar link" aria-label="Insertar link">🔗</button>
+            <button class="tb" data-cmd="removeFormat" title="Quitar formato" aria-label="Quitar formato">⌫</button>
+            ${VOZ ? `<button class="tb mic" id="micBtn" data-cmd="mic" title="Dictar por voz" aria-label="Dictar por voz" aria-pressed="false">🎤</button>` : `<span class="muted" style="font-size:.78rem" title="El dictado por voz funciona en Chrome y Edge. En Windows también podés usar Windows + H.">🎤 ${(window.claude && window.claude.use) ? "en la libreta descargada" : "no disponible en este navegador"}</span>`}
+          </div></div>
+        <div class="tema" id="tema" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="temaLbl" data-ph="Ej.: Formularios JSP y request.getParameter">${c.temaHtml ? limpiarHtml(c.temaHtml) : esc(c.tema || "").replace(/\n/g, "<br>")}</div>
+        <div class="row" id="colorRow" hidden role="group" aria-label="Elegir color">${PALETA.map(([n, h]) => `<button class="tb sw" data-cmd="color" data-color="${h}" title="${n}" aria-label="${n}"><span style="background:${h}"></span></button>`).join("")}<button class="tb" data-cmd="color" data-color="" title="Sin color (el color normal del texto)">Sin color</button></div>
+        <div class="row" id="linkRow" hidden><input class="field" id="linkUrl" placeholder="https://…" aria-label="Dirección del link" style="flex:1 1 220px"><button class="btn sm primary" data-act="linkOk">Insertar link</button><button class="btn sm" data-act="linkNo">Cancelar</button></div>
+        <div class="muted" id="vozTxt" style="font-size:.85rem" hidden></div>
+      </div>
+      <div class="row spread">
+        <div class="row"><label for="horas" class="muted">Horas</label><input class="field cfgnum" id="horas" type="number" min="1" max="8" step="1" value="${esc(horasClase(g, c))}" title="Horas de clase de este día: cada ausencia cuenta esa cantidad de faltas"></div>
+        <div class="row">${asis ? `<button class="btn sm" data-act="allP" data-c="${asis.id}">Todos presentes</button>` : ""}${conf}</div>
+      </div>
+      ${vozBox()}
+      <div class="stats" id="stats"></div>
+      <div class="sheet"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+      ${barra}
+      <div class="legend"><span><b>P</b>Presente</span><span><b>A</b>Ausente</span><span><b>T</b>Tarde</span><span><b>J</b>Justificada</span><span><b>2h</b>Horas que faltó: tocar para cambiar si se fue antes o llegó a otra hora</span><span><b>f</b>Faltas fictas acumuladas, por horas (A + J/2 + T/2)</span><span><b>✓</b>Hecho</span><span><b>½</b>Parcial</span><span><b>✗</b>No hecho</span><span><b>MB B R M</b>Conducta: muy buena, buena, regular, mala</span><span>Tocá una celda para cambiar su valor, o usá el teclado: P A T J en asistencia.</span><span>Tocá un nombre para ver su ficha.</span></div>`;
+  }
+  return `<section class="panel">
+    <div class="row spread">
+      <div class="row"><label for="fecha"><h2>Clase del</h2></label>
+        <button class="btn sm navc" data-act="prevc" title="Clase anterior registrada" aria-label="Clase anterior" ${fechasOrden().some(f => f < S.fecha) ? "" : "disabled"}>‹</button>
+        <input type="date" class="field" id="fecha" value="${S.fecha}">
+        <button class="btn sm navc" data-act="nextc" title="Clase siguiente registrada" aria-label="Clase siguiente" ${fechasOrden().some(f => f > S.fecha) ? "" : "disabled"}>›</button>
+        <button class="btn sm ghost" data-act="today">Hoy</button></div>
+      <span class="muted">${fmtDate(S.fecha, true)}</span>
+    </div>
+    ${fechas.length ? `<div class="dates" aria-label="Clases registradas">${chips}</div>` : ""}
+    ${body}
+  </section>`;
+}
+function val(c, sid, cid){ return ((c.valores || {})[sid] || {})[cid] ?? ""; }
+function cell(c, e, k){
+  const v = val(c, e.id, k.id);
+  const a = `data-s="${esc(e.id)}" data-c="${esc(k.id)}"`;
+  if (k.tipo === "asistencia") return `<td class="c" id="cl-${esc(e.id)}-${esc(k.id)}">${asisInner(c, e, k)}</td>`;
+  if (TIPOS[k.tipo] && TIPOS[k.tipo].ciclo)
+    return `<td class="c"><button class="cyc" data-act="cyc" ${a} data-v="${esc(v)}" title="${esc(LONG[v]||"Sin marcar")}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}: ${esc(LONG[v]||"sin marcar")}">${SHOW[v] ?? esc(v)}</button></td>`;
+  if (k.tipo === "nota")
+    { const nn = Number(v), cls = v === "" ? "" : nn >= APRUEBA ? " aprob" : " ape";
+    return `<td class="c"><input class="cellin nota${cls}" inputmode="decimal" ${a} id="n-${esc(e.id)}-${esc(k.id)}" value="${esc(v)}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}" title="1 a ${NOTA_MAX}; aprueba con ${APRUEBA}"></td>`; }
+  return `<td><input class="cellin txt" ${a} id="t-${esc(e.id)}-${esc(k.id)}" value="${esc(v)}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}"></td>`;
+}
+function asisInner(c, e, k){
+  const g = grupo(), v = val(c, e.id, k.id), a = `data-s="${esc(e.id)}" data-c="${esc(k.id)}"`, h = horasClase(g, c);
+  const btn = `<button class="cyc" data-act="cyc" ${a} data-v="${esc(v)}" title="${esc(LONG[v]||"Sin marcar")}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}: ${esc(LONG[v]||"sin marcar")}">${esc(marcaFalta(g, c, e.id, k.id))}</button>`;
+  if ((v !== "A" && v !== "J") || h < 2) return btn;
+  const hf = horasFalta(g, c, e.id, k.id);
+  return `<span class="asis">${btn}<button class="hchip${hf < h ? " parcial" : ""}" data-act="hfalta" ${a} title="Horas que faltó (tocar para cambiar)" aria-label="Horas de falta de ${esc(e.nombre)}: ${hf} de ${h}">${hf}h</button></span>`;
+}
+function refrescarAsis(g, sid){
+  const c = S.clases[S.fecha], e = g.estudiantes.find(x => x.id === sid); if (!c || !e) return;
+  for (const k of (g.columnas || []).filter(k => k.tipo === "asistencia")) { const td = document.getElementById(`cl-${sid}-${k.id}`); if (td) td.innerHTML = asisInner(c, e, k); }
+  const fb = document.getElementById("fb-" + sid); if (fb) fb.outerHTML = badgeFictas(g, e);
+}
+/* ---------- carga por voz (o escribiendo): "Ana presente, Luis ausente dos horas, Mateo nota 8" ---------- */
+const sinAcentos = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* clave fonética simple, para que "Thiago" encuentre a "Tihago" y "Naomi" a "Nahomi" */
+const fon = w => w.replace(/ch/g, "\u0001").replace(/h/g, "").replace(/\u0001/g, "ch").replace(/qu/g, "k").replace(/c([ei])/g, "s$1").replace(/c/g, "k")
+  .replace(/z/g, "s").replace(/v/g, "b").replace(/ll/g, "i").replace(/y/g, "i").replace(/w/g, "u").replace(/(.)\1+/g, "$1");
+function lev(a, b){
+  if (a === b) return 0; const m = a.length, n = b.length; if (!m || !n) return m || n;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+const NUM = { cero: 0, uno: 1, una: 1, un: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10 };
+const VOCAB = new Set(("presente presentes vino estuvo aca aqui ausente ausentes falto falta faltas no tarde llego justificada justificado justifico justificar certificado " +
+  "hora horas nota notas puso saco conducta comportamiento porto muy buena bueno buen bien regular mala malo mal excelente menos mas actividad tarea trabajo trabajos ejercicio ejercicios " +
+  "entrego entrega hizo hecha hecho completa completo completo termino si parcial medias medio mitad incompleta incompleto nada observacion observaciones comentario anotar anota " +
+  "y con todos todas resto demas el la lo los las de del se fue antes retiro tiene tuvo saca le en " + Object.keys(NUM).join(" ")).split(" "));
+const OBS_KW = new Set(["observacion", "observaciones", "comentario", "anotar", "anota"]);
+const vozHist = { log: [], undo: [] };
+let recCmd = null;
+function tokenizar(txt){
+  const raw = String(txt || "").replace(/(\d)[.,](\d)/g, "$1\u0002$2").split(/[\s,;:!?¡¿()"]+|\.+/).filter(Boolean).map(w => w.replace(/\u0002/g, ","));
+  return raw.map(w => ({ raw: w, n: sinAcentos(w).replace(/,/g, ".").replace(/[^a-z0-9ñ.]/g, "").replace(/ñ/g, "n") })).filter(t => t.n);
+}
+function indiceNombres(g){
+  const idx = new Map(); // clave fonética -> Set(ids)
+  const add = (k, id) => { if (!k) return; if (!idx.has(k)) idx.set(k, new Set()); idx.get(k).add(id); };
+  for (const e of activos(g)) {
+    const p = tokenizar(e.nombre).map(t => fon(t.n)).filter(Boolean); if (!p.length) continue;
+    add(p.join(" "), e.id); add(p[0], e.id); add(p[p.length - 1], e.id);
+    if (p.length > 2) { add(p[0] + " " + p[p.length - 1], e.id); add(p[0] + " " + p[1], e.id); add(p.slice(1).join(" "), e.id); }
+  }
+  return idx;
+}
+/* busca un nombre que empiece en la posición i: primero exacto (el más largo), después parecido */
+function buscarNombre(toks, i, idx){
+  const libre = t => t && !VOCAB.has(t.n) && !/^\d/.test(t.n);
+  if (!libre(toks[i])) return null;
+  for (let n = 3; n >= 1; n--) {
+    const seg = toks.slice(i, i + n); if (seg.length < n || !seg.every(libre)) continue;
+    const k = seg.map(t => fon(t.n)).join(" "), ids = idx.get(k);
+    if (ids) return { ids: [...ids], n, dicho: seg.map(t => t.raw).join(" ") };
+  }
+  for (let n = 2; n >= 1; n--) {
+    const seg = toks.slice(i, i + n); if (seg.length < n || !seg.every(libre)) continue;
+    const k = seg.map(t => fon(t.n)).join(" "); if (k.length < 4) continue;
+    const tope = k.length >= 8 ? 2 : 1; let mejor = tope + 1, ids = new Set();
+    for (const [clave, s] of idx) { if (clave.split(" ").length !== n) continue; const d = lev(k, clave); if (d < mejor) { mejor = d; ids = new Set(s); } else if (d === mejor) s.forEach(x => ids.add(x)); }
+    if (mejor <= tope) return { ids: [...ids], n, dicho: seg.map(t => t.raw).join(" "), aprox: true };
+  }
+  return null;
+}
+function colPorNombre(cols, s, tipo){ // la columna de ese tipo cuyo nombre aparece en lo dicho (la de nombre más largo)
+  const cand = cols.filter(k => k.tipo === tipo);
+  const conNombre = cand.filter(k => { const w = tokenizar(k.nombre).map(t => t.n); return w.length && w.every(x => (" " + s + " ").includes(" " + x + " ")); })
+    .sort((a, b) => b.nombre.length - a.nombre.length);
+  return conNombre[0] || cand.find(k => (grupo().columnas || []).includes(k)) || cand[0] || null;
+}
+function numeroEn(s){ // "8", "7,5", "siete", "siete y medio", "seis con cinco"
+  const re = /\b(\d+(?:\.\d+)?|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)(?:\s+(?:y|con)\s+(medio|cinco|5))?\b/;
+  const m = re.exec(s); if (!m) return null;
+  let n = /^\d/.test(m[1]) ? Number(m[1]) : NUM[m[1]]; if (m[2]) n += 0.5;
+  return { n, txt: m[0] };
+}
+/* traduce lo dicho sobre un estudiante en cambios de columnas */
+function accionesDe(g, c, toks){
+  const cols = colsClase(g, c), ops = [], s = toks.map(t => t.n).join(" ");
+  let resto = s;
+  const io = toks.findIndex(t => OBS_KW.has(t.n));
+  if (io >= 0) {
+    const k = cols.find(x => x.tipo === "texto"); let txt = puntuar(toks.slice(io + 1).map(t => t.raw).join(" "));
+    txt = txt.replace(/^\p{Ll}/u, m => m.toUpperCase());
+    if (k && txt) ops.push({ k, v: txt, obs: true });
+    resto = toks.slice(0, io).map(t => t.n).join(" ");
+  }
+  const kA = cols.find(x => x.tipo === "asistencia");
+  let h = null; const mh = /\b(\d+|un|una|uno|dos|tres|cuatro|cinco|seis)\s+horas?\b/.exec(resto);
+  if (mh) { h = /^\d/.test(mh[1]) ? Number(mh[1]) : NUM[mh[1]]; resto = resto.replace(mh[0], " "); }
+  if (kA) {
+    let v = "";
+    if (/\bjustific|\bcertificado\b/.test(resto)) v = "J";
+    else if (/\btarde\b/.test(resto)) v = "T";
+    else if (/\b(ausentes?|falto|falta|no vino|no esta|se fue|se retiro)\b/.test(resto)) v = "A";
+    else if (/\b(presentes?|vino|estuvo|aca|aqui)\b/.test(resto)) v = "P";
+    else if (h) v = "A";
+    if (v) ops.push({ k: kA, v, h: (v === "A" || v === "J") && h ? h : null });
+  }
+  const kE = colPorNombre(cols, resto, "entrega");
+  const hayEntrega = kE && (/\b(actividad|tarea|trabajos?|ejercicios?|entrego|entrega|hizo|termino|completo)\b/.test(resto) || (tokenizar(kE.nombre).length && tokenizar(kE.nombre).every(t => (" " + resto + " ").includes(" " + t.n + " "))));
+  if (hayEntrega) {
+    const v = /\b(no (la |lo |el |los |las )?(hizo|entrego|termino|completo|trajo|hecha|hecho)|nada|(actividad|tarea|trabajos?|ejercicios?) no)\b/.test(resto) ? "N"
+      : /\b(parcial|a medias|medio|mitad|incomplet[oa])\b/.test(resto) ? "M" : "S";
+    ops.push({ k: kE, v });
+  }
+  const kC = cols.find(x => x.tipo === "conducta");
+  if (kC && (/\b(conducta|comportamiento|porto)\b/.test(resto) || !hayEntrega)) {
+    const v = /\b(muy (buena|bueno|bien)|excelente)\b/.test(resto) ? "CMB" : /\b(regular|mas o menos)\b/.test(resto) ? "CR" : /\b(mala|malo|mal)\b/.test(resto) ? "CM" : /\b(buena|bueno|bien)\b/.test(resto) ? "CB" : "";
+    if (v) ops.push({ k: kC, v });
+  }
+  const num = numeroEn(resto.replace(/\b(muy|mas o menos)\b/g, " "));
+  if (num) {
+    const kN = colPorNombre(cols, resto, "nota");
+    if (kN) ops.push(num.n >= 1 && num.n <= NOTA_MAX ? { k: kN, v: String(num.n) } : { error: `La nota tiene que ir de 1 a ${NOTA_MAX} (escuché ${fmtN(num.n)}).` });
+  }
+  return ops;
+}
+function describir(op, g, c){
+  if (op.k.tipo === "asistencia") return LONG[op.v] + (op.h && op.h < horasClase(g, c) ? ` (${op.h} h)` : "");
+  if (op.k.tipo === "nota") return `${op.k.nombre} ${fmtN(Number(op.v))}`;
+  if (op.k.tipo === "texto") return `${op.k.nombre}: «${op.v}»`;
+  return `${op.k.nombre}: ${LONG[op.v] || op.v}`;
+}
+function vozLog(ok, txt){ vozHist.log.unshift({ ok, txt }); vozHist.log.length = Math.min(vozHist.log.length, 12); const ul = $("#vozLog"); if (ul) ul.innerHTML = vozLogHtml(); }
+const vozLogHtml = () => vozHist.log.map(x => `<li class="${x.ok ? "ok" : "no"}">${x.ok ? "✓" : "?"} ${esc(x.txt)}</li>`).join("");
+function deshacerVoz(){
+  const paso = vozHist.undo.pop(); if (!paso) { toast("No hay nada para deshacer"); return; }
+  const g = grupo();
+  for (const u of paso.cambios.slice().reverse()) {
+    const c = S.clases[u.fecha]; if (!c) continue; c.valores ||= {}; c.valores[u.sid] ||= {};
+    if (u.prev === "") delete c.valores[u.sid][u.kid]; else c.valores[u.sid][u.kid] = u.prev;
+    if (u.prevH === undefined) delete c.valores[u.sid][HKEY(u.kid)]; else c.valores[u.sid][HKEY(u.kid)] = u.prevH;
+    saveClaseSoon(u.fecha);
+  }
+  vozLog(true, "Deshecho: " + paso.txt); if (S.tab === "clase") render();
+  if (g) marcarFilas(paso.cambios.map(u => u.sid));
+}
+function marcarFilas(ids){ for (const id of new Set(ids)) { const tr = document.querySelector(`tr[data-sid="${CSS.escape(id)}"]`); if (tr) { tr.classList.remove("flash"); void tr.offsetWidth; tr.classList.add("flash"); } } }
+/* ejecuta un comando dicho o escrito; devuelve true si hizo algún cambio */
+function ejecutarComando(texto){
+  const g = grupo(); if (!g) return false;
+  let toks = tokenizar(texto); if (!toks.length) return false;
+  const todo = toks.map(t => t.n).join(" ");
+  if (/^(deshacer|deshace|deshaz|borra(r)? lo ultimo|me equivoque|anular|anula)\b/.test(todo)) { deshacerVoz(); return true; }
+  if (toks.length <= 3 && /\b(terminar|termine|terminamos|listo|parar|detener|basta)\b/.test(todo)) { if (recCmd) { recCmd.activo = false; recCmd.stop(); } return false; }
+  const nueva = !S.clases[S.fecha]; // si no hay clase ese día, se crea solo si el comando cambia algo
+  const c = S.clases[S.fecha] || { fecha: S.fecha, tema: "", horas: horasGrupo(g), valores: {} };
+  // "el resto presente", "los demás presentes", "todos presentes"
+  let resto = false;
+  for (let i = 0; i < toks.length; i++) {
+    if (!["resto", "demas", "todos", "todas"].includes(toks[i].n)) continue;
+    const j = toks.slice(i + 1, i + 4).findIndex(t => /^presentes?$/.test(t.n)); if (j < 0) continue;
+    const ini = i > 0 && ["el", "los", "las"].includes(toks[i - 1].n) ? i - 1 : i;
+    toks.splice(ini, i + 1 + j + 1 - ini); resto = true; break;
+  }
+  const idx = indiceNombres(g), segs = [], errores = [];
+  let cur = null, sueltas = [];
+  for (let i = 0; i < toks.length;) {
+    const m = cur && cur.obs ? null : buscarNombre(toks, i, idx);
+    if (m) { cur = { ...m, toks: [] }; segs.push(cur); i += m.n; continue; }
+    if (cur) { cur.toks.push(toks[i]); if (OBS_KW.has(toks[i].n)) cur.obs = true; } else sueltas.push(toks[i].raw);
+    i++;
+  }
+  const cambios = [], hechos = [];
+  for (const sg of segs) {
+    const nom = sg.ids.map(id => (g.estudiantes.find(e => e.id === id) || {}).nombre);
+    if (sg.ids.length > 1) { errores.push(`«${sg.dicho}» puede ser ${nom.slice(0, -1).join(", ")} o ${nom[nom.length - 1]}. Decí nombre y apellido.`); continue; }
+    const sid = sg.ids[0], ops = accionesDe(g, c, sg.toks);
+    if (!ops.length) { errores.push(`No entendí qué marcar para ${nom[0]}${sg.toks.length ? ` («${sg.toks.map(t => t.raw).join(" ")}»)` : ""}.`); continue; }
+    const desc = [];
+    for (const op of ops) {
+      if (op.error) { errores.push(`${nom[0]}: ${op.error}`); continue; }
+      c.valores ||= {}; c.valores[sid] ||= {};
+      const prev = val(c, sid, op.k.id), prevH = c.valores[sid][HKEY(op.k.id)];
+      let v = op.v; if (op.obs && prev) v = prev.replace(/[.\s]*$/, "") + ". " + v;
+      cambios.push({ fecha: S.fecha, sid, kid: op.k.id, prev, prevH });
+      c.valores[sid][op.k.id] = v;
+      if (op.k.tipo === "asistencia") { delete c.valores[sid][HKEY(op.k.id)]; if (op.h && op.h < horasClase(g, c)) c.valores[sid][HKEY(op.k.id)] = op.h; }
+      desc.push(describir(op, g, c));
+    }
+    if (desc.length) hechos.push(`${nom[0]}${sg.aprox ? ` (dijiste «${sg.dicho}»)` : ""}: ${desc.join(" · ")}`);
+  }
+  if (resto) {
+    const kA = colsClase(g, c).find(x => x.tipo === "asistencia"); let n = 0;
+    if (kA) for (const e of activos(g)) { c.valores ||= {}; c.valores[e.id] ||= {}; if (!c.valores[e.id][kA.id]) { cambios.push({ fecha: S.fecha, sid: e.id, kid: kA.id, prev: "", prevH: undefined }); c.valores[e.id][kA.id] = "P"; n++; } }
+    hechos.push(n ? `El resto presente (${n})` : "Ya estaban todos marcados");
+  }
+  if (!segs.length && !resto) errores.push(sueltas.length ? `No encontré ningún estudiante en «${sueltas.join(" ")}».` : "No entendí el comando.");
+  if (cambios.length && nueva) S.clases[S.fecha] = c;
+  if (cambios.length) { vozHist.undo.push({ cambios, txt: hechos.join(" — ") }); if (vozHist.undo.length > 30) vozHist.undo.shift(); saveClaseSoon(S.fecha); }
+  hechos.forEach(h => vozLog(true, h)); errores.forEach(e => vozLog(false, e));
+  if (cambios.length && S.tab === "clase") { render(); marcarFilas(cambios.map(u => u.sid)); }
+  return cambios.length > 0;
+}
+function vozInfo(msg){ S.vozInfo = msg || ""; const el = $("#vozCmdTxt"); if (el) { el.textContent = S.vozInfo; el.hidden = !S.vozInfo; } }
+function vozCmdToggle(){
+  if (recCmd) { recCmd.activo = false; recCmd.stop(); return; }
+  if (rec) { rec.activo = false; rec.stop(); } // un solo dictado a la vez
+  const ANDROID = /Android/i.test(navigator.userAgent);
+  let error = "";
+  const boton = on => { const b = $("#vozCmdBtn"); if (b) { b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "■ Dejar de escuchar" : "🎤 Cargar por voz"; } };
+  const arrancar = () => {
+    const r = new RecVoz(); r.lang = "es-UY"; r.continuous = !ANDROID; r.interimResults = !ANDROID; r.activo = true; r.maxAlternatives = 1;
+    r.onstart = () => { boton(true); vozInfo("Escuchando… decí el nombre y lo que hay que marcar. Ej.: «Ana presente», «Luis ausente dos horas», «Mateo nota ocho»."); };
+    r.onresult = ev => {
+      let prov = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const res = ev.results[i];
+        if (res.isFinal) { const t = res[0].transcript.trim(); if (t) { vozInfo("Escuché: «" + t + "»"); ejecutarComando(t); } } else prov += res[0].transcript;
+      }
+      if (prov) vozInfo("… " + prov);
+    };
+    r.onerror = ev => { error = ev.error === "not-allowed" || ev.error === "service-not-allowed" ? "El navegador no tiene permiso para usar el micrófono. Habilitalo con el candado de la barra de direcciones." : ev.error === "network" ? "El dictado necesita conexión a internet." : ""; if (error) r.activo = false; };
+    r.onend = () => {
+      if (r.activo && recCmd === r) { try { arrancar(); return; } catch(e) {} } // Chrome corta solo cada tanto: sigue escuchando
+      recCmd = null; boton(false); vozInfo(error);
+    };
+    recCmd = r;
+    try { r.start(); } catch(e) { recCmd = null; boton(false); vozInfo("No se pudo iniciar el dictado."); }
+  };
+  arrancar();
+}
+function vozBox(){
+  const sinVoz = IN_CLAUDE ? "El dictado por voz funciona en la libreta descargada o en GitHub (Chrome o Edge). Acá podés escribir el comando." : "Este navegador no tiene dictado por voz (usá Chrome o Edge). Podés escribir el comando, o en Windows dictarlo con Windows + H.";
+  return `<div class="vozbox noprint">
+    <div class="row">
+      ${VOZ ? `<button class="btn ${recCmd ? "danger" : "primary"}" id="vozCmdBtn" data-act="vozcmd" aria-pressed="${!!recCmd}">${recCmd ? "■ Dejar de escuchar" : "🎤 Cargar por voz"}</button>` : ""}
+      <form class="row" id="cmdForm" style="flex:1 1 300px"><input class="field" id="cmdIn" autocomplete="off" style="flex:1 1 220px" aria-label="Comando para cargar la clase" placeholder="Ej.: Ana presente, Luis ausente 2 horas, Mateo nota 8, el resto presente"><button class="btn sm">Aplicar</button></form>
+      <button class="btn sm" data-act="vozUndo" ${vozHist.undo.length ? "" : "disabled"} title="Deshace el último comando (también podés decir «deshacer»)">↶ Deshacer</button>
+    </div>
+    <div class="muted" id="vozCmdTxt" style="font-size:.85rem" ${S.vozInfo || !VOZ ? "" : "hidden"}>${esc(S.vozInfo || (VOZ ? "" : sinVoz))}</div>
+    <ul class="vozlog" id="vozLog">${vozLogHtml()}</ul>
+    <details><summary class="muted">Qué se puede decir</summary>
+      <div class="vozayuda">
+        <p><b>Primero el nombre, después lo que hay que marcar.</b> Alcanza con el nombre o el apellido si no se repite en el grupo. Podés decir varios estudiantes seguidos.</p>
+        <ul>
+          <li><b>Asistencia:</b> «Ana presente» · «Luis ausente» · «Mateo tarde» · «Sofía justificada» · «Ian faltó una hora» · «el resto presente»</li>
+          <li><b>Notas:</b> «Mateo nota 8» · «Ana siete y medio» · «Luis escrito 6» (si hay una columna Escrito ese día)</li>
+          <li><b>Actividad:</b> «Ana hizo la actividad» · «Luis actividad parcial» · «Mateo no hizo la tarea»</li>
+          <li><b>Conducta:</b> «Ana conducta muy buena» · «Luis conducta regular» · «Mateo mala»</li>
+          <li><b>Observación:</b> «Ana observación no trajo la computadora coma pidió ayuda» (todo lo que sigue a «observación» se anota)</li>
+          <li><b>Otros:</b> «deshacer» · «terminar»</li>
+        </ul>
+        <p>Con el teclado: en una celda de asistencia tocá <b>P</b>, <b>A</b>, <b>T</b> o <b>J</b> y pasa solo al siguiente estudiante. En actividad, <b>S</b>/<b>P</b>/<b>N</b>; en conducta, <b>1</b> a <b>4</b> (MB, B, R, M); <b>Supr</b> borra; las flechas ↑ ↓ cambian de estudiante.</p>
+      </div>
+    </details>
+  </div>`;
+}
+/* ---------- teclado en la tabla de la clase ---------- */
+function ponerValor(g, sid, k, nv){
+  const c = S.clases[S.fecha]; c.valores ||= {}; c.valores[sid] ||= {};
+  if (k.tipo === "asistencia") delete c.valores[sid][HKEY(k.id)];
+  setVal(sid, k.id, nv);
+  if (k.tipo === "asistencia") refrescarAsis(g, sid);
+  else { const b = document.querySelector(`.cyc[data-s="${CSS.escape(sid)}"][data-c="${CSS.escape(k.id)}"]`); if (b) { b.dataset.v = nv; b.textContent = SHOW[nv] ?? nv; b.title = LONG[nv] || "Sin marcar"; } }
+  updateStats();
+}
+function moverFoco(sid, kid, d){
+  const ids = activos(grupo()).map(e => e.id), i = ids.indexOf(sid), n = ids[i + d]; if (!n) return;
+  const el = document.querySelector(`[data-s="${CSS.escape(n)}"][data-c="${CSS.escape(kid)}"]`); if (el) el.focus();
+}
+document.addEventListener("keydown", ev => {
+  const t = ev.target; if (S.tab !== "clase" || !t.dataset || !t.dataset.s || !t.dataset.c || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (ev.key === "ArrowDown" || ev.key === "ArrowUp") { ev.preventDefault(); moverFoco(t.dataset.s, t.dataset.c, ev.key === "ArrowDown" ? 1 : -1); return; }
+  if (t.classList.contains("cellin") && ev.key === "Enter") { ev.preventDefault(); moverFoco(t.dataset.s, t.dataset.c, 1); return; }
+  if (!t.classList.contains("cyc")) return;
+  const g = grupo(), c = S.clases[S.fecha]; if (!g || !c) return;
+  const k = colsClase(g, c).find(x => x.id === t.dataset.c); if (!k) return;
+  const mapa = { asistencia: { p: "P", a: "A", t: "T", j: "J" }, entrega: { s: "S", h: "S", p: "M", n: "N" }, conducta: { "1": "CMB", "2": "CB", "3": "CR", "4": "CM" } }[k.tipo] || {};
+  const key = ev.key.toLowerCase(); let nv;
+  if (key in mapa) nv = mapa[key]; else if (ev.key === "Backspace" || ev.key === "Delete") nv = ""; else return;
+  ev.preventDefault(); const sid = t.dataset.s;
+  ponerValor(g, sid, k, nv);
+  if (nv) moverFoco(sid, k.id, 1); else { const el = document.querySelector(`.cyc[data-s="${CSS.escape(sid)}"][data-c="${CSS.escape(k.id)}"]`); if (el) el.focus(); }
+});
+/* ---------- ficha del estudiante ---------- */
+function viewFicha(g, sid){
+  const e = (g.estudiantes || []).find(x => x.id === sid); if (!e) return "";
+  const r = resumenData(g).find(x => x.e.id === sid), cr = colsResumen(g), fechas = fechasOrden();
+  const chips = [];
+  for (const k of cr) { const x = r && r.cols[k.id]; if (!x) continue;
+    if (k.tipo === "asistencia") { const L = limiteFictas(g), nv = nivelFictas(g, x.fictas);
+      chips.push(`<span class="stat">Asistencia <b>${x.pct === null ? "—" : x.pct + "%"}</b></span>`, `<span class="stat ${nv}">Fictas <b>${fmtN(x.fictas)}</b> de ${fmtN(L.max)}</span>`, `<span class="stat">${x.faltas} h injust. · ${x.just} h just. · ${x.tardes} tardes</span>`); }
+    else if (k.tipo === "nota" && x.prom !== null) chips.push(`<span class="stat">${k.todas ? "Promedio ponderado" : "Prom. " + esc(k.nombre)} <b>${x.prom.toFixed(1)}</b>${k.todas || cr.filter(y => y.tipo === "nota").length === 1 ? ` <span class="sit ${sit(x.prom)}">${sit(x.prom)}</span>` : ""}</span>`);
+    else if (k.tipo === "conducta" && CONDUCTA.some(cc => x.cnt[cc])) chips.push(`<span class="stat">Conducta ${CONDUCTA.filter(cc => x.cnt[cc]).map(cc => `<b>${x.cnt[cc]}</b> ${SHOW[cc]}`).join(" · ")}</span>`);
+    else if (k.tipo === "entrega") chips.push(`<span class="stat">${esc(k.nombre)} <b>${x.s}</b> ✓ · ${x.m} ½ · ${x.n} ✗</span>`);
+  }
+  const filas = fechas.slice().reverse().map(f => { const c = S.clases[f], cols = colsClase(g, c), por = t => cols.filter(k => k.tipo === t);
+    const kA = por("asistencia")[0], va = kA ? val(c, sid, kA.id) : "";
+    const cel = (t, fmt) => por(t).map(k => { const v = val(c, sid, k.id); return v ? fmt(k, v) : ""; }).filter(Boolean).join(" ");
+    return `<tr><td><button class="lnk" data-act="pick" data-f="${f}">${fmtDate(f)}</button><div class="muted" style="font-size:.78rem">${horasClase(g, c)} h</div></td>
+      <td class="tcell">${esc(c.tema || "")}</td>
+      <td class="c">${va ? `<span class="mini"><i class="${esc(va)}">${esc(marcaFalta(g, c, sid, kA.id))}</i></span>` : "·"}</td>
+      <td>${cel("entrega", (k, v) => `<span class="mini"><i class="${esc(v)}" title="${esc(k.nombre)}">${esc(SHOW[v] ?? v)}</i></span>${por("entrega").length > 1 ? " " + esc(k.nombre) : ""}`)}</td>
+      <td>${cel("nota", (k, v) => `<span class="mini"><i class="${Number(v) >= APRUEBA ? "S" : "M"}">${esc(k.nombre)} ${esc(v)}</i></span>`)}</td>
+      <td class="c">${cel("conducta", (k, v) => `<span class="mini"><i class="${esc(v)}">${esc(SHOW[v])}</i></span>`)}</td>
+      <td class="tcell">${cel("texto", (k, v) => esc(v))}</td></tr>`; }).join("");
+  return `<div class="modal" id="fichaModal" role="dialog" aria-modal="true" aria-labelledby="fichaTit" data-act="fichaFondo">
+    <section class="panel ficha">
+      <div class="row spread"><div><span class="muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em">${esc(g.nombre)}</span><h2 id="fichaTit">${esc(e.nombre)}</h2></div>
+        <div class="row noprint">${!IN_CLAUDE ? `<button class="btn sm" data-act="imprimir">${ic("imprimir")}Imprimir</button>` : ""}<button class="btn sm" data-act="fichaCerrar" aria-label="Cerrar la ficha">✕ Cerrar</button></div></div>
+      <div class="stats">${chips.join("") || `<span class="muted">Todavía no hay datos de este estudiante.</span>`}</div>
+      ${fechas.length ? `<div class="sheet"><table class="fichatab"><thead><tr><th>Clase</th><th>Tema</th><th class="c">Asist.</th><th>Actividad</th><th>Notas</th><th class="c">Conducta</th><th>Observaciones</th></tr></thead><tbody>${filas}</tbody></table></div>` : ""}
+    </section></div>`;
+}
+function abrirFicha(sid){ S.ficha = sid; pintarFicha(); }
+function pintarFicha(){
+  const box = $("#fichaBox"), g = grupo(); if (!box) return;
+  box.innerHTML = S.ficha && g ? viewFicha(g, S.ficha) : "";
+  document.body.classList.toggle("ficha-open", !!box.innerHTML);
+  if (box.innerHTML) { const b = box.querySelector("[data-act=fichaCerrar]"); if (b) b.focus(); }
+}
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && S.ficha) { S.ficha = null; pintarFicha(); } });
+
+function notaClass(el){ const n = Number(el.value.trim().replace(",", ".")); const has = el.value.trim() !== "" && n >= 1 && n <= NOTA_MAX; el.classList.toggle("aprob", has && n >= APRUEBA); el.classList.toggle("ape", has && n < APRUEBA); }
+function setVal(sid, cid, v){
+  const c = S.clases[S.fecha]; c.valores ||= {}; c.valores[sid] ||= {};
+  if (v === "" ) delete c.valores[sid][cid]; else c.valores[sid][cid] = v;
+  saveClaseSoon(S.fecha);
+}
+function updateStats(){
+  const box = $("#stats"); const g = grupo(); const c = S.clases[S.fecha]; if (!box || !c) return;
+  const est = activos(g); const out = [];
+  for (const k of colsClase(g, c)) {
+    const vs = est.map(e => val(c, e.id, k.id));
+    if (k.tipo === "asistencia") {
+      const n = x => vs.filter(v => v === x).length;
+      out.push(`<span class="stat">${esc(k.nombre)}: <b>${n("P")+n("T")}</b>/${est.length} presentes</span>`);
+      const h = horasClase(g, c);
+      out.push(`<span class="stat">Clase de <b>${h}</b> ${h === 1 ? "hora" : "horas"}</span>`);
+      const hs = x => est.filter(e => val(c, e.id, k.id) === x).reduce((s, e) => s + horasFalta(g, c, e.id, k.id), 0);
+      if (n("A")) out.push(`<span class="stat">Injustificadas <b>${n("A")}</b> (${hs("A")} h)</span>`);
+      if (n("J")) out.push(`<span class="stat">Justificadas <b>${n("J")}</b> (${hs("J")} h)</span>`);
+      if (n("T")) out.push(`<span class="stat">Tardes <b>${n("T")}</b></span>`);
+      const sin = vs.filter(v => !v).length; if (sin) out.push(`<span class="stat">Sin marcar <b>${sin}</b></span>`);
+    } else if (k.tipo === "entrega") {
+      const s = vs.filter(v => v === "S").length, m = vs.filter(v => v === "M").length;
+      out.push(`<span class="stat">${esc(k.nombre)}: <b>${s}</b> hechas${m?`, ${m} parciales`:""}</span>`);
+    } else if (k.tipo === "conducta") {
+      const parts = CONDUCTA.map(c => [c, vs.filter(v => v === c).length]).filter(([, n]) => n);
+      if (parts.length) out.push(`<span class="stat">${esc(k.nombre)}: ${parts.map(([c, n]) => `<b>${n}</b> ${SHOW[c]}`).join(" · ")}</span>`);
+    } else if (k.tipo === "nota") {
+      const ns = vs.map(Number).filter(x => x >= 1 && x <= NOTA_MAX);
+      if (ns.length) { const ap = ns.filter(x => x >= APRUEBA).length; out.push(`<span class="stat">${esc(k.nombre)} promedio <b>${(ns.reduce((a,b)=>a+b,0)/ns.length).toFixed(1)}</b> (${ns.length})</span><span class="stat">Aprobadas <b>${ap}</b></span>${ns.length-ap ? `<span class="stat">Por debajo de ${APRUEBA} <b>${ns.length-ap}</b></span>` : ""}`); }
+    }
+  }
+  box.innerHTML = out.join("");
+}
+ 
+/* ---------- vista: resumen ---------- */
+function resumenData(g){
+  const fechas = fechasOrden(), cols = colsResumen(g), notas = cols.filter(k => k.tipo === "nota" && !k.todas);
+  return activos(g).map(e => {
+    const r = { e, cols: {} };
+    for (const k of cols) {
+      const vs = k.todas ? notas.flatMap(n => fechas.map(f => valR(S.clases[f], e.id, n))) : fechas.map(f => valR(S.clases[f], e.id, k));
+      if (k.tipo === "asistencia") {
+        const marc = vs.filter(Boolean), pres = marc.filter(v => v === "P" || v === "T").length;
+        let a = 0, j = 0, t = 0;
+        vs.forEach((v, i) => { const h = horasFalta(g, S.clases[fechas[i]], e.id, k.id); if (v === "A") a += h; else if (v === "J") j += h; else if (v === "T") t++; });
+        r.cols[k.id] = { pct: marc.length ? Math.round(pres*100/marc.length) : null, faltas: a, just: j, tardes: t, fictas: a + j / 2 + t / 2 };
+      } else if (k.tipo === "entrega") {
+        r.cols[k.id] = { s: vs.filter(v => v === "S").length, m: vs.filter(v => v === "M").length, n: vs.filter(v => v === "N").length };
+      } else if (k.tipo === "conducta") {
+        const cnt = Object.fromEntries(CONDUCTA.map(c => [c, vs.filter(v => v === c).length]));
+        const ult = [...vs].reverse().find(v => CONDUCTA.includes(v)) || "";
+        r.cols[k.id] = { cnt, ult };
+      } else if (k.tipo === "nota") {
+        const ns = vs.map(Number).filter(x => x >= 1 && x <= NOTA_MAX);
+        if (k.todas) { let s = 0, sp = 0; for (const n of notas) { const x = r.cols[n.id], p = pesoNota(g, n); if (x && x.prom !== null && p > 0) { s += x.prom * p; sp += p; } }
+          r.cols[k.id] = { prom: sp ? s / sp : null, cant: ns.length }; }
+        else r.cols[k.id] = { prom: ns.length ? ns.reduce((a,b)=>a+b,0)/ns.length : null, cant: ns.length };
+      }
+    }
+    return r;
+  });
+}
+function celdaFictasAnep(g, sid){
+  const a = ((g.anepFictas || {}).v || {})[sid]; if (!a) return `<td class="muted" title="Sin dato de ANEP">—</td>`;
+  return `<td class="ficcol ${nivelFictas(g, a.f)}" title="ANEP${a.i !== null && a.i !== undefined ? `: ${a.i} h injustificadas${a.j !== null && a.j !== undefined ? ` + ${a.j} h justificadas ÷ 2` : ""}` : ""}">${fmtN(a.f)}</td>`;
+}
+function viewLimite(g){
+  const L = limiteFictas(g), reg = horasRegistradas(g);
+  return `<div class="row limrow"><b>Límite de faltas fictas:</b>
+    <input class="field inl" data-act="glim" type="number" min="1" max="100" step="any" value="${esc(L.pct)}" aria-label="Porcentaje de faltas fictas permitido"><span>% de</span>
+    <input class="field inl" data-act="gbase" type="number" min="1" max="2000" step="1" value="${esc(g.horasBase ?? "")}" placeholder="${reg}" aria-label="Horas sobre las que se calcula el límite"><span>horas =</span>
+    <b id="limTxt">${fmtN(L.max)}</b><span>fictas</span>
+    <span class="muted">${g.horasBase ? `Horas puestas a mano (en la libreta hay ${reg} registradas); borrá el número para usar las registradas.` : `Vacío = las ${reg} horas de las clases registradas; si en la libreta faltan clases, poné las horas del curso.`}</span></div>`;
+}
+const RS_VISTAS = [["resumen", "Resumen"], ["detalle", "Con detalle"], ["dias", "Día por día"]];
+const rsEstado = () => S.rs ||= { vista: "resumen", filtro: "todos", orden: "nombre", q: "", ayuda: false };
+function viewResumen(g){
+  const fechas = fechasOrden(), cols = colsResumen(g).filter(k => k.tipo !== "texto");
+  if (!fechas.length) return `<section class="panel"><div class="empty"><h2>Sin clases registradas</h2><p>El resumen se arma solo a medida que registrás clases.</p><button class="btn primary" data-act="tab" data-t="clase">Ir a la clase de hoy</button> <button class="btn" data-imp-act="abrir">⬇ Traer las faltas de ANEP</button></div></section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
+  const rs = rsEstado(), data = resumenData(g), L = limiteFictas(g);
+  const kA = asisCol(g), kN = cols.find(k => k.tipo === "nota" && k.todas) || cols.find(k => k.tipo === "nota");
+  const vista = rs.vista, full = vista !== "resumen", conDias = vista === "dias";
+  const vcols = full ? cols : cols.filter(k => k.tipo === "asistencia" || k === kN);
+  const info = data.map((r, i) => { const a = kA ? r.cols[kA.id] : null, n = kN ? r.cols[kN.id] : null, prom = n && n.prom !== undefined ? n.prom : null;
+    return { r, i, a, prom, nf: a ? nivelFictas(g, a.fictas) : "", bajo: prom !== null && prom < APRUEBA }; });
+  // datos clave del grupo
+  const pcts = info.filter(x => x.a && x.a.pct !== null).map(x => x.a.pct), pctMed = pcts.length ? Math.round(pcts.reduce((s, v) => s + v, 0) / pcts.length) : null;
+  const pasan = info.filter(x => x.nf === "bad").length, cerca = info.filter(x => x.nf === "warn").length;
+  const conNota = info.filter(x => x.prom !== null), promG = conNota.length ? conNota.reduce((s, x) => s + x.prom, 0) / conNota.length : null, aprob = conNota.filter(x => !x.bajo).length;
+  const plural = (n, a, b) => n === 1 ? a : b;
+  const stats = `<div class="rs-stats" role="list">
+    <div class="rs-st" role="listitem"><b>${pctMed === null ? "—" : pctMed + " %"}</b><span>asistencia media del grupo</span></div>
+    <div class="rs-st ${pasan ? "bad" : cerca ? "warn" : ""}" role="listitem"><b>${pasan + cerca}</b><span>${plural(pasan + cerca, "estudiante", "estudiantes")} con alerta de faltas${pasan + cerca ? ` (${pasan} ${plural(pasan, "pasó", "pasaron")} el límite, ${cerca} cerca)` : ""}</span></div>
+    <div class="rs-st" role="listitem"><b>${promG === null ? "—" : fmtN(promG)}</b><span>promedio del grupo${kN ? ` · ${esc(kN.todas ? "ponderado" : kN.nombre)}` : ""}</span></div>
+    <div class="rs-st ${conNota.length && aprob < conNota.length ? "warn" : ""}" role="listitem"><b>${conNota.length ? aprob + " de " + conNota.length : "—"}</b><span>con promedio de ${APRUEBA} o más</span></div></div>`;
+  // filtros y orden
+  const qn = sinAcentos(rs.q).trim(), nBajo = info.filter(x => x.bajo).length;
+  let lista = info.filter(x => (rs.filtro === "faltas" ? x.nf : rs.filtro === "bajo" ? x.bajo : true) && (!qn || sinAcentos(x.r.e.nombre).includes(qn)));
+  const fnOrd = { faltas: (a, b) => (b.a ? b.a.fictas : 0) - (a.a ? a.a.fictas : 0), asistencia: (a, b) => (a.a && a.a.pct !== null ? a.a.pct : 101) - (b.a && b.a.pct !== null ? b.a.pct : 101),
+    prom_bajo: (a, b) => (a.prom ?? 99) - (b.prom ?? 99), prom_alto: (a, b) => (b.prom ?? -1) - (a.prom ?? -1) }[rs.orden];
+  if (fnOrd) lista = lista.slice().sort(fnOrd);
+  const ORD = [["nombre", "Lista de la clase"], ["faltas", "Más faltas fictas primero"], ["asistencia", "Menor asistencia primero"], ["prom_bajo", "Menor promedio primero"], ["prom_alto", "Mayor promedio primero"]];
+  const chip = (v, txt, n) => `<button class="chip" data-act="rsfiltro" data-v="${v}" aria-pressed="${rs.filtro === v}">${txt}${n === undefined ? "" : ` <span class="rs-cnt">${n}</span>`}</button>`;
+  const tools = `<div class="rs-tools noprint">
+    <label class="rs-search"><span class="sr">Buscar estudiante</span><input type="search" class="field" data-act="rsq" placeholder="Buscar estudiante…" value="${esc(rs.q)}" autocomplete="off"></label>
+    <div class="rs-chips" role="group" aria-label="Mostrar">${chip("todos", "Todos", info.length)}${chip("faltas", "Con alerta de faltas", pasan + cerca)}${chip("bajo", "Promedio bajo", nBajo)}</div>
+    <label class="rs-ord"><span>Ordenar</span><select class="field" data-act="rsorden">${ORD.map(([v, t]) => `<option value="${v}"${rs.orden === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+    <div class="rs-seg" role="group" aria-label="Cuánto detalle mostrar">${RS_VISTAS.map(([v, t]) => `<button data-act="rsvista" data-v="${v}" aria-pressed="${vista === v}">${t}</button>`).join("")}</div></div>`;
+  // encabezados agrupados
+  const celdas = k => k.tipo === "asistencia" ? (full ? ["% asist.", ["Injust. (h)", "Horas de ausencia sin justificar"], ["Just. (h)", "Horas de falta justificada"], ["Tardes", "Llegadas tarde (T)"], ["Fictas", "A + J/2 + T/2"]] : ["% asist.", ["Fictas", "Faltas fictas = injustificadas + justificadas/2 + tardes/2"]]).concat(g.anepFictas ? [["Fictas ANEP", "Total oficial de ANEP (Cerrar promedios), obtenido el " + (g.anepFictas.obtenido || "?")]] : [])
+    : k.tipo === "entrega" ? [["Entregas", "Sí / Medio / No"]] : k.tipo === "conducta" ? [["Conducta", "Cantidad de cada nivel"], "Última"] : ["Promedio", "Situación"];
+  const th = c => Array.isArray(c) ? `<th title="${esc(c[1])}">${esc(c[0])}</th>` : `<th>${esc(c)}</th>`;
+  const grupoHead = `<tr class="rs-grp"><th class="name" rowspan="2">Estudiante</th>${vcols.map(k => `<th colspan="${celdas(k).length}" class="rs-g">${esc(k.nombre)}</th>`).join("")}${conDias ? `<th colspan="${fechas.length}" class="rs-g">Día por día <span class="rs-hint">tocá una fecha para abrir esa clase</span></th>` : ""}</tr>`;
+  const subHead = `<tr>${vcols.map(k => celdas(k).map(th).join("")).join("")}${conDias ? fechas.map(f => `<th class="d" data-act="pick" data-f="${f}" title="Abrir la clase">${fmtDate(f)}<br><span style="text-transform:none">${horasClase(g, S.clases[f])} h</span></th>`).join("") : ""}</tr>`;
+  const barra = (pct, cls) => `<span class="rs-bar ${cls || ""}" aria-hidden="true"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></span>`;
+  const rows = lista.map(({ r, i, a, nf, bajo }) => {
+    const tot = vcols.map(k => { const x = r.cols[k.id];
+      if (k.tipo === "asistencia") {
+        const pct = x.pct === null ? "<span class=\"muted\">—</span>" : `<span class="rs-v ${x.pct < 75 ? "lowatt" : ""}">${x.pct} %</span>${barra(x.pct, x.pct < 75 ? "bad" : "")}`;
+        const nfx = nivelFictas(g, x.fictas);
+        const fic = full ? `<td class="ficcol ${nfx}">${fmtN(x.fictas)}</td>` : `<td class="rs-fic ${nfx}" title="Límite: ${fmtN(L.max)} fictas (${L.pct} % de ${L.base} h)"><span class="rs-v">${fmtN(x.fictas)}</span><span class="rs-of">de ${fmtN(L.max)}</span>${L.max ? barra(x.fictas * 100 / L.max, nfx) : ""}</td>`;
+        return `<td class="rs-pct">${pct}</td>${full ? `<td>${x.faltas}</td><td>${x.just}</td><td>${x.tardes}</td>` : ""}${fic}${g.anepFictas ? celdaFictasAnep(g, r.e.id) : ""}`; }
+      if (k.tipo === "entrega") return `<td>${x.s}/${x.m}/${x.n}</td>`;
+      if (k.tipo === "conducta") return `<td>${CONDUCTA.map(c => x.cnt[c]).join("/")}</td><td>${x.ult ? `<span class="mini"><i class="${x.ult}">${SHOW[x.ult]}</i></span>` : "—"}</td>`;
+      return `<td><span class="rs-prom ${x.prom !== null && x.prom < APRUEBA ? "bad" : ""}">${x.prom === null ? "—" : fmtN(x.prom)}</span></td><td>${x.prom === null ? "—" : `<span class="sit ${sit(x.prom)}">${sit(x.prom)}</span>`}</td>`; }).join("");
+    const dias = conDias ? fechas.map(f => { const c = S.clases[f];
+      const bits = cols.map(k => { if (k.todas) return ""; const v = valR(c, r.e.id, k); if (!v) return ""; return k.tipo === "nota" ? `<i class="${Number(v) >= APRUEBA ? "S" : "M"}" title="${esc(k.nombre)}">${k.dia ? esc(k.nombre.slice(0, 1).toUpperCase()) + " " : ""}${esc(v)}</i>` : `<i class="${esc(v)}">${esc(k.tipo === "asistencia" ? marcaFalta(g, c, r.e.id, k.id) : SHOW[v] ?? v)}</i>`; }).join("");
+      return `<td><span class="mini">${bits || `<span class="muted">·</span>`}</span></td>`; }).join("") : "";
+    const aviso = nf === "bad" ? ["bad", "Pasó el límite de faltas fictas"] : nf === "warn" ? ["warn", "Cerca del límite de faltas fictas"] : bajo ? ["warn", "Promedio menor a " + APRUEBA] : null;
+    return `<tr data-n="${esc(sinAcentos(r.e.nombre))}"><td class="name"><span class="idx">${i + 1}</span><button class="nm" data-act="ficha" data-sid="${esc(r.e.id)}" title="Ver la ficha de ${esc(r.e.nombre)}">${esc(r.e.nombre)}</button>${aviso ? `<span class="rs-dot ${aviso[0]}" role="img" aria-label="${aviso[1]}" title="${aviso[1]}"></span>` : ""}</td>${tot}${dias}</tr>`;
+  }).join("") || `<tr><td class="muted" colspan="40" style="text-align:left;padding:18px">Ningún estudiante coincide con este filtro.</td></tr>`;
+  const canDl = !!DL.api;
+  const ayuda = rs.ayuda ? `<div class="rs-help" role="note"><ul>
+    <li><b>Asistencia:</b> cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %.</li>
+    <li><b>Faltas fictas</b> = horas de ausencia injustificada + horas justificadas ÷ 2 + tardes ÷ 2. Se pintan en ámbar al acercarse al límite y en rojo al pasarlo.</li>
+    <li><b>Promedio:</b> con 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre.</li>
+    <li>Tocá un nombre para ver la ficha del estudiante${conDias ? ", o una fecha para abrir esa clase" : ""}.</li></ul></div>` : "";
+  return `<section class="panel rs">
+    <header class="rs-head"><div><h2>Resumen de ${esc(g.nombre)}</h2>
+      <p class="muted">${fechas.length} ${plural(fechas.length, "clase", "clases")}, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length - 1])} · ${info.length} estudiantes <button class="rs-link" data-act="rsayuda" aria-expanded="${!!rs.ayuda}">${rs.ayuda ? "Ocultar explicación" : "¿Cómo se calcula?"}</button></p></div>
+      <div class="rs-acts noprint"><div class="rs-grupo" role="group" aria-label="ANEP"><span class="rs-gl">ANEP</span><button class="btn" data-imp-act="abrir" title="Traer las faltas día a día y el total de fictas desde ANEP">${ic("bajar")}Traer</button><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">${ic("subir")}Migrar</button></div>
+      <div class="rs-grupo" role="group" aria-label="Archivo">${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">${ic("imprimir")}Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">${ic("planilla")}Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div></header>
+    ${ayuda}${stats}${viewLimite(g)}${tools}
+    <div class="sheet"><table class="sum rs-tab"><thead>${grupoHead}${subHead}</thead><tbody>${rows}</tbody></table></div>
+  </section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
+}
+ 
+/* ---------- migrar al Portafolio Docente de ANEP ----------
+   La libreta no puede escribir en el Portafolio (es otro sitio y usa la sesión de ANEP): arma un «paquete»
+   y lo copia; el marcador «Migrar desde la Libreta» (anep.html) lo completa allá. Nunca guarda: guarda el docente.
+   En el grupo quedan g.juicios = { idEstudiante: texto }, g.anepTipos = { "nota:escrito": "Escritos" } y g.anepUrl. */
+const ANEP_TIPOS = ["Carpeta", "Escritos", "Orales", "Parcial", "Práctico", "Tarea domiciliaria", "Teórico"];
+const ANEP_PISTAS = [[/carpeta|cuaderno/, "Carpeta"], [/escrit|prueba/, "Escritos"], [/oral/, "Orales"], [/parcial/, "Parcial"], [/practic|proyecto|laboratorio|taller/, "Práctico"], [/tarea|deber|domicil/, "Tarea domiciliaria"], [/teoric/, "Teórico"]];
+const notaAnep = n => Math.max(1, Math.min(10, Math.round(Number(n)))); // ANEP: enteros de 1 a 10 (7,5 → 8)
+// EBI: la calificación de 1 a 10 se traduce en «Niveles de Avance»; es el juicio automático del cierre
+const NIVELES_AVANCE = [[9, "Avance Destacado", "n5"], [7, "Avance Significativo", "n4"], [5, "Avance Moderado", "n3"], [3, "Avance Escaso", "n2"], [1, "Avance Mínimo", "n1"]];
+const nivelAvance = n => NIVELES_AVANCE.find(([min]) => notaAnep(n) >= min) || NIVELES_AVANCE[NIVELES_AVANCE.length - 1];
+const juicioAuto = p => p === null || p === undefined ? "" : nivelAvance(p)[1];
+const juicioManual = (g, sid) => ((g.juicios || {})[sid] || "").trim();
+const anepKey = k => k.key || colKey(k);
+function tipoAnep(g, k){
+  const t = (g.anepTipos || {})[anepKey(k)]; if (ANEP_TIPOS.includes(t)) return t;
+  const n = sinAcentos(k.nombre); const p = ANEP_PISTAS.find(([re]) => re.test(n)); return p ? p[1] : "";
+}
+function anepLinks(g){
+  const m = /libretaId=(\d+)/.exec(g.anepUrl || ""); if (!m) return null;
+  const b = "https://portafoliodocente.anep.edu.uy/paginas/";
+  return { asistencia: `${b}pasaje_de_lista_page.xhtml?libretaId=${m[1]}`, evaluacion: `${b}eval_grupal_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, individual: `${b}calif_page.xhtml?libretaId=${m[1]}`, cierre: `${b}promedios_page.xhtml?libretaId=${m[1]}&origenMenu=CALIF`, desarrollo: `${b}desarrollo_page.xhtml?libretaId=${m[1]}` };
+}
+const temaDe = c => c ? String(c.tema || "").trim() : "";
+function temaHtmlDe(c){ // HTML del tema para el editor del Portafolio (ya limpio)
+  if (c.temaHtml) return limpiarHtml(c.temaHtml);
+  return temaDe(c).split(/\n{2,}/).map(par => "<p>" + esc(par).replace(/\n/g, "<br>") + "</p>").join("");
+}
+function migState(g){
+  const m = S.mig ||= {}, fs = fechasOrden(), est = activos(g);
+  if (!fs.includes(m.fAsis)) m.fAsis = fs.includes(S.fecha) ? S.fecha : fs[fs.length - 1] || "";
+  const cats = catsNota(g);
+  if (!cats.some(k => k.id === m.colEval)) m.colEval = cats[0] ? cats[0].id : "";
+  const kEval = cats.find(k => k.id === m.colEval);
+  const fEvals = kEval ? fs.filter(f => est.some(e => valR(S.clases[f], e.id, kEval) !== "")) : [];
+  if (!fEvals.includes(m.fEval)) m.fEval = fEvals[fEvals.length - 1] || "";
+  const proms = colsResumen(g).filter(k => k.tipo === "nota");
+  if (!proms.some(k => k.id === m.colCierre)) m.colCierre = (proms.find(k => k.todas) || proms[0] || {}).id || "";
+  const dk = m.colEval + "|" + m.fEval; if (m.descDe !== dk) { m.descDe = dk; m.desc = kEval ? kEval.nombre : ""; }
+  const fTema = fs.filter(f => temaDe(S.clases[f]));
+  if (!fTema.includes(m.fDes)) m.fDes = fTema[0] || "";
+  return { m, fs, est, cats, kEval, fEvals, proms, fTema };
+}
+function paqueteAnep(g, tipo){
+  const { m, est, kEval, proms } = migState(g), base = { app: "libreta-anep", v: 1, tipo, grupo: g.nombre };
+  if (tipo === "asistencia") {
+    const k = asisCol(g), c = S.clases[m.fAsis]; if (!k || !c) return { error: "No hay una clase con asistencia para esa fecha." };
+    const hc = horasClase(g, c);
+    if (hc > 8) return { error: `La clase del ${fmtDate(m.fAsis)} figura con ${hc} horas, y en UTU se cargan como máximo 8 por día. Corregí las horas de esa clase (en «Clase del día», campo Horas) y volvé a copiar.` };
+    const filas = est.map(e => { const v = val(c, e.id, k.id), h = horasFalta(g, c, e.id, k.id); return { nombre: e.nombre, inj: v === "A" ? h : 0, jus: v === "J" ? h : 0, marca: v || "" }; });
+    return { ...base, fecha: m.fAsis, horas: horasClase(g, c), filas };
+  }
+  if (tipo === "evaluacion") {
+    const c = S.clases[m.fEval]; if (!kEval || !c) return { error: "No hay notas para migrar en esa columna." };
+    const actividad = tipoAnep(g, kEval); if (!actividad) return { error: "Elegí el tipo de actividad de ANEP para esta columna." };
+    const filas = est.map(e => ({ nombre: e.nombre, n: Number(String(valR(c, e.id, kEval)).replace(",", ".")) })).filter(x => x.n >= 1 && x.n <= NOTA_MAX).map(x => ({ nombre: x.nombre, nota: notaAnep(x.n) }));
+    if (!filas.length) return { error: "Esa clase no tiene notas en esa columna." };
+    return { ...base, fecha: m.fEval, actividad, descripcion: (m.desc || "").trim(), filas };
+  }
+  if (tipo === "desarrollo") {
+    const { fTema } = migState(g), desde = m.fDes;
+    const filas = fTema.filter(f => !desde || f >= desde).map(f => { const c = S.clases[f]; return { fecha: f, horas: horasClase(g, c), texto: temaDe(c), html: temaHtmlDe(c) }; });
+    if (!filas.length) return { error: "No hay clases con tema anotado para migrar." };
+    return { ...base, filas };
+  }
+  const k = proms.find(x => x.id === m.colCierre); if (!k) return { error: "El grupo no tiene columnas de nota." };
+  const filas = resumenData(g).map(r => { const p = (r.cols[k.id] || {}).prom; return { nombre: r.e.nombre, nota: p === null || p === undefined ? "" : notaAnep(p), juicio: juicioManual(g, r.e.id) || juicioAuto(p) }; }).filter(x => x.nota !== "" || x.juicio);
+  if (!filas.length) return { error: "Todavía no hay promedios ni juicios para migrar." };
+  return { ...base, promedio: k.todas ? "ponderado" : k.nombre, filas };
+}
+async function copiarPaquete(g, tipo){
+  const p = paqueteAnep(g, tipo), m = S.mig;
+  if (p.error) { m.msg = { tipo, mal: true, txt: p.error }; render(); return; }
+  const txt = "LIBRETA-ANEP " + JSON.stringify(p);
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch(e) {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand("copy"); } catch(e2) {} ta.remove();
+  }
+  const n = p.filas.length, que = tipo === "desarrollo" ? `el tema de ${n === 1 ? "1 clase" : n + " clases"} (${fmtDate(p.filas[0].fecha)} a ${fmtDate(p.filas[n - 1].fecha)})` : tipo === "asistencia" ? `la asistencia del ${fmtDate(p.fecha)} (${p.filas.filter(x => x.inj || x.jus).length} con faltas, ${n} estudiantes)` : tipo === "evaluacion" ? `${n} nota${n === 1 ? "" : "s"} de «${p.actividad}» del ${fmtDate(p.fecha)}` : `el cierre de ${n} estudiante${n === 1 ? "" : "s"} (${p.filas.filter(x => x.juicio).length} con juicio)`;
+  m.msg = ok ? { tipo, txt: `Copiado: ${que}.` } : { tipo, mal: true, txt: "El navegador no dejó copiar. Probá de nuevo." };
+  render(); if (ok) toast("Copiado para ANEP");
+}
+function viewDesarrolloMig(g){
+  const { m, fTema } = migState(g), L = anepLinks(g);
+  if (!fTema.length) return `<p class="muted">Todavía no hay clases con el tema anotado. El tema se escribe arriba de cada clase, en «Clase del día».</p>`;
+  const elegidas = fTema.filter(f => f >= m.fDes), x = m.msg && m.msg.tipo === "desarrollo" ? m.msg : null;
+  return `<div class="row"><label>Desde la clase <select class="field" data-mig="fDes">${fTema.map(f => `<option value="${f}"${f === m.fDes ? " selected" : ""}>${esc(fmtDate(f))} · ${esc(temaDe(S.clases[f]).slice(0, 40))}</option>`).join("")}</select></label>
+      <button class="btn primary" data-mig-act="copy" data-k="desarrollo">Copiar desarrollo</button></div>
+    <p class="muted">${elegidas.length === 1 ? "1 clase" : elegidas.length + " clases"} con tema, con su fecha y sus horas. En el Portafolio se cargan <b>de a una</b>: el marcador completa la próxima que falte, apretás <b>Guardar</b> y volvés a tocar «Completar» para la siguiente. Las fechas que ya estén en «Desarrollo del curso» se saltean solas.</p>
+    ${x ? `<p class="migmsg ${x.mal ? "mal" : "ok"}" role="status">${esc(x.txt)}${x.mal ? "" : ` Ahora ${L ? `<a href="${esc(L.desarrollo)}" target="_blank" rel="noopener">abrí la pestaña Desarrollo ↗</a>` : "abrí la pestaña Desarrollo del Portafolio"} y tocá el marcador <b>📒 Migrar desde la Libreta</b>.`}</p>` : ""}`;
+}
+function viewMigrar(g){
+  const { m, fs, est, cats, kEval, fEvals, proms } = migState(g);
+  if (!m.open) return "";
+  const L = anepLinks(g), kA = asisCol(g);
+  const opt = (v, t, sel) => `<option value="${esc(v)}"${v === sel ? " selected" : ""}>${esc(t)}</option>`;
+  const paso = (tipo, donde, alt) => { const x = m.msg && m.msg.tipo === tipo ? m.msg : null; if (!x) return "";
+    return `<p class="migmsg ${x.mal ? "mal" : "ok"}" role="status">${esc(x.txt)}${x.mal ? "" : ` Ahora ${L ? `<a href="${esc(L[tipo])}" target="_blank" rel="noopener">abrí ${donde} ↗</a>` : `abrí ${donde}`} y tocá el marcador <b>📒 Migrar desde la Libreta</b>.${alt ? ` O, para cargar estudiante por estudiante, ${L ? `<a href="${esc(L.individual)}" target="_blank" rel="noopener">abrí ${alt} ↗</a>` : `abrí ${alt}`} (desplegá el período y elegí «Calificaciones del 1 al 10»).` : ""}`}</p>`; };
+  let asis = `<p class="muted">El grupo no tiene columna de asistencia.</p>`;
+  if (kA && fs.length) {
+    const c = S.clases[m.fAsis], vs = est.map(e => val(c, e.id, kA.id));
+    const sinMarcar = vs.filter(v => !v).length, tardes = vs.filter(v => v === "T").length;
+    asis = `<div class="row"><label>Clase <select class="field" data-mig="fAsis">${[...fs].reverse().map(f => opt(f, fmtDate(f) + " · " + horasClase(g, S.clases[f]) + " h", m.fAsis)).join("")}</select></label>
+      <button class="btn primary" data-mig-act="copy" data-k="asistencia">Copiar asistencia</button></div>
+      <p class="muted">${(n => n === 1 ? "1 ausente" : n + " ausentes")(vs.filter(v => v === "A").length)} y ${vs.filter(v => v === "J").length} con falta justificada; en ANEP van en horas.${tardes ? ` ${tardes === 1 ? "La llegada tarde no se migra" : `Las ${tardes} llegadas tarde no se migran`}: el registro de UTU solo lleva horas de falta.` : ""}${sinMarcar ? ` <b>${sinMarcar} sin marcar</b> van como presentes.` : ""} En UTU se carga una fecha por vez: poné la misma fecha allá antes de tocar el marcador.</p>${paso("asistencia", "Pasaje de Lista")}`;
+  }
+  let ev = `<p class="muted">El grupo todavía no tiene columnas de nota.</p>`;
+  if (kEval) {
+    const tipo = tipoAnep(g, kEval), c = S.clases[m.fEval];
+    const cant = c ? est.filter(e => { const n = Number(String(valR(c, e.id, kEval)).replace(",", ".")); return n >= 1 && n <= NOTA_MAX; }).length : 0;
+    ev = `<div class="row"><label>Columna <select class="field" data-mig="colEval">${cats.map(k => opt(k.id, k.nombre, m.colEval)).join("")}</select></label>
+      <label>Clase <select class="field" data-mig="fEval"${fEvals.length ? "" : " disabled"}>${fEvals.length ? [...fEvals].reverse().map(f => opt(f, fmtDate(f), m.fEval)).join("") : "<option>sin notas</option>"}</select></label>
+      <label>Tipo de actividad en ANEP <select class="field" data-mig="tipo"><option value="">— elegir —</option>${ANEP_TIPOS.map(t => opt(t, t, tipo)).join("")}</select></label></div>
+      <div class="row"><label class="grow">Descripción <input class="field" data-mig="desc" value="${esc(m.desc || "")}" maxlength="200"></label>
+      <button class="btn primary" data-mig-act="copy" data-k="evaluacion"${fEvals.length ? "" : " disabled"}>Copiar evaluación</button></div>
+      <p class="muted">${cant} nota${cant === 1 ? "" : "s"} en esa clase. El tipo queda guardado para la columna «${esc(kEval.nombre)}». Las notas van como enteros de 1 a 10 (7,5 → 8).</p>${paso("evaluacion", "Evaluación grupal → Nueva evaluación grupal", "Evaluación individual")}`;
+  }
+  let ci = `<p class="muted">El cierre necesita al menos una columna de nota.</p>`;
+  if (proms.length) {
+    const k = proms.find(x => x.id === m.colCierre), data = resumenData(g), J = g.juicios || {};
+    ci = `<div class="row"><label>Promedio a migrar <select class="field" data-mig="colCierre">${proms.map(x => opt(x.id, x.todas ? "Ponderado de todas las notas" : x.nombre, m.colCierre)).join("")}</select></label>
+      <button class="btn primary" data-mig-act="copy" data-k="cierre">Copiar cierre</button></div>
+      <div class="sheet"><table class="sum migt"><thead><tr><th class="name">Estudiante</th><th>Promedio</th><th title="Promedio redondeado a entero, como lo pide ANEP">Calificación</th><th title="Nivel de Avance de EBI según la calificación">Nivel de avance</th><th class="jc">Juicio conceptual</th></tr></thead><tbody>${data.map((r, i) => { const p = (r.cols[k.id] || {}).prom, tiene = p !== null && p !== undefined, man = juicioManual(g, r.e.id), auto = juicioAuto(p), niv = tiene ? nivelAvance(p) : null;
+        return `<tr><td class="name"><span class="idx">${i + 1}</span>${esc(r.e.nombre)}</td><td>${tiene ? p.toFixed(1) : "—"}</td><td>${tiene ? `<b class="sit ${sit(notaAnep(p))}">${notaAnep(p)}</b>` : "—"}</td><td>${niv ? `<span class="niv ${niv[2]}">${esc(niv[1])}</span>` : "—"}</td><td class="jc"><textarea class="field${man ? "" : " auto"}" rows="2" data-mig="juicio" data-sid="${esc(r.e.id)}" data-auto="${esc(auto)}" maxlength="1000" placeholder="${tiene ? "" : "Sin promedio todavía"}" aria-label="Juicio conceptual de ${esc(r.e.nombre)}">${esc(man || auto)}</textarea>${man && auto ? `<button type="button" class="btn sm ghost" style="margin-top:4px" data-mig-act="juicioAuto" data-sid="${esc(r.e.id)}" title="Volver al juicio automático: ${esc(auto)}">↺ Automático</button>` : ""}</td></tr>`; }).join("")}</tbody></table></div>
+      <p class="muted">El juicio se genera solo según el promedio: 9 y 10 <b>Avance Destacado</b>, 7 y 8 <b>Avance Significativo</b>, 5 y 6 <b>Avance Moderado</b>, 3 y 4 <b>Avance Escaso</b>, 1 y 2 <b>Avance Mínimo</b> (en gris mientras sea automático). Si lo cambiás, queda tu texto; con «↺ Automático» o borrándolo vuelve el del nivel. Se migran la calificación y el juicio del período que esté abierto en «Cerrar promedios».</p>${paso("cierre", "Cerrar promedios")}`;
+  }
+  return `<section class="panel mig" id="migPanel">
+    <div class="row spread"><h2>Libreta ⇄ Portafolio de ANEP</h2><div class="row"><a class="btn sm ghost" href="anep.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${ic("ayuda")}Manual y video</a><button class="btn sm ghost" data-mig-act="toggle">Cerrar</button></div></div>
+    <p class="muted" style="margin:0">Cada botón copia un paquete; en la pantalla de ANEP, el marcador <b>📒 Migrar desde la Libreta</b> lo completa. <a href="anep.html" target="_blank" rel="noopener">Instalar el marcador (una sola vez) ↗</a>. El marcador <b>nunca aprieta «Guardar»</b>: revisás y guardás vos.</p>
+    <label class="grow">Link del grupo en el Portafolio (opcional, para abrir cada pantalla desde acá) <input class="field" data-mig="url" value="${esc(g.anepUrl || "")}" placeholder="https://portafoliodocente.anep.edu.uy/paginas/calif_page.xhtml?libretaId=…"></label>
+    ${viewTraer(g)}
+    <div class="migpaso"><h3>1 · Lista de presentes</h3>${asis}</div>
+    <div class="migpaso"><h3>2 · Calificaciones y tipo de evaluación</h3>${ev}</div>
+    <div class="migpaso"><h3>3 · Juicios y cierre de promedios</h3>${ci}</div>
+    <div class="migpaso"><h3>4 · Desarrollo de las clases (tema)</h3>${viewDesarrolloMig(g)}</div>
+  </section>`;
+}
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-mig-act]"), g = grupo(); if (!t || !g) return;
+  const m = S.mig ||= {};
+  if (t.dataset.migAct === "toggle") { m.open = !m.open; m.msg = null; render(); if (m.open) { const p = $("#migPanel"); if (p) p.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
+  if (t.dataset.migAct === "copy") copiarPaquete(g, t.dataset.k);
+  if (t.dataset.migAct === "juicioAuto") { if (g.juicios) delete g.juicios[t.dataset.sid]; saveGrupoSoon(); render(); }
+});
+document.addEventListener("input", ev => {
+  const t = ev.target, g = grupo(); if (!g || !t.dataset || !t.dataset.mig) return;
+  if (t.dataset.mig === "juicio") { g.juicios ||= {}; const v = t.value.trim(), auto = t.dataset.auto || "";
+    if (v && v !== auto) g.juicios[t.dataset.sid] = t.value; else delete g.juicios[t.dataset.sid]; // igual al automático o vacío = automático
+    t.classList.toggle("auto", !v || v === auto); saveGrupoSoon(); return; }
+  if (t.dataset.mig === "desc") { (S.mig ||= {}).desc = t.value; return; }
+});
+document.addEventListener("change", ev => {
+  const t = ev.target, g = grupo(); if (!g || !t.dataset || !t.dataset.mig) return;
+  const m = S.mig ||= {}, k = t.dataset.mig;
+  if (k === "juicio" || k === "desc") return;
+  if (k === "url") { const v = t.value.trim(); if (v) g.anepUrl = v; else delete g.anepUrl; saveGrupoSoon(); m.msg = null; render(); return; }
+  if (k === "tipo") { const { kEval } = migState(g); if (!kEval) return; g.anepTipos ||= {}; if (t.value) g.anepTipos[anepKey(kEval)] = t.value; else delete g.anepTipos[anepKey(kEval)]; saveGrupoSoon(); m.msg = null; render(); return; }
+  m[k] = t.value; m.msg = null; render();
+});
+ 
+/* ---------- traer de ANEP: faltas día a día (Registro de inasistencias de UTU) y total de fictas (Cerrar promedios) ----------
+   El marcador copia un paquete «LIBRETA-ANEP {tipo: "faltas" | "fictas"}» y acá se pega. Las faltas se aplican a las clases
+   (creando las que falten); el total queda en g.anepFictas = { obtenido, v: { idEstudiante: { f, i, j } } }. */
+const normN = s => sinAcentos(s).replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
+const toksN = s => normN(s).split(" ").filter(w => w.length > 1 && !/^\d+$/.test(w));
+function emparejarAnep(g, nombres){ // nombre de ANEP → id del estudiante, solo si no hay dudas («ACOSTA SABRINA» → «ACOSTA IRUTE, SABRINA MIKAELA»)
+  const est = activos(g).map(e => ({ id: e.id, n: normN(e.nombre), t: toksN(e.nombre) }));
+  const res = nombres.map(nom => {
+    const n = normN(nom), t = toksN(nom); if (!t.length) return null;
+    let c = est.filter(e => e.n === n);
+    if (!c.length) c = est.filter(e => { const [a, b] = t.length <= e.t.length ? [t, e.t] : [e.t, t]; return a.length > 0 && a.every(w => b.includes(w)); });
+    return c.length === 1 ? c[0].id : null;
+  });
+  const usos = {}; res.forEach(id => { if (id) usos[id] = (usos[id] || 0) + 1; });
+  return res.map(id => id && usos[id] === 1 ? id : null);
+}
+function leerPaqAnep(txt){
+  const m = /LIBRETA-ANEP\s*(\{[\s\S]*\})/.exec(String(txt || "")); if (!m) return { error: "Eso no es lo que copia el marcador en ANEP. En el Registro de inasistencias o en «Cerrar promedios», tocá el marcador 📒 y usá «Copiar para la Libreta»." };
+  let p; try { p = JSON.parse(m[1]); } catch(e) { return { error: "Lo pegado está incompleto. Copialo de nuevo en ANEP." }; }
+  if (!p || p.app !== "libreta-anep") return { error: "Lo pegado no es de la Libreta." };
+  if (p.tipo !== "faltas" && p.tipo !== "fictas") return { error: "Ese paquete es para llevar a ANEP (se completa allá con el marcador), no para traer." };
+  return { p };
+}
+const nomEst = (g, sid) => (activos(g).find(e => e.id === sid) || {}).nombre || "";
+const marcaTxt = (v, h, horas) => v === "A" || v === "J" ? v + (h && h < horas ? h : "") : v || "vacío";
+function planFaltas(g, p, im){
+  const kA = asisCol(g); if (!kA) return { error: "El grupo no tiene columna de asistencia: agregala en «Estudiantes y columnas»." };
+  const nombres = p.estudiantes || [], ids = emparejarAnep(g, nombres), idDe = {};
+  nombres.forEach((n, i) => { if (ids[i]) idDe[n] = ids[i]; });
+  const enAnep = [...new Set(Object.values(idDe))];
+  const fechas = Object.keys(p.fechas || {}).sort().map(f => {
+    const fal = {}; let otros = 0;
+    for (const x of p.fechas[f]) { const sid = idDe[x.nombre]; if (sid) fal[sid] = x; else otros++; }
+    const c = S.clases[f], nf = Object.keys(fal).length;
+    const horas = c ? horasClase(g, c) : Math.max(Number(im.horas) || horasGrupo(g), ...Object.values(fal).map(x => (x.inj || 0) + (x.jus || 0)));
+    const cambios = [], difs = [], avisos = [];
+    for (const sid of enAnep) {
+      const x = fal[sid] || { inj: 0, jus: 0 }, inj = Number(x.inj) || 0, jus = Number(x.jus) || 0;
+      const v = inj || jus ? (inj >= jus ? "A" : "J") : "P", h = v === "A" ? inj : v === "J" ? jus : 0;
+      if (inj && jus) avisos.push(`${nomEst(g, sid)}: ${inj} h injustificadas y ${jus} justificadas; la libreta guarda una sola marca por clase y queda ${v}${h}.`);
+      if (h > horas) avisos.push(`${nomEst(g, sid)}: ${h} h de falta en una clase de ${horas} h; se cuentan ${horas}.`);
+      const cur = c ? val(c, sid, kA.id) : "", hc = c ? horasFalta(g, c, sid, kA.id) : 0;
+      if (cur === v && (v === "P" || hc === Math.min(h, horas))) continue;
+      if (v === "P" && cur === "T") continue; // UTU no lleva llegadas tarde
+      const op = { sid, v, h };
+      if (!cur) cambios.push(op); else difs.push({ ...op, antes: marcaTxt(cur, hc, horas), ahora: marcaTxt(v, h, horas) });
+    }
+    return { f, existe: !!c, horas, nf, otros, cambios, difs, avisos, fal };
+  });
+  const enRango = f => (!p.desde || f >= p.desde) && (!p.hasta || f <= p.hasta) && (!Array.isArray(p.dias) || p.dias.includes(new Date(f + "T12:00").getDay()));
+  const soloLibreta = fechasOrden().filter(f => !(p.fechas || {})[f] && enRango(f)).map(f => ({ f, n: activos(g).filter(e => ["A", "J"].includes(val(S.clases[f], e.id, kA.id))).length })).filter(x => x.n);
+  return { kA, fechas, enAnep, otrosAnep: nombres.length - enAnep.length, sinAnep: activos(g).filter(e => !enAnep.includes(e.id)), soloLibreta };
+}
+function cargarImp(g, txt){
+  const r = leerPaqAnep(txt);
+  if (r.error) { S.imp = { err: r.error }; render(); return; }
+  S.imp = { p: r.p, pisar: false };
+  prepImp(g);
+  render(); const el = $("#impPaso"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function prepImp(g){ // fechas tildadas por defecto: las que tienen faltas de este grupo
+  const im = S.imp; im.gid = g.id; im.horas = horasGrupo(g); im.sel = {};
+  if (im.p.tipo === "faltas") { const pl = planFaltas(g, im.p, im); if (!pl.error) pl.fechas.forEach(d => { im.sel[d.f] = d.nf > 0; }); }
+}
+function aplicarFaltas(g){
+  const im = S.imp, pl = planFaltas(g, im.p, im); if (pl.error) return;
+  let marcas = 0, nuevas = 0, fs = 0;
+  for (const d of pl.fechas) {
+    if (!im.sel[d.f]) continue;
+    const ops = d.cambios.concat(im.pisar ? d.difs : []); if (!ops.length && d.existe) continue;
+    let c = S.clases[d.f];
+    if (!c) { c = S.clases[d.f] = { fecha: d.f, tema: "", horas: d.horas, valores: {} }; nuevas++; }
+    c.valores ||= {}; fs++;
+    for (const o of ops) { const vv = c.valores[o.sid] ||= {}; vv[pl.kA.id] = o.v; if (o.v === "P" || o.h >= horasClase(g, c)) delete vv[HKEY(pl.kA.id)]; else vv[HKEY(pl.kA.id)] = o.h; marcas++; }
+    saveClaseSoon(d.f);
+  }
+  S.imp = { hecho: fs ? `Listo: ${fs} fecha${fs === 1 ? "" : "s"} (${nuevas} clase${nuevas === 1 ? "" : "s"} nueva${nuevas === 1 ? "" : "s"}), ${marcas} marca${marcas === 1 ? "" : "s"} de asistencia. Se guarda solo.` : "No había nada para cambiar." };
+  render(); toast("Faltas de ANEP cargadas");
+}
+function planFictas(g, p){
+  const filas = p.filas || [], ids = emparejarAnep(g, filas.map(x => x.nombre)), v = {}; let nd = 0;
+  filas.forEach((x, i) => { if (!ids[i]) return; if (x.nd || x.fictas === null || x.fictas === undefined) { nd++; return; } v[ids[i]] = { f: Number(x.fictas), i: x.inj, j: x.jus }; });
+  return { v, nd, otros: filas.filter((x, i) => !ids[i]).length, sinAnep: activos(g).filter(e => !ids.includes(e.id)) };
+}
+function viewTraer(g){
+  if (S.imp && S.imp.p && S.imp.gid !== g.id) prepImp(g);
+  const im = S.imp || {};
+  const intro = im.p ? "" : `<ol class="pasosimp">
+      <li><b>Una sola vez:</b> <a href="anep.html" target="_blank" rel="noopener">instalá el marcador «📒 Migrar desde la Libreta» ↗</a> en la barra de marcadores de Chrome.</li>
+      <li>En el Portafolio de ANEP abrí <b>«Pasaje de Lista»</b> (para las faltas de cada día) o <b>Calificaciones → Cerrar promedios</b> (para el total de faltas).</li>
+      <li>Con esa pantalla abierta, tocá el marcador en la barra. Se abre un cuadro: en la parte <b>«⬇ De esta pantalla a la Libreta»</b> tocá «Leer faltas» (o «Leer el total de faltas»).</li>
+      <li>Tocá <b>«Abrir en la Libreta»</b>: la libreta se abre con los datos para revisar, y apretás «Traer».</li></ol>`;
+  const pegar = im.p ? "" : `<div class="row"><button class="btn" data-imp-act="pegar">Pegar lo copiado en ANEP</button><span class="muted">Solo si en el marcador usaste «Copiar» en vez de «Abrir en la Libreta».</span></div>
+    <details><summary class="muted">Si no se pega solo</summary><textarea class="field imptxt" data-imp="txt" rows="3" placeholder="Pegá acá (Ctrl+V) lo que copió el marcador"></textarea></details>`;
+  let cuerpo = intro + pegar;
+  if (im.err) cuerpo += `<p class="migmsg mal" role="status">${esc(im.err)}</p>`;
+  if (im.hecho) cuerpo += `<p class="migmsg ok" role="status">${esc(im.hecho)}</p>`;
+  if (im.p && im.p.tipo === "faltas") {
+    const p = im.p, pl = planFaltas(g, p, im);
+    if (pl.error) cuerpo = `<p class="migmsg mal">${esc(pl.error)}</p>`;
+    else {
+      const vis = pl.fechas.filter(d => d.nf || d.existe), ocultas = pl.fechas.length - vis.length;
+      const elegidas = vis.filter(d => im.sel[d.f]), ndif = elegidas.reduce((s, d) => s + d.difs.length, 0);
+      const quien = d => Object.entries(d.fal).map(([sid, x]) => `${nomEst(g, sid)} ${x.inj ? "A" + x.inj : ""}${x.inj && x.jus ? " " : ""}${x.jus ? "J" + x.jus : ""}`).join(" · ");
+      const filas = vis.map(d => `<tr><td><input type="checkbox" data-imp="sel" data-f="${d.f}"${im.sel[d.f] ? " checked" : ""} aria-label="Traer el ${fmtDate(d.f)}"></td>
+        <td class="name">${fmtDate(d.f)}</td><td>${d.existe ? "ya está" : `<b>nueva</b> · ${d.horas} h`}</td>
+        <td class="quien">${d.nf ? `<b>${d.nf}</b> <span class="muted">${esc(quien(d))}</span>` : "—"}</td>
+        <td>${d.cambios.length || "—"}</td>
+        <td class="quien">${d.difs.length ? d.difs.map(x => `${esc(nomEst(g, x.sid))}: ${esc(x.antes)} → ${esc(x.ahora)}`).join("<br>") : "—"}${d.avisos.length ? `<br><span class="av">${d.avisos.map(esc).join("<br>")}</span>` : ""}</td></tr>`).join("");
+      cuerpo = `<p class="migmsg ok">Faltas de ${esc(p.asignatura || "ANEP")}${p.grupo ? " · " + esc(p.grupo) : ""}, leídas del ${p.desde ? fmtDate(p.desde) : "?"} al ${p.hasta ? fmtDate(p.hasta) : "?"} (${p.leidas || "?"} fechas).
+        ${pl.enAnep.length === 1 ? "1 estudiante del grupo está" : pl.enAnep.length + " estudiantes del grupo están"} en la lista de ANEP${pl.otrosAnep ? `; ${pl.otrosAnep === 1 ? "el otro de ANEP no está" : `los otros ${pl.otrosAnep} de ANEP no están`} en este grupo y se ignora${pl.otrosAnep === 1 ? "" : "n"}` : ""}.</p>
+        ${pl.sinAnep.length ? `<p class="migmsg mal">No encontré en ANEP a: ${pl.sinAnep.map(e => esc(e.nombre)).join(", ")}. Sus marcas no se tocan.</p>` : ""}
+        <p class="muted">ANEP solo registra las faltas: una fecha aparece si alguien faltó. Al traerla, los demás estudiantes del grupo quedan presentes (salvo los que ya tengan T). Marcá solo las fechas en que este grupo tuvo clase.${ocultas ? ` Hay ${ocultas} fecha${ocultas === 1 ? "" : "s"} con faltas solo de estudiantes de otro grupo; no se muestra${ocultas === 1 ? "" : "n"}.` : ""}</p>
+        ${vis.length ? `<div class="sheet"><table class="sum impt"><thead><tr><th></th><th class="name">Fecha</th><th>En la libreta</th><th>Faltas de este grupo en ANEP</th><th title="Casilleros vacíos que se completan">Se completan</th><th>Diferencias (libreta → ANEP)</th></tr></thead><tbody>${filas}</tbody></table></div>` : `<p class="muted">No hay fechas con faltas de este grupo en ese rango.</p>`}
+        <div class="row"><label>Horas de cada clase nueva <input class="field cfgnum" data-imp="horas" type="number" min="1" max="8" step="1" value="${esc(im.horas)}"></label>
+          <label class="chk"><input type="checkbox" data-imp="pisar"${im.pisar ? " checked" : ""}> Usar lo de ANEP también donde la libreta tiene otra marca${ndif ? ` (${ndif})` : ""}</label></div>
+        ${pl.soloLibreta.length ? `<p class="muted">En ANEP no hay faltas de las clases ${pl.soloLibreta.map(x => `${fmtDate(x.f)} (${x.n} con falta en la libreta)`).join(", ")}: esas no se tocan. Para pasarlas a ANEP usá el paso 1 de abajo.</p>` : ""}
+        <div class="row"><button class="btn primary" data-imp-act="aplicar"${elegidas.length ? "" : " disabled"}>Traer ${elegidas.length} fecha${elegidas.length === 1 ? "" : "s"}</button><button class="btn ghost" data-imp-act="borrar">Descartar</button></div>`;
+    }
+  }
+  if (im.p && im.p.tipo === "fictas") {
+    const p = im.p, pl = planFictas(g, p), est = activos(g), kA = asisCol(g);
+    const filas = est.map(e => { const a = pl.v[e.id], x = kA ? conteoFaltas(g, e.id, kA.id) : null;
+      return `<tr><td class="name">${esc(e.nombre)}</td><td>${a ? `<b>${fmtN(a.f)}</b>${a.i !== null && a.i !== undefined ? ` <span class="muted">(${a.i} h inj.${a.j !== null && a.j !== undefined ? ` + ${a.j} h just.` : ""})</span>` : ""}` : "—"}</td><td>${x ? fmtN(x.fictas) : "—"}</td></tr>`; }).join("");
+    cuerpo = `<p class="migmsg ok">Total de faltas fictas de ${esc(p.asignatura || "ANEP")}, obtenido el ${esc(p.obtenido || "?")}: ${Object.keys(pl.v).length} estudiantes de este grupo${pl.nd ? `, ${pl.nd} sin dato (N/D)` : ""}${pl.otros ? `; ${pl.otros} de ANEP no ${pl.otros === 1 ? "está" : "están"} en este grupo y se ignora${pl.otros === 1 ? "" : "n"}` : ""}.</p>
+      ${pl.sinAnep.length ? `<p class="migmsg mal">No encontré en ANEP a: ${pl.sinAnep.map(e => esc(e.nombre)).join(", ")}.</p>` : ""}
+      <div class="sheet"><table class="sum impt"><thead><tr><th class="name">Estudiante</th><th>Fictas ANEP</th><th>Fictas en la libreta</th></tr></thead><tbody>${filas}</tbody></table></div>
+      <p class="muted">Se guarda como una columna «Fictas ANEP» en el Resumen, al lado de las que cuenta la libreta. No cambia ninguna clase.</p>
+      <div class="row"><button class="btn primary" data-imp-act="fictas">Guardar el total en la libreta</button><button class="btn ghost" data-imp-act="borrar">Descartar</button></div>`;
+  }
+  return `<div class="migpaso" id="impPaso"><h3>⬇ Traer faltas desde ANEP</h3>${cuerpo}${g.anepFictas ? `<p class="muted">Total de ANEP guardado: obtenido el ${esc(g.anepFictas.obtenido || "?")}. <button class="btn sm ghost" data-imp-act="sinFictas">Quitarlo</button></p>` : ""}</div>`;
+}
+document.addEventListener("click", async ev => {
+  const t = ev.target.closest("[data-imp-act]"), g = grupo(); if (!t || !g) return;
+  const a = t.dataset.impAct;
+  if (a === "abrir") { (S.mig ||= {}).open = true; render(); const el = $("#impPaso"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (a === "pegar") { let txt = ""; try { txt = await navigator.clipboard.readText(); } catch(e) { S.imp = { err: "El navegador no dejó leer lo copiado: pegalo en el recuadro «Si no se pega solo»." }; render(); return; } cargarImp(g, txt); return; }
+  if (a === "borrar") { S.imp = null; render(); return; }
+  if (a === "aplicar") { aplicarFaltas(g); return; }
+  if (a === "fictas") { const pl = planFictas(g, S.imp.p); g.anepFictas = { obtenido: S.imp.p.obtenido || "", v: pl.v }; saveGrupoSoon(); S.imp = { hecho: `Listo: total de ANEP de ${Object.keys(pl.v).length} estudiantes. Está en el Resumen, columna «Fictas ANEP».` }; render(); return; }
+  if (a === "sinFictas") { delete g.anepFictas; saveGrupoSoon(); render(); return; }
+});
+document.addEventListener("input", ev => {
+  const t = ev.target, g = grupo(); if (!g || !t.dataset || t.dataset.imp !== "txt" || !t.value.trim()) return;
+  cargarImp(g, t.value);
+});
+document.addEventListener("change", ev => {
+  const t = ev.target, g = grupo(); if (t.id === "groupSel") { if (S.imp && S.imp.p) S.imp.gid = null; else S.imp = null; return; } // al cambiar de grupo se recalcula
+  if (!g || !t.dataset || !t.dataset.imp || !S.imp) return;
+  const k = t.dataset.imp;
+  if (k === "sel") { S.imp.sel[t.dataset.f] = t.checked; render(); return; }
+  if (k === "pisar") { S.imp.pisar = t.checked; render(); return; }
+  if (k === "horas") { const n = Number(t.value); if (Number.isInteger(n) && n >= 1 && n <= 8) S.imp.horas = n; render(); return; }
+});
+ 
+/* ---------- vista: configuración ---------- */
+function viewConfig(g){
+  const est = g.estudiantes || [];
+  const conf = (k, txt, yes) => S.confirm === k ? `<span class="confirm">${txt} <button class="btn sm danger" data-act="${yes}">Sí, borrar</button><button class="btn sm" data-act="cancel">No</button></span>` : null;
+  const list = est.map((e, i) => `<div class="item ${e.activo === false ? "off" : ""}">
+      <span class="num muted" style="width:2ch;text-align:right">${i+1}</span>
+      <input class="field" id="en-${esc(e.id)}" data-act="rename" data-s="${esc(e.id)}" value="${esc(e.nombre)}" aria-label="Nombre">
+      <button class="btn sm ghost" data-act="up" data-s="${esc(e.id)}" aria-label="Subir" ${i===0?"disabled":""}>↑</button>
+      <button class="btn sm ghost" data-act="down" data-s="${esc(e.id)}" aria-label="Bajar" ${i===est.length-1?"disabled":""}>↓</button>
+      <button class="btn sm" data-act="toggle" data-s="${esc(e.id)}">${e.activo === false ? "Reactivar" : "Dar de baja"}</button>
+      ${conf("dels:" + e.id, "¿Borrar del grupo?", "dels-yes") || `<button class="btn sm danger ghost" data-act="ask" data-k="dels:${esc(e.id)}" aria-label="Borrar">✕</button>`}
+    </div>`).join("");
+  const cols = (g.columnas || []).map((k, i, a) => `<div class="item">
+      <input class="field" id="cn-${esc(k.id)}" data-act="colname" data-c="${esc(k.id)}" value="${esc(k.nombre)}" aria-label="Nombre de la columna">
+      <select class="field" id="ct-${esc(k.id)}" data-act="coltipo" data-c="${esc(k.id)}" style="flex:0 1 210px">${Object.entries(TIPOS).map(([t, d]) => `<option value="${t}"${t===k.tipo?" selected":""}>${d.label}</option>`).join("")}</select>
+      <button class="btn sm ghost" data-act="cup" data-c="${esc(k.id)}" aria-label="Mover a la izquierda" ${i===0?"disabled":""}>↑</button>
+      <button class="btn sm ghost" data-act="cdown" data-c="${esc(k.id)}" aria-label="Mover a la derecha" ${i===a.length-1?"disabled":""}>↓</button>
+      ${conf("delc:" + k.id, "¿Quitar columna?", "delc-yes") || `<button class="btn sm danger ghost" data-act="ask" data-k="delc:${esc(k.id)}" aria-label="Quitar">✕</button>`}
+    </div>`).join("");
+  return `<div class="grid2">
+    <section class="panel">
+      <div class="row spread"><h2>Estudiantes</h2><span class="pill">${activos(g).length} activos${est.length !== activos(g).length ? ` · ${est.length - activos(g).length} de baja` : ""}</span></div>
+      <form class="row" id="addStu"><input class="field" id="newStu" placeholder="Nombre y apellido" style="flex:1 1 200px" aria-label="Nuevo estudiante"><button class="btn primary">Agregar</button></form>
+      <div class="list">${list || `<p class="muted">Sin estudiantes. Agregalos de a uno, pegá una lista o importá tu planilla.</p>`}</div>
+      <details><summary><b>Pegar una lista</b> <span class="muted">(un nombre por línea)</span></summary>
+        <div style="display:grid;gap:8px;margin-top:10px"><textarea class="field" id="pasteList" placeholder="Nahomi Vera&#10;Ian Valerio&#10;…"></textarea><div><button class="btn" data-act="paste">Agregar los nombres</button></div></div>
+      </details>
+      <div class="row"><label class="btn" for="xlsIn">Importar nombres desde Excel</label><input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" hidden><span class="muted" style="font-size:.85rem">Lee la fila de encabezado de tu plantilla (fecha, presente, actividad, nota, y los nombres).</span></div>
+    </section>
+    <div style="display:grid;gap:18px;align-content:start;min-width:0">
+      <section class="panel">
+        <h2>Grupo</h2>
+        <div class="item"><input class="field" id="gname" data-act="gname" value="${esc(g.nombre)}" aria-label="Nombre del grupo"></div>
+        <div style="display:grid;gap:8px">
+          <h3>Horas y límite de faltas fictas</h3>
+          <div class="row"><label for="ghoras">Horas por clase</label><input class="field cfgnum" id="ghoras" data-act="ghoras" type="number" min="1" max="8" step="1" value="${esc(horasGrupo(g))}"><span class="muted">Es el valor de cada clase nueva; en cada clase se puede cambiar.</span></div>
+          <div class="row"><label for="glim">Porcentaje</label><input class="field cfgnum" id="glim" data-act="glim" type="number" min="1" max="100" step="any" value="${esc(g.limiteFictas ?? LIMITE_DEF)}"><span class="muted">%</span><span class="muted">de las horas dictadas</span></div>
+          <div class="row"><label for="gbase">Horas del curso</label><input class="field cfgnum" id="gbase" data-act="gbase" type="number" min="1" max="2000" step="1" value="${esc(g.horasBase ?? "")}" placeholder="${horasRegistradas(g)}"><span class="muted">Opcional. Vacío = las horas de las clases registradas.</span></div>
+          <p class="muted" style="margin:0;font-size:.88rem">Las faltas se cuentan por horas: un ausente en una clase de 3 horas son 3 faltas. Fictas = horas A + horas J/2 + tardes/2. El límite se calcula sobre las horas del curso si las ponés, o si no sobre las horas dictadas hasta hoy (las clases registradas): ahora son ${limiteFictas(g).base} horas, así que el límite es <b id="limTxt">${fmtN(limiteFictas(g).max)}</b> fictas.</p>
+        </div>
+        <div>${conf("delg", "¿Borrar el grupo con todas sus clases? No se puede deshacer.", "delg-yes") || `<button class="btn sm danger" data-act="ask" data-k="delg">Borrar grupo</button>`}</div>
+      </section>
+      <section class="panel">
+        <h2>Columnas de la planilla</h2>
+        <p class="muted" style="margin:0">Lo que marcás en todas las clases. Para algo de un solo día, como un escrito o un oral, agregá la columna desde la clase del día.</p>
+        <div class="list">${cols}</div>
+        <form class="row" id="addCol"><input class="field" id="newCol" placeholder="Nombre de la columna" style="flex:1 1 160px" aria-label="Nueva columna">
+          <select class="field" id="newColT" aria-label="Tipo">${Object.entries(TIPOS).map(([t, d]) => `<option value="${t}"${t==="entrega"?" selected":""}>${d.label}</option>`).join("")}</select>
+          <button class="btn">Agregar</button></form>
+      </section>
+      ${viewPesos(g)}
+      ${CAN_SHEETS ? viewSheets() : ""}
+      <section class="panel">
+        <h2>Respaldo</h2>
+        <p class="muted" style="margin:0">${Store.mode === "db" ? "Todo se guarda solo en la nube mientras editás; podés abrir esta página desde otro equipo y seguir. El respaldo es una copia extra en un archivo." : Store.mode === "sheets" ? "Todo se guarda en tu planilla de Google Sheets mientras editás. El respaldo es una copia extra en un archivo." : "Los datos están solo en este navegador. Exportá un respaldo para no perderlos."}</p>
+        <div class="row">${DL.api ? `<button class="btn" data-act="exportjson">Exportar respaldo (.json)</button>` : ""}<label class="btn" for="jsonIn">Restaurar desde respaldo</label><input type="file" id="jsonIn" accept=".json,application/json" hidden></div>
+      </section>
+    </div>
+  </div>`;
+}
+ 
+function viewPesos(g){
+  const cats = catsNota(g);
+  if (cats.length < 2) return `<section class="panel"><h2>Ponderación de notas</h2><p class="muted" style="margin:0">Cuando el grupo tenga más de un tipo de nota (por ejemplo Escrito y Oral), acá vas a poder darle a cada uno su peso en el promedio.</p></section>`;
+  return `<section class="panel">
+    <h2>Ponderación de notas</h2>
+    <p class="muted" style="margin:0">Peso de cada tipo de nota en el <b>promedio ponderado</b>. Por ejemplo, Escrito 60 y Oral 40. Con peso 0 no cuenta. Si un estudiante no tiene notas de un tipo, ese tipo no se tiene en cuenta para él.</p>
+    <div class="list">${cats.map(k => `<div class="row"><label for="pw-${esc(k.id)}" style="flex:1 1 140px">${esc(k.nombre)}</label><input class="field cfgnum" id="pw-${esc(k.id)}" data-act="peso" data-k="${esc(k.key || colKey(k))}" type="number" min="0" step="1" value="${esc(pesoNota(g, k))}"><span class="muted pwp" data-k="${esc(k.key || colKey(k))}"></span></div>`).join("")}</div>
+  </section>`;
+}
+function pesosPct(g){
+  const cats = catsNota(g), tot = cats.reduce((s, k) => s + pesoNota(g, k), 0);
+  document.querySelectorAll(".pwp").forEach(el => { const k = cats.find(c => (c.key || colKey(c)) === el.dataset.k); el.textContent = k && tot ? `${Math.round(pesoNota(g, k) * 100 / tot)} %` : "—"; });
+}
+function viewSheets(){
+  if (Store.mode === "sheets") {
+    let copiado = false; try { copiado = !!localStorage.getItem(LSKEY + ":copiado"); } catch(e) {}
+    const hayLocal = Store.localTiene() && !copiado;
+    return `<section class="panel">
+      <div class="row spread"><h2>Google Sheets</h2><span class="pill">Conectada</span></div>
+      <p style="margin:0">Guardando en la planilla <b>${esc(Store.gs.planilla || "de Google Sheets")}</b>. Cada grupo tiene además una hoja legible con la libreta armada.</p>
+      ${S.gsMsg ? `<p class="muted" style="margin:0">${esc(S.gsMsg)}</p>` : ""}
+      <div class="row">
+        ${hayLocal ? (S.confirm === "gssubir" ? `<span class="confirm">Esto copia lo que quedó guardado <b>en este navegador</b> antes de conectar la planilla y <b>reemplaza</b> en Sheets los grupos y clases que coincidan. Lo que marcaste después en la planilla se pierde. <button class="btn sm danger" data-act="gsSubir">Copiar igual</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn" data-act="ask" data-k="gssubir">Copiar a Sheets lo guardado en este navegador</button>`) : ""}
+        ${S.confirm === "gsoff" ? `<span class="confirm">¿Desconectar? Los datos quedan en la planilla. <button class="btn sm danger" data-act="gsOff">Desconectar</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn ghost" data-act="ask" data-k="gsoff">Desconectar</button>`}
+      </div>
+    </section>`;
+  }
+  return `<section class="panel">
+    <h2>Google Sheets</h2>
+    <p class="muted" style="margin:0">Conectá una planilla tuya para que todo se guarde ahí y puedas abrir la libreta desde cualquier equipo.</p>
+    <details><summary><b>Cómo prepararla</b> <span class="muted">(una sola vez, 5 minutos)</span></summary>
+      <ol style="margin:10px 0 0;padding-left:20px;display:grid;gap:6px">
+        <li>Creá una planilla nueva en Google Sheets.</li>
+        <li>Abrí <b>Extensiones → Apps Script</b>, borrá lo que haya y pegá el <a href="${SCRIPT_URL_REPO}" target="_blank" rel="noopener">código del script</a>.</li>
+        <li>Guardá. En la planilla, recargá la página y usá el menú <b>Libreta → Configurar clave</b> para poner una clave tuya.</li>
+        <li><b>Implementar → Nueva implementación</b>, tipo <b>Aplicación web</b>. Ejecutar como: <b>Yo</b>. Quién tiene acceso: <b>Cualquier usuario</b>. Autorizá los permisos.</li>
+        <li>Copiá la URL que termina en <code>/exec</code> y pegala acá con la clave.</li>
+      </ol></details>
+    <form id="gsForm" style="display:grid;gap:8px">
+      <input class="field" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" aria-label="URL de la aplicación web" value="${esc(S.gsUrl || "")}" required>
+      <input class="field" id="gsClave" type="password" placeholder="Clave del script" aria-label="Clave" value="${esc(S.gsClave || "")}" required autocomplete="off">
+      <div class="row"><button class="btn primary" id="gsBtn">Conectar</button>${S.gsMsg ? `<span class="muted">${esc(S.gsMsg)}</span>` : ""}</div>
+    </form>
+  </section>`;
+}
+async function gsConectar(url, clave){
+  url = url.trim(); clave = clave.trim();
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(url)) { S.gsMsg = "La URL tiene que ser la de la aplicación web y terminar en /exec."; render(); return; }
+  S.gsMsg = "Probando la conexión…"; render();
+  try {
+    const info = await Store.call("ping", {}, { url, clave });
+    const cfg = { url, clave, planilla: info && info.planilla };
+    try { localStorage.setItem(GSKEY, JSON.stringify(cfg)); } catch(e) {}
+    Store.gs = cfg; Store.mode = "sheets"; S.gsClave = "";
+    S.gsMsg = Store.localTiene() ? "Conectada. Si querés llevar a la planilla lo que ya tenías en este navegador, usá el botón «Copiar a Sheets»." : "";
+    await loadAll(); toast("Conectada a Google Sheets");
+  } catch(e) { S.gsMsg = e.message || "No se pudo conectar."; render(); }
+}
+ 
+/* ---------- acciones ---------- */
+const DL = { api: null };
+async function createGroup(nombre, estudiantes){
+  const g = { id: uid("g"), nombre, estudiantes: estudiantes || [], columnas: defaultCols(), conductaAgregada: true, creado: new Date().toISOString() };
+  S.grupos.push(g); S.gid = g.id; S.clases = {}; S.tab = estudiantes && estudiantes.length ? "clase" : "config";
+  try { localStorage.setItem(LSKEY + ":ultimo", g.id); } catch(e) {}
+  saveGrupoSoon(); render(); return g;
+}
+function addNames(names){
+  const g = grupo(); const have = new Set((g.estudiantes||[]).map(e => e.nombre.trim().toLowerCase())); let n = 0;
+  for (let raw of names) { const nm = String(raw).replace(/\s+/g, " ").trim(); if (!nm || have.has(nm.toLowerCase())) continue; have.add(nm.toLowerCase()); (g.estudiantes ||= []).push({ id: uid("s"), nombre: nm, activo: true }); n++; }
+  if (n) { saveGrupoSoon(); render(); }
+  toast(n ? `Se agregaron ${n} estudiantes` : "No había nombres nuevos para agregar");
+}
+function addExtra(nombre, tipo){
+  const c = S.clases[S.fecha]; nombre = String(nombre || "").replace(/\s+/g, " ").trim(); if (!c || !nombre) return;
+  if (!TIPOS_DIA.includes(tipo)) tipo = "nota";
+  const k = { id: uid("x"), nombre, tipo };
+  if (colsClase(grupo(), c).some(x => colKey(x) === colKey(k))) { toast(`Ya hay una columna «${nombre}» en esta clase`); return; }
+  (c.extra ||= []).push(k); saveClaseSoon(S.fecha); render();
+  setTimeout(() => { const el = document.querySelector(`[data-c="${k.id}"]`); if (el) el.focus(); }, 0);
+}
+function move(arr, i, d){ const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+ 
+document.addEventListener("click", async ev => {
+  const t = ev.target.closest("[data-act]"); if (!t || t.tagName === "INPUT" || t.tagName === "SELECT") return;
+  const act = t.dataset.act, g = grupo();
+  if (act === "newgroup") { showNG(true); return; }
+  if (act === "tab") { S.tab = t.dataset.t; S.confirm = null; render(); return; }
+  if (act === "pick") { S.fecha = t.dataset.f; S.tab = "clase"; S.confirm = null; S.ficha = null; render(); return; }
+  if (act === "prevc" || act === "nextc") { const fs = fechasOrden(), f = act === "prevc" ? fs.filter(x => x < S.fecha).pop() : fs.find(x => x > S.fecha); if (f) { S.fecha = f; S.confirm = null; render(); } return; }
+  if (act === "vozcmd") { vozCmdToggle(); return; }
+  if (act === "vozUndo") { deshacerVoz(); return; }
+  if (act === "ficha") { abrirFicha(t.dataset.sid); return; }
+  if (act === "fichaCerrar") { S.ficha = null; pintarFicha(); return; }
+  if (act === "fichaFondo") { if (ev.target === t) { S.ficha = null; pintarFicha(); } return; }
+  if (act === "rsvista") { rsEstado().vista = t.dataset.v; render(); return; }
+  if (act === "rsfiltro") { rsEstado().filtro = t.dataset.v; render(); return; }
+  if (act === "rsayuda") { const r = rsEstado(); r.ayuda = !r.ayuda; render(); return; }
+  if (act === "imprimir") { window.print(); return; }
+  if (act === "today") { S.fecha = todayStr(); render(); return; }
+  if (act === "create") { S.clases[S.fecha] = { fecha: S.fecha, tema: "", horas: horasGrupo(g), valores: {} }; saveClaseSoon(S.fecha); render(); return; }
+  if (act === "cyc") {
+    const k = colsClase(g, S.clases[S.fecha]).find(x => x.id === t.dataset.c); const ciclo = TIPOS[k.tipo].ciclo;
+    const nv = ciclo[(ciclo.indexOf(t.dataset.v) + 1) % ciclo.length];
+    if (k.tipo === "asistencia") { const c = S.clases[S.fecha]; if (c.valores && c.valores[t.dataset.s]) delete c.valores[t.dataset.s][HKEY(k.id)]; }
+    setVal(t.dataset.s, k.id, nv);
+    if (k.tipo === "asistencia") { refrescarAsis(g, t.dataset.s); const nb = document.querySelector(`#cl-${t.dataset.s}-${k.id} .cyc`); if (nb) nb.focus(); }
+    else { t.dataset.v = nv; t.textContent = SHOW[nv]; t.title = LONG[nv] || "Sin marcar"; }
+    updateStats(); return;
+  }
+  if (act === "hfalta") {
+    const c = S.clases[S.fecha], sid = t.dataset.s, kid = t.dataset.c, h = horasClase(g, c);
+    const hf = horasFalta(g, c, sid, kid), nh = hf > 1 ? hf - 1 : h;
+    c.valores[sid] ||= {}; if (nh >= h) delete c.valores[sid][HKEY(kid)]; else c.valores[sid][HKEY(kid)] = nh;
+    saveClaseSoon(S.fecha); refrescarAsis(g, sid);
+    const nb = document.querySelector(`#cl-${sid}-${kid} .hchip`); if (nb) nb.focus();
+    updateStats(); return;
+  }
+  if (act === "allP") { const c = S.clases[S.fecha]; c.valores ||= {}; for (const e of activos(g)) { c.valores[e.id] ||= {}; if (!c.valores[e.id][t.dataset.c]) c.valores[e.id][t.dataset.c] = "P"; } saveClaseSoon(S.fecha); render(); return; }
+  if (act === "reintentar") { setStatus("saving", "Guardando…"); for (const [k, fn] of [...fallidos]) await correr(k, fn); if (!fallidos.size) toast("Cambios guardados"); return; }
+  if (act === "linkOk") { insertarLink(); return; }
+  if (act === "linkNo") { $("#linkRow").hidden = true; volverSel(); return; }
+  if (act === "addx") { addExtra(t.dataset.n, t.dataset.t); return; }
+  if (act === "delx-yes") { const c = S.clases[S.fecha], id = S.confirm.slice(5);
+    c.extra = (c.extra || []).filter(k => k.id !== id); if (!c.extra.length) delete c.extra;
+    for (const sid of Object.keys(c.valores || {})) delete c.valores[sid][id];
+    S.confirm = null; saveClaseSoon(S.fecha); render(); return; }
+  if (act === "ask") { S.confirm = t.dataset.k; render(); return; }
+  if (act === "cancel") { S.confirm = null; render(); return; }
+  if (act === "delclase-yes") { const f = S.fecha, gid = S.gid; delete S.clases[f]; S.confirm = null; clearTimeout(pend.get(`c:${gid}:${f}`)); pend.delete(`c:${gid}:${f}`); render();
+    try { await Store.deleteClase(gid, f); toast("Clase borrada"); } catch(e) { setStatus("error", "No se pudo borrar la clase"); } return; }
+  if (act === "dels-yes") { const id = S.confirm.slice(5); g.estudiantes = g.estudiantes.filter(e => e.id !== id); S.confirm = null; saveGrupoSoon(); render(); return; }
+  if (act === "delc-yes") { const id = S.confirm.slice(5); g.columnas = g.columnas.filter(k => k.id !== id); S.confirm = null; saveGrupoSoon(); render(); return; }
+  if (act === "delg-yes") { const gid = S.gid, fs = Object.keys(S.clases); S.grupos = S.grupos.filter(x => x.id !== gid); S.gid = S.grupos[0]?.id || null; S.confirm = null; S.tab = "clase";
+    try { await Store.deleteGrupo(gid, fs); toast("Grupo borrado"); } catch(e) { setStatus("error", "No se pudo borrar el grupo"); }
+    await loadClases(); render(); return; }
+  if (act === "up" || act === "down") { const i = g.estudiantes.findIndex(e => e.id === t.dataset.s); move(g.estudiantes, i, act === "up" ? -1 : 1); saveGrupoSoon(); render(); return; }
+  if (act === "cup" || act === "cdown") { const i = g.columnas.findIndex(k => k.id === t.dataset.c); move(g.columnas, i, act === "cup" ? -1 : 1); saveGrupoSoon(); render(); return; }
+  if (act === "toggle") { const e = g.estudiantes.find(e => e.id === t.dataset.s); e.activo = e.activo === false; saveGrupoSoon(); render(); return; }
+  if (act === "paste") { addNames(($("#pasteList").value || "").split(/\r?\n/)); return; }
+  if (act === "xlsx") { exportXlsx(g); return; }
+  if (act === "exportjson") { exportJson(); return; }
+  if (act === "gsOff") { try { localStorage.removeItem(GSKEY); } catch(e) {} Store.gs = null; Store.mode = "local"; S.confirm = null; S.gsMsg = ""; await loadAll(); toast("Desconectada de Google Sheets"); return; }
+  if (act === "gsSubir") { const todo = Store.localTodo(); S.gsMsg = "Copiando…"; render(); setStatus("saving", "Copiando a Google Sheets…");
+    S.confirm = null;
+    try { await Store.importar(todo); try { localStorage.setItem(LSKEY + ":copiado", new Date().toISOString()); } catch(e) {} S.gsMsg = `Se copiaron ${todo.length} grupo${todo.length===1?"":"s"} a la planilla.`; await loadAll(); }
+    catch(e) { S.gsMsg = e.message || "No se pudo copiar."; setStatus("error", "No se pudo copiar a Sheets"); render(); } return; }
+});
+ 
+document.addEventListener("click", ev => { const a = ev.target.closest("#tema a"); if (a && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); window.open(a.href, "_blank", "noopener"); } });
+document.addEventListener("mousedown", ev => { if (ev.target.closest(".tb")) ev.preventDefault(); }); // no perder la selección del tema
+document.addEventListener("click", ev => {
+  const b = ev.target.closest(".tb"); if (!b) return;
+  const cmd = b.dataset.cmd;
+  if (cmd === "mic") { vozToggle(); return; }
+  if (cmd === "colores") { const row = $("#colorRow"); row.hidden = !row.hidden; b.setAttribute("aria-expanded", String(!row.hidden)); return; }
+  if (cmd === "color") { volverSel(); document.execCommand("styleWithCSS", false, true);
+    document.execCommand("foreColor", false, b.dataset.color || getComputedStyle($("#tema")).color);
+    document.execCommand("styleWithCSS", false, false);
+    $("#colorRow").hidden = true; guardarSel(); guardarTema(); return; }
+  if (cmd === "link") { guardarSel(); const row = $("#linkRow"); row.hidden = false; const u = $("#linkUrl"); u.value = ""; u.focus(); return; }
+  volverSel(); document.execCommand(cmd, false, null); guardarSel(); guardarTema();
+});
+function insertarLink(){
+  let url = ($("#linkUrl").value || "").trim(); $("#linkRow").hidden = true; if (!url) { volverSel(); return; }
+  if (!/^(https?:|mailto:)/i.test(url)) url = (/^[^\s@]+@[^\s@]+$/.test(url) ? "mailto:" : "https://") + url;
+  volverSel(); const s = getSelection();
+  if (s.rangeCount && !s.isCollapsed) document.execCommand("createLink", false, url);
+  else document.execCommand("insertHTML", false, `<a href="${esc(url)}">${esc(url.replace(/^mailto:/, ""))}</a>&nbsp;`);
+  guardarSel(); guardarTema();
+}
+document.addEventListener("keydown", ev => {
+  if (ev.target.id === "linkUrl" && ev.key === "Enter") { ev.preventDefault(); insertarLink(); }
+  if (ev.target.id === "linkUrl" && ev.key === "Escape") { $("#linkRow").hidden = true; volverSel(); }
+});
+document.addEventListener("input", ev => {
+  const t = ev.target, g = grupo(); if (!g) return;
+  if (t.dataset.act === "rsq") { rsEstado().q = t.value; const q = sinAcentos(t.value).trim(); let n = 0; document.querySelectorAll(".rs-tab tbody tr[data-n]").forEach(tr => { const ok = !q || tr.dataset.n.includes(q); tr.hidden = !ok; if (ok) n++; }); return; }
+  if (t.dataset.act === "rsorden") { rsEstado().orden = t.value; render(); return; }
+  if (t.id === "tema") { guardarTema(); return; }
+  if (t.id === "horas") { const n = Number(t.value); if (!(Number.isInteger(n) && n >= 1 && n <= 8)) { toast("Las horas de una clase van de 1 a 8"); return; }
+    S.clases[S.fecha].horas = n; saveClaseSoon(S.fecha);
+    for (const e of activos(g)) refrescarAsis(g, e.id);
+    updateStats(); return; }
+  if (t.classList.contains("nota")) {
+    const v = t.value.trim().replace(",", "."); const n = Number(v);
+    const ok = v === "" || (Number.isFinite(n) && n >= 1 && n <= NOTA_MAX);
+    t.classList.toggle("bad", !ok);
+    if (ok) { setVal(t.dataset.s, t.dataset.c, v); updateStats(); }
+    notaClass(t);
+    return;
+  }
+  if (t.classList.contains("txt")) { setVal(t.dataset.s, t.dataset.c, t.value); return; }
+  if (t.dataset.act === "rename") { const e = g.estudiantes.find(e => e.id === t.dataset.s); e.nombre = t.value; saveGrupoSoon(); return; }
+  if (t.dataset.act === "colname") { const k = g.columnas.find(k => k.id === t.dataset.c); k.nombre = t.value; saveGrupoSoon(); return; }
+  if (t.dataset.act === "glim" || t.dataset.act === "ghoras") {
+    const n = Number(t.value); const key = { glim: "limiteFictas", ghoras: "horasPorClase" }[t.dataset.act];
+    if (t.value === "" ) delete g[key]; else if (Number.isFinite(n) && n > 0 && n <= (key === "limiteFictas" ? 100 : 8)) g[key] = n; else { if (key === "horasPorClase") toast("Las horas por clase van de 1 a 8"); return; }
+    saveGrupoSoon(); const lt = $("#limTxt"); if (lt) lt.textContent = fmtN(limiteFictas(g).max); return; }
+  if (t.dataset.act === "gbase") { const n = Number(t.value); if (t.value === "") delete g.horasBase; else if (Number.isInteger(n) && n >= 1 && n <= 2000) g.horasBase = n; else return;
+    saveGrupoSoon(); const lt = $("#limTxt"); if (lt) lt.textContent = fmtN(limiteFictas(g).max); return; }
+  if (t.dataset.act === "peso") { const n = Number(t.value); if (t.value !== "" && !(Number.isFinite(n) && n >= 0)) return;
+    g.pesos ||= {}; if (t.value === "") delete g.pesos[t.dataset.k]; else g.pesos[t.dataset.k] = n; saveGrupoSoon(); pesosPct(g); return; }
+  if (t.dataset.act === "gname") { g.nombre = t.value; saveGrupoSoon(); const o = $("#groupSel").selectedOptions[0]; if (o) o.textContent = t.value; return; }
+});
+let limPend = false; // el límite cambió en el Resumen: se redibuja recién al salir de esa fila (si no, se pierde el casillero de al lado)
+const limRender = () => setTimeout(() => { const a = document.activeElement; if (limPend && !(a && a.closest && a.closest(".limrow"))) { limPend = false; render(); } }, 0);
+document.addEventListener("focusout", ev => { if (limPend && ev.target.closest && ev.target.closest(".limrow")) limRender(); });
+document.addEventListener("change", async ev => {
+  const t = ev.target, g = grupo();
+  if (t.id === "groupSel") { S.gid = t.value; S.confirm = null; S.loading = true; render(); await loadClases(); S.loading = false; render(); return; }
+  if (t.id === "fecha" && t.value) { S.fecha = t.value; S.confirm = null; render(); return; }
+  if ((t.dataset.act === "glim" || t.dataset.act === "gbase") && S.tab === "resumen") { limPend = true; limRender(); return; } // recolorear las fictas al salir de la fila
+  if (t.dataset.act === "coltipo") { const k = g.columnas.find(k => k.id === t.dataset.c); k.tipo = t.value; saveGrupoSoon(); return; }
+  if (t.id === "xlsIn" && t.files[0]) { importXlsNames(t.files[0]); t.value = ""; return; }
+  if (t.id === "jsonIn" && t.files[0]) { importJson(t.files[0]); t.value = ""; return; }
+});
+document.addEventListener("submit", ev => {
+  ev.preventDefault(); const f = ev.target, g = grupo();
+  if (f.id === "addStu") { const v = $("#newStu").value; addNames([v]); setTimeout(() => $("#newStu")?.focus(), 0); }
+  if (f.id === "addX") { addExtra($("#xName").value, $("#xTipo").value); return; }
+  if (f.id === "cmdForm") { const inp = $("#cmdIn"), v = inp.value.trim(); if (!v) return; if (ejecutarComando(v)) { const n = $("#cmdIn"); if (n) { n.value = ""; n.focus(); } } else inp.focus(); return; }
+  if (f.id === "addCol") { const n = $("#newCol").value.trim(); if (!n) return; g.columnas.push({ id: uid("k"), nombre: n, tipo: $("#newColT").value }); saveGrupoSoon(); render(); }
+  if (f.id === "gsForm") { S.gsUrl = $("#gsUrl").value; S.gsClave = $("#gsClave").value; gsConectar($("#gsUrl").value, $("#gsClave").value); return; }
+  if (f.id === "ngForm") { const n = $("#ngName").value.trim(); if (!n) return; createGroup(n); showNG(false); $("#ngName").value = ""; }
+});
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { S.tab = b.dataset.tab; S.confirm = null; render(); }));
+function showNG(on){ $("#newGroupForm").hidden = !on; if (on) $("#ngName").focus(); }
+document.addEventListener("click", ev => { if (ev.target.closest("#reintentarBtn")) loadAll(); });
+$("#refrescarBtn").addEventListener("click", async () => { if (pend.size || inflight || fallidos.size) { toast("Esperá a que se guarden los cambios"); return; } setStatus("saving", "Leyendo Google Sheets…"); await refrescar(true); idleStatus(); });
+$("#newGroupBtn").addEventListener("click", () => showNG($("#newGroupForm").hidden));
+$("#ngCancel").addEventListener("click", () => showNG(false));
+ 
+/* ---------- Excel: importar nombres y exportar planilla ---------- */
+function importXlsNames(file){
+  if (!window.XLSX) { toast("No se pudo cargar el lector de Excel"); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const wb = XLSX.read(new Uint8Array(r.result), { type: "array" });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, blankrows: false });
+      const hdr = rows.find(rw => rw.some(x => /^fecha$/i.test(String(x ?? "").trim())));
+      const skip = /^(fecha|pre[sc]ente|asistencia|actividad|actividades|ejercicios?|nota|notas|tema|observaci[oó]n|campo)$/i;
+      const names = hdr ? hdr.filter(x => x != null && String(x).trim() && !skip.test(String(x).trim())) : rows.map(rw => rw[0]).filter(x => x != null && String(x).trim());
+      addNames(names);
+    } catch(e) { console.error(e); toast("No pude leer ese archivo"); }
+  };
+  r.readAsArrayBuffer(file);
+}
+async function saveFile(filename, data){
+  if (!DL.api) { toast("La descarga no está disponible en esta vista"); return; }
+  try { const res = await DL.api.save({ filename, data }); if (res && res.status === "saved") toast("Archivo descargado"); }
+  catch(e) { if (e && e.code === "unavailable") { DL.api = null; render(); } else if (!(e && /cancel|declin/i.test(e.code || ""))) toast("No se pudo descargar"); }
+}
+function exportXlsx(g){
+  if (!window.XLSX) { toast("No se pudo cargar el generador de Excel"); return; }
+  const fechas = fechasOrden(), est = activos(g), cols = g.columnas || [];
+  const toCell = (k, v, c, e) => k.tipo === "nota" && v !== "" ? Number(v) : k.tipo === "conducta" && v ? SHOW[v] : k.tipo === "asistencia" && c && e ? marcaFalta(g, c, e.id, k.id) : v;
+  // Hoja 1: misma orientación que la plantilla (estudiantes como columnas, una fila por dato de cada clase)
+  const a = [["Grupo", g.nombre], [], ["fecha", "horas", "tema", "dato", ...est.map(e => e.nombre)]];
+  for (const f of fechas) { const c = S.clases[f]; colsClase(g, c).forEach((k, i) => a.push([i === 0 ? f.split("-").reverse().join("/") : "", i === 0 ? horasClase(g, c) : "", i === 0 ? (c.tema || "") : "", k.nombre, ...est.map(e => toCell(k, val(c, e.id, k.id), c, e))])); }
+  a.push([], ["Horas dictadas", horasRegistradas(g)]);
+  a.push([], [`Notas de 1 a ${NOTA_MAX}: aprueba con ${APRUEBA} o más; de 1 a 4 va al APE de diciembre.`], ["Referencias: P presente · A ausente · T tarde · J justificada (A2 / J2: faltó 2 horas de la clase) · S hecho · M parcial · N no hecho"], [`Faltas por horas. Fictas = horas A + horas J/2 + tardes/2 · Límite del grupo: ${fmtN(limiteFictas(g).max)} (${limiteFictas(g).pct} % de ${limiteFictas(g).base} horas)`], ["Conducta: MB muy buena · B buena · R regular · M mala"]);
+  const ws1 = XLSX.utils.aoa_to_sheet(a); ws1["!cols"] = [{ wch: 11 }, { wch: 7 }, { wch: 28 }, { wch: 14 }, ...est.map(() => ({ wch: 14 }))];
+  // Hoja 2: resumen por estudiante
+  const data = resumenData(g), cr = colsResumen(g), rc = cr.filter(k => k.tipo !== "texto"), cd = cr.filter(k => !k.todas);
+  const h = ["Estudiante"]; rc.forEach(k => { if (k.tipo === "asistencia") h.push(`% ${k.nombre}`, "Horas injustificadas (A)", "Horas justificadas (J)", "Tardes (T)", "Fictas", "Situación faltas"); else if (k.tipo === "entrega") h.push(`${k.nombre} hechas`, "Parciales", "No hechas"); else if (k.tipo === "conducta") h.push(`${k.nombre} MB`, "B", "R", "M", "Última"); else h.push(`Promedio ${k.nombre}`, "Cant. notas", "Situación"); });
+  const b = [h, ...data.map(r => { const row = [r.e.nombre]; rc.forEach(k => { const x = r.cols[k.id];
+    if (k.tipo === "asistencia") { const nv = nivelFictas(g, x.fictas); row.push(x.pct === null ? "" : x.pct / 100, x.faltas, x.just, x.tardes, x.fictas, nv === "bad" ? "Supera el límite" : nv === "warn" ? "Cerca del límite" : ""); } else if (k.tipo === "entrega") row.push(x.s, x.m, x.n); else if (k.tipo === "conducta") row.push(...CONDUCTA.map(c => x.cnt[c]), x.ult ? LONG[x.ult] : ""); else row.push(x.prom === null ? "" : Math.round(x.prom * 10) / 10, x.cant, x.prom === null ? "" : sit(x.prom)); }); return row; })];
+  const ws2 = XLSX.utils.aoa_to_sheet(b); ws2["!cols"] = [{ wch: 24 }, ...h.slice(1).map(() => ({ wch: 13 }))];
+  let colIdx = 1; rc.forEach(k => { if (k.tipo === "asistencia") { for (let r = 1; r < b.length; r++) { const ref = XLSX.utils.encode_cell({ r, c: colIdx }); if (ws2[ref] && ws2[ref].t === "n") ws2[ref].z = "0%"; } colIdx += 6; } else colIdx += k.tipo === "conducta" ? 5 : 3; });
+  // Hoja 3: tabla larga (una fila por estudiante y clase), útil para filtrar
+  const c3 = [["fecha", "horas", "tema", "estudiante", ...cd.map(k => k.nombre)]];
+  for (const f of fechas) { const c = S.clases[f]; for (const e of est) c3.push([f.split("-").reverse().join("/"), horasClase(g, c), c.tema || "", e.nombre, ...cd.map(k => toCell(k, valR(c, e.id, k), c, e))]); }
+  const ws3 = XLSX.utils.aoa_to_sheet(c3);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, "Planilla"); XLSX.utils.book_append_sheet(wb, ws2, "Resumen"); XLSX.utils.book_append_sheet(wb, ws3, "Detalle");
+  const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  saveFile(`libreta-${g.nombre.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").toLowerCase() || "grupo"}-${todayStr()}.xlsx`, out);
+}
+ 
+/* ---------- respaldo JSON ---------- */
+async function exportJson(){
+  const full = { app: "libreta-clase", version: 1, exportado: new Date().toISOString(), grupos: [] };
+  for (const g of S.grupos) { let cl; try { cl = g.id === S.gid ? S.clases : await Store.clases(g.id); } catch(e) { cl = {}; } full.grupos.push({ ...clone(g), clases: clone(cl) }); }
+  saveFile(`libreta-respaldo-${todayStr()}.json`, JSON.stringify(full, null, 2));
+}
+function importJson(file){
+  const r = new FileReader();
+  r.onload = async () => {
+    let o; try { o = JSON.parse(r.result); } catch(e) { toast("Ese archivo no es un respaldo válido"); return; }
+    if (!o || o.app !== "libreta-clase" || !Array.isArray(o.grupos)) { toast("Ese archivo no es un respaldo de la libreta"); return; }
+    setStatus("saving", "Restaurando…"); let n = 0;
+    try {
+      const validos = o.grupos.filter(gr => gr && gr.id && gr.nombre).map(gr => ({ ...gr, clases: Object.fromEntries(Object.entries(gr.clases || {}).filter(([f]) => /^\d{4}-\d{2}-\d{2}$/.test(f))) }));
+      await Store.importar(validos);
+      for (const gr of validos) { const { clases, ...g } = gr; const i = S.grupos.findIndex(x => x.id === g.id); if (i >= 0) S.grupos[i] = g; else S.grupos.push(g); n++; }
+      if (!S.gid && S.grupos[0]) S.gid = S.grupos[0].id;
+      await loadClases(); idleStatus(); render(); toast(`Respaldo restaurado: ${n} grupo${n===1?"":"s"}`);
+    } catch(e) { console.error(e); setStatus("error", "La restauración quedó incompleta"); }
+  };
+  r.readAsText(file);
+}
+ 
+/* downloads (opcional) */
+/* fuera de claude.ai (por ejemplo en GitHub Pages) se descarga con un enlace normal */
+if (!(window.claude && window.claude.use)) DL.api = { async save({ filename, data }) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: /\.json$/.test(filename) ? "application/json" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob), el = document.createElement("a"); el.href = url; el.download = filename; document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); return { status: "saved" }; } };
+(async () => { try { if (window.claude && window.claude.use) { DL.api = await window.claude.use("downloads"); if (DL.api && !S.loading && S.tab !== "clase") render(); } } catch(e) { DL.api = null; } })();
+boot();
+</script>
+ 
+</body>
+</html>
