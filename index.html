@@ -212,6 +212,51 @@ tr.flash td{animation:flash 1.6s ease-out}
 .modal .ficha{max-width:1000px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.25)}
 .stat.warn{background:var(--warn-soft);color:var(--warn)} .stat.bad{background:var(--bad-soft);color:var(--bad)}
 .fichatab td{vertical-align:top} .fichatab .tcell{min-width:180px;max-width:360px;white-space:pre-wrap}
+
+/* ---- Resumen del grupo ---- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rs{display:grid;gap:16px}
+.rs-head{display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between;align-items:flex-start}
+.rs-head h2{margin:0 0 2px}.rs-head p{margin:0;font-size:.9rem}
+.rs-link{border:0;background:none;color:var(--accent);font:inherit;font-size:.88rem;text-decoration:underline;cursor:pointer;padding:0 0 0 8px}
+.rs-acts{display:flex;flex-wrap:wrap;gap:8px 16px}
+.rs-grupo{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--soft)}
+.rs-grupo .btn{border-radius:999px}
+.rs-gl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-right:2px}
+.rs-help{background:var(--soft);border-radius:var(--r);padding:10px 16px;font-size:.9rem}.rs-help ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.rs-st{padding:12px 16px;display:grid;gap:2px;border-right:1px solid var(--line)}.rs-st:last-child{border-right:0}
+.rs-st b{font-family:var(--f-display);font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.rs-st span{font-size:.84rem;color:var(--muted)}
+.rs-st.warn b{color:var(--warn)}.rs-st.bad b{color:var(--bad)}
+.rs .limrow{background:var(--soft);border-radius:var(--r);padding:8px 14px;margin:0}
+.rs-tools{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.rs-search input{width:210px}
+.rs-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rs-cnt{font-family:var(--f-mono);font-size:.78rem;opacity:.8;margin-left:2px}
+.rs-ord{display:flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted)}.rs-ord select{width:auto}
+.rs-seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-left:auto}
+.rs-seg button{border:0;background:var(--paper);padding:6px 14px;font:inherit;font-size:.86rem;cursor:pointer;color:var(--ink)}
+.rs-seg button+button{border-left:1px solid var(--line)}
+.rs-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.rs-tab thead th.rs-g{text-align:center;border-bottom:1px solid var(--line);letter-spacing:.05em}
+.rs-tab thead tr:nth-child(2) th{top:34px}
+.rs-hint{text-transform:none;letter-spacing:0;font-weight:400;margin-left:8px}
+.rs-tab td{padding:9px 10px}
+.rs-tab td.name{white-space:nowrap;min-width:230px;max-width:none}.rs-tab th.name{min-width:230px}
+.rs-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle;background:var(--warn)}
+.rs-dot.bad{background:var(--bad)}
+.rs-v{font-weight:700}.rs-of{color:var(--muted);font-size:.78rem;margin-left:4px}
+.rs-pct,.rs-fic{min-width:96px}
+.rs-bar{display:block;height:5px;border-radius:3px;background:var(--soft);margin:5px auto 0;max-width:84px;overflow:hidden}
+.rs-bar i{display:block;height:100%;background:var(--ok);border-radius:3px}
+.rs-bar.warn i{background:var(--warn)}.rs-bar.bad i{background:var(--bad)}
+.rs-tab td.rs-fic.warn,.rs-tab td.rs-fic.bad{background:transparent}
+.rs-fic.warn .rs-v{color:var(--warn)}.rs-fic.bad .rs-v{color:var(--bad)}
+.rs-prom{font-family:var(--f-display);font-size:1.1rem;font-weight:700}.rs-prom.bad{color:var(--bad)}
+.rs-tab tbody tr[hidden]{display:none}
+@media (max-width:700px){.rs-stats{grid-template-columns:1fr 1fr}.rs-st{padding:10px 12px}.rs-st b{font-size:1.4rem}.rs-tab td.name,.rs-tab th.name{min-width:150px;white-space:normal}.rs-seg{margin-left:0}.rs-search input{width:100%}.rs-search{flex:1 1 100%}.rs-st{border-bottom:1px solid var(--line)}}
+@media print{.rs-tools,.rs-acts,.rs-link{display:none!important}.rs-stats{border:1px solid #bbb}}
 @media (prefers-reduced-motion:no-preference){.chip,.btn,.cyc{transition:background .12s,border-color .12s}}
 @media (prefers-reduced-motion:reduce){tr.flash td{animation:none}}
 @media print{
@@ -244,7 +289,7 @@ tr.flash td{animation:flash 1.6s ease-out}
 <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
 </svg>
   <header class="top">
-    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v16 · 13/11</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><span class="logo"><svg class="ic" aria-hidden="true"><use href="#i-libreta"/></svg></span><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v17 · 13/11</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn"><svg class="ic" aria-hidden="true"><use href="#i-mas"/></svg>Grupo</button>
@@ -1206,30 +1251,76 @@ function viewLimite(g){
     <b id="limTxt">${fmtN(L.max)}</b><span>fictas</span>
     <span class="muted">${g.horasBase ? `Horas puestas a mano (en la libreta hay ${reg} registradas); borrá el número para usar las registradas.` : `Vacío = las ${reg} horas de las clases registradas; si en la libreta faltan clases, poné las horas del curso.`}</span></div>`;
 }
+const RS_VISTAS = [["resumen", "Resumen"], ["detalle", "Con detalle"], ["dias", "Día por día"]];
+const rsEstado = () => S.rs ||= { vista: "resumen", filtro: "todos", orden: "nombre", q: "", ayuda: false };
 function viewResumen(g){
   const fechas = fechasOrden(), cols = colsResumen(g).filter(k => k.tipo !== "texto");
   if (!fechas.length) return `<section class="panel"><div class="empty"><h2>Sin clases registradas</h2><p>El resumen se arma solo a medida que registrás clases.</p><button class="btn primary" data-act="tab" data-t="clase">Ir a la clase de hoy</button> <button class="btn" data-imp-act="abrir">⬇ Traer las faltas de ANEP</button></div></section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
-  const data = resumenData(g);
-  const totHead = cols.map(k => k.tipo === "asistencia" ? `<th>% ${esc(k.nombre)}</th><th title="Horas de ausencia sin justificar">Injust. (h)</th><th title="Horas de falta justificada">Just. (h)</th><th title="Llegada tarde">Tardes (T)</th><th title="A + J/2 + T/2">Fictas</th>${g.anepFictas ? `<th title="Total oficial de ANEP (Cerrar promedios), obtenido el ${esc(g.anepFictas.obtenido || "?")}">Fictas ANEP</th>` : ""}` : k.tipo === "entrega" ? `<th>${esc(k.nombre)} ✓/½/✗</th>` : k.tipo === "conducta" ? `<th>${esc(k.nombre)} MB/B/R/M</th><th>Última</th>` : `<th>Prom. ${esc(k.nombre)}</th><th>Situación</th>`).join("");
-  const head = `<tr><th class="name">Estudiante</th>${totHead}${fechas.map(f => `<th class="d" data-act="pick" data-f="${f}" title="Abrir la clase">${fmtDate(f)}<br><span style="text-transform:none">${horasClase(g, S.clases[f])} h</span></th>`).join("")}</tr>`;
-  const rows = data.map((r, i) => {
-    const tot = cols.map(k => { const x = r.cols[k.id];
-      if (k.tipo === "asistencia") return `<td class="${x.pct !== null && x.pct < 75 ? "lowatt" : ""}">${x.pct === null ? "—" : x.pct + "%"}</td><td>${x.faltas}</td><td>${x.just}</td><td>${x.tardes}</td><td class="ficcol ${nivelFictas(g, x.fictas)}">${fmtN(x.fictas)}</td>${g.anepFictas ? celdaFictasAnep(g, r.e.id) : ""}`;
+  const rs = rsEstado(), data = resumenData(g), L = limiteFictas(g);
+  const kA = asisCol(g), kN = cols.find(k => k.tipo === "nota" && k.todas) || cols.find(k => k.tipo === "nota");
+  const vista = rs.vista, full = vista !== "resumen", conDias = vista === "dias";
+  const vcols = full ? cols : cols.filter(k => k.tipo === "asistencia" || k === kN);
+  const info = data.map((r, i) => { const a = kA ? r.cols[kA.id] : null, n = kN ? r.cols[kN.id] : null, prom = n && n.prom !== undefined ? n.prom : null;
+    return { r, i, a, prom, nf: a ? nivelFictas(g, a.fictas) : "", bajo: prom !== null && prom < APRUEBA }; });
+  // datos clave del grupo
+  const pcts = info.filter(x => x.a && x.a.pct !== null).map(x => x.a.pct), pctMed = pcts.length ? Math.round(pcts.reduce((s, v) => s + v, 0) / pcts.length) : null;
+  const pasan = info.filter(x => x.nf === "bad").length, cerca = info.filter(x => x.nf === "warn").length;
+  const conNota = info.filter(x => x.prom !== null), promG = conNota.length ? conNota.reduce((s, x) => s + x.prom, 0) / conNota.length : null, aprob = conNota.filter(x => !x.bajo).length;
+  const plural = (n, a, b) => n === 1 ? a : b;
+  const stats = `<div class="rs-stats" role="list">
+    <div class="rs-st" role="listitem"><b>${pctMed === null ? "—" : pctMed + " %"}</b><span>asistencia media del grupo</span></div>
+    <div class="rs-st ${pasan ? "bad" : cerca ? "warn" : ""}" role="listitem"><b>${pasan + cerca}</b><span>${plural(pasan + cerca, "estudiante", "estudiantes")} con alerta de faltas${pasan + cerca ? ` (${pasan} ${plural(pasan, "pasó", "pasaron")} el límite, ${cerca} cerca)` : ""}</span></div>
+    <div class="rs-st" role="listitem"><b>${promG === null ? "—" : fmtN(promG)}</b><span>promedio del grupo${kN ? ` · ${esc(kN.todas ? "ponderado" : kN.nombre)}` : ""}</span></div>
+    <div class="rs-st ${conNota.length && aprob < conNota.length ? "warn" : ""}" role="listitem"><b>${conNota.length ? aprob + " de " + conNota.length : "—"}</b><span>con promedio de ${APRUEBA} o más</span></div></div>`;
+  // filtros y orden
+  const qn = sinAcentos(rs.q).trim(), nBajo = info.filter(x => x.bajo).length;
+  let lista = info.filter(x => (rs.filtro === "faltas" ? x.nf : rs.filtro === "bajo" ? x.bajo : true) && (!qn || sinAcentos(x.r.e.nombre).includes(qn)));
+  const fnOrd = { faltas: (a, b) => (b.a ? b.a.fictas : 0) - (a.a ? a.a.fictas : 0), asistencia: (a, b) => (a.a && a.a.pct !== null ? a.a.pct : 101) - (b.a && b.a.pct !== null ? b.a.pct : 101),
+    prom_bajo: (a, b) => (a.prom ?? 99) - (b.prom ?? 99), prom_alto: (a, b) => (b.prom ?? -1) - (a.prom ?? -1) }[rs.orden];
+  if (fnOrd) lista = lista.slice().sort(fnOrd);
+  const ORD = [["nombre", "Lista de la clase"], ["faltas", "Más faltas fictas primero"], ["asistencia", "Menor asistencia primero"], ["prom_bajo", "Menor promedio primero"], ["prom_alto", "Mayor promedio primero"]];
+  const chip = (v, txt, n) => `<button class="chip" data-act="rsfiltro" data-v="${v}" aria-pressed="${rs.filtro === v}">${txt}${n === undefined ? "" : ` <span class="rs-cnt">${n}</span>`}</button>`;
+  const tools = `<div class="rs-tools noprint">
+    <label class="rs-search"><span class="sr">Buscar estudiante</span><input type="search" class="field" data-act="rsq" placeholder="Buscar estudiante…" value="${esc(rs.q)}" autocomplete="off"></label>
+    <div class="rs-chips" role="group" aria-label="Mostrar">${chip("todos", "Todos", info.length)}${chip("faltas", "Con alerta de faltas", pasan + cerca)}${chip("bajo", "Promedio bajo", nBajo)}</div>
+    <label class="rs-ord"><span>Ordenar</span><select class="field" data-act="rsorden">${ORD.map(([v, t]) => `<option value="${v}"${rs.orden === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+    <div class="rs-seg" role="group" aria-label="Cuánto detalle mostrar">${RS_VISTAS.map(([v, t]) => `<button data-act="rsvista" data-v="${v}" aria-pressed="${vista === v}">${t}</button>`).join("")}</div></div>`;
+  // encabezados agrupados
+  const celdas = k => k.tipo === "asistencia" ? (full ? ["% asist.", ["Injust. (h)", "Horas de ausencia sin justificar"], ["Just. (h)", "Horas de falta justificada"], ["Tardes", "Llegadas tarde (T)"], ["Fictas", "A + J/2 + T/2"]] : ["% asist.", ["Fictas", "Faltas fictas = injustificadas + justificadas/2 + tardes/2"]]).concat(g.anepFictas ? [["Fictas ANEP", "Total oficial de ANEP (Cerrar promedios), obtenido el " + (g.anepFictas.obtenido || "?")]] : [])
+    : k.tipo === "entrega" ? [["Entregas", "Sí / Medio / No"]] : k.tipo === "conducta" ? [["Conducta", "Cantidad de cada nivel"], "Última"] : ["Promedio", "Situación"];
+  const th = c => Array.isArray(c) ? `<th title="${esc(c[1])}">${esc(c[0])}</th>` : `<th>${esc(c)}</th>`;
+  const grupoHead = `<tr class="rs-grp"><th class="name" rowspan="2">Estudiante</th>${vcols.map(k => `<th colspan="${celdas(k).length}" class="rs-g">${esc(k.nombre)}</th>`).join("")}${conDias ? `<th colspan="${fechas.length}" class="rs-g">Día por día <span class="rs-hint">tocá una fecha para abrir esa clase</span></th>` : ""}</tr>`;
+  const subHead = `<tr>${vcols.map(k => celdas(k).map(th).join("")).join("")}${conDias ? fechas.map(f => `<th class="d" data-act="pick" data-f="${f}" title="Abrir la clase">${fmtDate(f)}<br><span style="text-transform:none">${horasClase(g, S.clases[f])} h</span></th>`).join("") : ""}</tr>`;
+  const barra = (pct, cls) => `<span class="rs-bar ${cls || ""}" aria-hidden="true"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></span>`;
+  const rows = lista.map(({ r, i, a, nf, bajo }) => {
+    const tot = vcols.map(k => { const x = r.cols[k.id];
+      if (k.tipo === "asistencia") {
+        const pct = x.pct === null ? "<span class=\"muted\">—</span>" : `<span class="rs-v ${x.pct < 75 ? "lowatt" : ""}">${x.pct} %</span>${barra(x.pct, x.pct < 75 ? "bad" : "")}`;
+        const nfx = nivelFictas(g, x.fictas);
+        const fic = full ? `<td class="ficcol ${nfx}">${fmtN(x.fictas)}</td>` : `<td class="rs-fic ${nfx}" title="Límite: ${fmtN(L.max)} fictas (${L.pct} % de ${L.base} h)"><span class="rs-v">${fmtN(x.fictas)}</span><span class="rs-of">de ${fmtN(L.max)}</span>${L.max ? barra(x.fictas * 100 / L.max, nfx) : ""}</td>`;
+        return `<td class="rs-pct">${pct}</td>${full ? `<td>${x.faltas}</td><td>${x.just}</td><td>${x.tardes}</td>` : ""}${fic}${g.anepFictas ? celdaFictasAnep(g, r.e.id) : ""}`; }
       if (k.tipo === "entrega") return `<td>${x.s}/${x.m}/${x.n}</td>`;
       if (k.tipo === "conducta") return `<td>${CONDUCTA.map(c => x.cnt[c]).join("/")}</td><td>${x.ult ? `<span class="mini"><i class="${x.ult}">${SHOW[x.ult]}</i></span>` : "—"}</td>`;
-      return `<td>${x.prom === null ? "—" : x.prom.toFixed(1)}</td><td>${x.prom === null ? "—" : `<span class="sit ${sit(x.prom)}">${sit(x.prom)}</span>`}</td>`; }).join("");
-    const dias = fechas.map(f => { const c = S.clases[f];
+      return `<td><span class="rs-prom ${x.prom !== null && x.prom < APRUEBA ? "bad" : ""}">${x.prom === null ? "—" : fmtN(x.prom)}</span></td><td>${x.prom === null ? "—" : `<span class="sit ${sit(x.prom)}">${sit(x.prom)}</span>`}</td>`; }).join("");
+    const dias = conDias ? fechas.map(f => { const c = S.clases[f];
       const bits = cols.map(k => { if (k.todas) return ""; const v = valR(c, r.e.id, k); if (!v) return ""; return k.tipo === "nota" ? `<i class="${Number(v) >= APRUEBA ? "S" : "M"}" title="${esc(k.nombre)}">${k.dia ? esc(k.nombre.slice(0, 1).toUpperCase()) + " " : ""}${esc(v)}</i>` : `<i class="${esc(v)}">${esc(k.tipo === "asistencia" ? marcaFalta(g, c, r.e.id, k.id) : SHOW[v] ?? v)}</i>`; }).join("");
-      return `<td><span class="mini">${bits || `<span class="muted">·</span>`}</span></td>`; }).join("");
-    return `<tr><td class="name"><span class="idx">${i+1}</span><button class="nm" data-act="ficha" data-sid="${esc(r.e.id)}" title="Ver la ficha de ${esc(r.e.nombre)}">${esc(r.e.nombre)}</button></td>${tot}${dias}</tr>`;
-  }).join("");
+      return `<td><span class="mini">${bits || `<span class="muted">·</span>`}</span></td>`; }).join("") : "";
+    const aviso = nf === "bad" ? ["bad", "Pasó el límite de faltas fictas"] : nf === "warn" ? ["warn", "Cerca del límite de faltas fictas"] : bajo ? ["warn", "Promedio menor a " + APRUEBA] : null;
+    return `<tr data-n="${esc(sinAcentos(r.e.nombre))}"><td class="name"><span class="idx">${i + 1}</span><button class="nm" data-act="ficha" data-sid="${esc(r.e.id)}" title="Ver la ficha de ${esc(r.e.nombre)}">${esc(r.e.nombre)}</button>${aviso ? `<span class="rs-dot ${aviso[0]}" role="img" aria-label="${aviso[1]}" title="${aviso[1]}"></span>` : ""}</td>${tot}${dias}</tr>`;
+  }).join("") || `<tr><td class="muted" colspan="40" style="text-align:left;padding:18px">Ningún estudiante coincide con este filtro.</td></tr>`;
   const canDl = !!DL.api;
-  return `<section class="panel">
-    <div class="row spread"><h2>Resumen de ${esc(g.nombre)}</h2>
-      <div class="row"><button class="btn" data-imp-act="abrir" title="Traer las faltas día a día y el total de fictas desde ANEP">${ic("bajar")}Traer de ANEP</button><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">${ic("subir")}Migrar a ANEP</button>${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">${ic("imprimir")}Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">${ic("planilla")}Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
-    <p class="muted" style="margin:0">${fechas.length} clases, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}. El porcentaje de asistencia cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %. Las faltas se cuentan por horas. <b>Fictas</b> = horas A + horas J/2 + tardes/2; en ámbar al acercarse al límite y en rojo al pasarlo. Con promedio de 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre. Tocá una fecha para abrir esa clase, o un nombre para ver la ficha del estudiante.</p>
-    ${viewLimite(g)}
-    <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+  const ayuda = rs.ayuda ? `<div class="rs-help" role="note"><ul>
+    <li><b>Asistencia:</b> cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %.</li>
+    <li><b>Faltas fictas</b> = horas de ausencia injustificada + horas justificadas ÷ 2 + tardes ÷ 2. Se pintan en ámbar al acercarse al límite y en rojo al pasarlo.</li>
+    <li><b>Promedio:</b> con 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre.</li>
+    <li>Tocá un nombre para ver la ficha del estudiante${conDias ? ", o una fecha para abrir esa clase" : ""}.</li></ul></div>` : "";
+  return `<section class="panel rs">
+    <header class="rs-head"><div><h2>Resumen de ${esc(g.nombre)}</h2>
+      <p class="muted">${fechas.length} ${plural(fechas.length, "clase", "clases")}, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length - 1])} · ${info.length} estudiantes <button class="rs-link" data-act="rsayuda" aria-expanded="${!!rs.ayuda}">${rs.ayuda ? "Ocultar explicación" : "¿Cómo se calcula?"}</button></p></div>
+      <div class="rs-acts noprint"><div class="rs-grupo" role="group" aria-label="ANEP"><span class="rs-gl">ANEP</span><button class="btn" data-imp-act="abrir" title="Traer las faltas día a día y el total de fictas desde ANEP">${ic("bajar")}Traer</button><button class="btn" data-mig-act="toggle" title="Pasar asistencia, calificaciones, juicios y cierre al Portafolio Docente de ANEP">${ic("subir")}Migrar</button></div>
+      <div class="rs-grupo" role="group" aria-label="Archivo">${!IN_CLAUDE ? `<button class="btn" data-act="imprimir">${ic("imprimir")}Imprimir</button>` : ""}${canDl ? `<button class="btn primary" data-act="xlsx">${ic("planilla")}Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div></header>
+    ${ayuda}${stats}${viewLimite(g)}${tools}
+    <div class="sheet"><table class="sum rs-tab"><thead>${grupoHead}${subHead}</thead><tbody>${rows}</tbody></table></div>
   </section>${(S.mig || {}).open ? `<div style="height:18px"></div>${viewMigrar(g)}` : ""}`;
 }
  
@@ -1704,6 +1795,9 @@ document.addEventListener("click", async ev => {
   if (act === "ficha") { abrirFicha(t.dataset.sid); return; }
   if (act === "fichaCerrar") { S.ficha = null; pintarFicha(); return; }
   if (act === "fichaFondo") { if (ev.target === t) { S.ficha = null; pintarFicha(); } return; }
+  if (act === "rsvista") { rsEstado().vista = t.dataset.v; render(); return; }
+  if (act === "rsfiltro") { rsEstado().filtro = t.dataset.v; render(); return; }
+  if (act === "rsayuda") { const r = rsEstado(); r.ayuda = !r.ayuda; render(); return; }
   if (act === "imprimir") { window.print(); return; }
   if (act === "today") { S.fecha = todayStr(); render(); return; }
   if (act === "create") { S.clases[S.fecha] = { fecha: S.fecha, tema: "", horas: horasGrupo(g), valores: {} }; saveClaseSoon(S.fecha); render(); return; }
@@ -1783,6 +1877,8 @@ document.addEventListener("keydown", ev => {
 });
 document.addEventListener("input", ev => {
   const t = ev.target, g = grupo(); if (!g) return;
+  if (t.dataset.act === "rsq") { rsEstado().q = t.value; const q = sinAcentos(t.value).trim(); let n = 0; document.querySelectorAll(".rs-tab tbody tr[data-n]").forEach(tr => { const ok = !q || tr.dataset.n.includes(q); tr.hidden = !ok; if (ok) n++; }); return; }
+  if (t.dataset.act === "rsorden") { rsEstado().orden = t.value; render(); return; }
   if (t.id === "tema") { guardarTema(); return; }
   if (t.id === "horas") { const n = Number(t.value); if (!(Number.isInteger(n) && n >= 1 && n <= 8)) { toast("Las horas de una clase van de 1 a 8"); return; }
     S.clases[S.fecha].horas = n; saveClaseSoon(S.fecha);
