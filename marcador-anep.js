@@ -1,7 +1,8 @@
 /* Marcador «📒 Migrar desde la Libreta» — fuente legible del marcador que se instala desde anep.html.
    Lee el paquete que copia la Libreta de Clase (botón «⇪ Migrar a ANEP») y completa la pantalla abierta:
      · asistencia  → Registro de inasistencias de UTU (Pasaje de Lista): horas injustificadas y justificadas de una fecha
-     · evaluacion  → Portafolio Docente → Evaluación grupal: tipo de actividad, fecha, descripción y notas
+     · evaluacion  → Portafolio Docente → Evaluación grupal (tipo de actividad, fecha, descripción y notas de toda la clase)
+                     o Evaluación individual (lo mismo, casillero por casillero de cada estudiante en el período abierto)
      · cierre      → Portafolio Docente → Cerrar promedios: calificación y juicio conceptual del período abierto
      · desarrollo  → Portafolio Docente → Desarrollo: fecha, horas y tema de cada clase, una por vez (salta las ya cargadas)
    Y al revés («⬇ De esta pantalla a la Libreta»): en el Registro de inasistencias lee las faltas de un rango de fechas
@@ -19,7 +20,7 @@
   var byId = function (id) { return document.getElementById(id); };
   var LIBRETA = "https://adelvalle2010.github.io/carpeta-clase/";
   var NOMBRES = { asistencia: "asistencia", evaluacion: "evaluación", cierre: "cierre de promedios", desarrollo: "desarrollo del curso" };
-  var DONDE = { asistencia: "«Pasaje de Lista» (Registro de inasistencias de UTU)", evaluacion: "Calificaciones → Evaluación grupal → Nueva evaluación grupal", cierre: "Calificaciones → Cerrar promedios", desarrollo: "la pestaña «Desarrollo» del Portafolio" };
+  var DONDE = { asistencia: "«Pasaje de Lista» (Registro de inasistencias de UTU)", evaluacion: "Calificaciones → Evaluación grupal → Nueva evaluación grupal, o Calificaciones → Evaluación individual", cierre: "Calificaciones → Cerrar promedios", desarrollo: "la pestaña «Desarrollo» del Portafolio" };
 
   function poner(el, v) {
     try { el.dispatchEvent(new Event("focus")); } catch (e) {}
@@ -52,6 +53,15 @@
           if (n) { n = n.cloneNode(true); Array.prototype.forEach.call(n.querySelectorAll(".dataadcurricular"), function (x) { x.remove(); }); } // sin la marca «AR» de ajuste razonable
           return { nombre: n ? n.textContent : "", nota: tr.querySelector("input.campoCalificacion"), texto: tr.querySelector("td.calif-comentario textarea") || tr.querySelector("textarea") };
         }).filter(function (f) { return f.nota && !f.nota.disabled && !f.nota.readOnly; }) };
+    }
+    var pest = document.querySelector("a.pestaniaeval.pestaniasel"), esInd = !!(pest && /individual/i.test(pest.textContent));
+    var conSel = Array.prototype.filter.call(document.querySelectorAll("tr.filaalumno"), function (tr) { return Array.prototype.some.call(tr.querySelectorAll('select[id^="tipoEvaluacion_"]'), vis); });
+    if (esInd || conSel.length) { // Evaluación individual: cada estudiante tiene su tipo, nota, fecha, comentario y su propio «Guardar»
+      return { tipo: "evaluacion", individual: true, filas: conSel.map(function (tr) {
+        var sel = Array.prototype.filter.call(tr.querySelectorAll('select[id^="tipoEvaluacion_"]'), vis)[0], caja = sel.closest("tr.boxadd") || tr;
+        var n = tr.querySelector(".datanombre") || tr.querySelector("td.nombre");
+        return { nombre: n ? n.textContent : "", selTipo: sel, nota: caja.querySelector("input.campoCalificacion"), fecha: caja.querySelector("input.hasDatepicker"), desc: caja.querySelector("textarea"), guardar: caja.querySelector("a.boxcalifguardar") };
+      }).filter(function (f) { return f.nota && !f.nota.disabled && !f.nota.readOnly; }) };
     }
     var al = document.querySelectorAll("tr.filaalumno");
     if (al.length) {
@@ -97,7 +107,14 @@
   }
 
   /* ---- completar ---- */
-  var hechos = [], marcados = [];
+  var hechos = [], marcados = [], paraGuardar = [];
+  function prepararIndividual(d, p, reemplazar, r) { // tipo de actividad, fecha y comentario del casillero de un estudiante
+    var op = Array.prototype.filter.call(d.selTipo.options, function (o) { return norm(o.text) === norm(p.actividad); })[0];
+    if (op && !d.selTipo.disabled) { if (d.selTipo.value !== op.value) { hechos.push([d.selTipo, d.selTipo.value]); poner(d.selTipo, op.value); } marca(d.selTipo, "#2f9e5b"); marcados.push(d.selTipo); }
+    else if (!r.sinTipo) { r.sinTipo = true; r.avisos.push("No pude poner el tipo de actividad «" + p.actividad + "»: elegilo a mano en cada estudiante."); }
+    if (d.fecha && !d.fecha.disabled && (reemplazar || !d.fecha.value.trim())) { hechos.push([d.fecha, d.fecha.value]); poner(d.fecha, dmy(p.fecha)); }
+    if (d.desc && p.descripcion && (reemplazar || !d.desc.value.trim())) { hechos.push([d.desc, d.desc.value]); poner(d.desc, p.descripcion); }
+  }
   function escribir(el, v, reemplazar, r, nombre, vacio) {
     var act = String(el.value == null ? "" : el.value).trim();
     if (act === String(v)) { r.iguales++; marca(el, "#2f9e5b"); marcados.push(el); return; }
@@ -108,13 +125,13 @@
     var pg = pantalla(), r = { puestos: 0, iguales: 0, ocupados: [], sin: [], dudosos: [], avisos: [], error: "" };
     if (!pg) { r.error = "Esta pantalla no tiene nada para completar. Para este paquete abrí " + DONDE[p.tipo] + "."; return r; }
     if (pg.tipo !== p.tipo) { r.error = "El paquete copiado es de " + NOMBRES[p.tipo] + ", y esta pantalla es de " + NOMBRES[pg.tipo] + ". Abrí " + DONDE[p.tipo] + ", o copiá el otro paquete en la Libreta."; return r; }
-    if (!pg.filas.length) { r.error = p.tipo === "cierre" ? "No encontré casilleros abiertos: desplegá el período a cerrar (por ejemplo Oct-Nov) y probá de nuevo." : "No encontré casilleros para completar en esta pantalla."; return r; }
+    if (!pg.filas.length) { r.error = p.tipo === "cierre" ? "No encontré casilleros abiertos: desplegá el período a cerrar (por ejemplo Oct-Nov) y probá de nuevo." : pg.individual ? "No encontré casilleros de nota. Desplegá el período (por ejemplo Oct-Nov) y, en «Tipos de calificaciones», elegí «Calificaciones del 1 al 10»." : "No encontré casilleros para completar en esta pantalla."; return r; }
     if (p.tipo === "asistencia") {
       var mucho = p.filas.filter(function (f) { return (f.inj || 0) + (f.jus || 0) > 8; });
       if (mucho.length) { r.error = "El paquete trae " + mucho.length + " estudiante" + (mucho.length === 1 ? "" : "s") + " con más de 8 horas de falta en el día (por ejemplo " + mucho[0].nombre + ": " + ((mucho[0].inj || 0) + (mucho[0].jus || 0)) + " h), y UTU acepta como máximo 8. Revisá las horas de esa clase en la libreta y volvé a copiar."; return r; }
     }
     if (p.tipo === "asistencia" && !mismaFecha(p.fecha, pg.fecha)) { r.error = "El paquete es del " + dmy(p.fecha) + " y esta pantalla está en " + pg.fecha + ". Cambiá la fecha de la pantalla a " + dmy(p.fecha) + ", esperá a que recargue la lista y tocá «Completar» otra vez."; return r; }
-    if (p.tipo === "evaluacion") {
+    if (p.tipo === "evaluacion" && !pg.individual) {
       if (pg.tipoCalif && pg.tipoCalif.value !== "numerico_1_10") { r.error = "En «Tipos de calificaciones» elegí «Calificaciones del 1 al 10» y tocá «Completar» otra vez."; return r; }
       var op = Array.prototype.filter.call(pg.selTipo.options, function (o) { return norm(o.text) === norm(p.actividad); })[0];
       if (!pg.selTipo.disabled && op) { if (pg.selTipo.value !== op.value) { hechos.push([pg.selTipo, pg.selTipo.value]); poner(pg.selTipo, op.value); } marca(pg.selTipo, "#2f9e5b"); marcados.push(pg.selTipo); }
@@ -128,6 +145,13 @@
       if (par[i] === -2) { r.dudosos.push(f.nombre); return; }
       var d = pg.filas[par[i]]; usados[par[i]] = 1;
       if (p.tipo === "asistencia") { escribir(d.inj, f.inj || 0, reemplazar, r, f.nombre, "0"); escribir(d.jus, f.jus || 0, reemplazar, r, f.nombre, "0"); return; }
+      if (pg.individual && f.nota !== "" && f.nota != null) {
+        var act = String(d.nota.value).trim();
+        if ((act === "" || reemplazar) && act !== String(f.nota)) prepararIndividual(d, p, reemplazar, r);
+        var antes = r.puestos; escribir(d.nota, f.nota, reemplazar, r, f.nombre, "");
+        if (r.puestos > antes && d.guardar) paraGuardar.push({ nombre: f.nombre, a: d.guardar });
+        return;
+      }
       if (f.nota !== "" && f.nota != null && d.nota) escribir(d.nota, f.nota, reemplazar, r, f.nombre, "");
       if (p.tipo === "cierre" && f.juicio && d.texto) escribir(d.texto, f.juicio, reemplazar, r, f.nombre + " (juicio)", "");
     });
@@ -139,7 +163,7 @@
     return r;
   }
   function deshacer() {
-    hechos.reverse().forEach(function (h) { poner(h[0], h[1]); }); hechos = [];
+    hechos.reverse().forEach(function (h) { poner(h[0], h[1]); }); hechos = []; paraGuardar = [];
     restaurar.reverse().forEach(function (fn) { try { fn(); } catch (e) {} }); restaurar = [];
     marcados.forEach(function (e) { marca(e, ""); }); marcados = [];
   }
@@ -292,7 +316,7 @@
   host.style.cssText = "position:fixed;top:12px;right:12px;z-index:2147483647";
   var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
   root.innerHTML = '<style>.p{width:370px;max-height:88vh;overflow:auto;background:#fff;color:#1b2333;border:2px solid #2a4ea8;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.3);font:14px/1.45 system-ui,sans-serif;padding:12px 14px;position:relative;text-align:left}h2{margin:0 26px 6px 0;font-size:16px;color:#2a4ea8}textarea{width:100%;box-sizing:border-box;height:64px;font:12px ui-monospace,monospace}label{display:block;margin:6px 0}button{font:inherit;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;background:#2a4ea8;color:#fff;margin:6px 6px 0 0}button.alt{background:#e9edf5;color:#1b2333}button:disabled{opacity:.5;cursor:default}.x{position:absolute;top:4px;right:6px;background:none;color:#1b2333;font-size:20px;padding:0 6px;margin:0}.pq{background:#e8e4f8;border-radius:6px;padding:6px 8px;margin:6px 0}.r{margin-top:8px;font-size:13px}.r ul{margin:4px 0 0;padding-left:18px}h3{margin:4px 0;font-size:14px;color:#2a4ea8}.tr{border-top:1px solid #d9dfea;margin-top:10px;padding-top:6px}label.inl{display:inline-block;margin:3px 8px 3px 0}input[type=date]{font:inherit;font-size:13px}.out{height:46px}.ok{color:#1f7a4d}.av{color:#946200}.mal{color:#b3332b}small{color:#5d6880;display:block;margin-top:6px}</style>' +
-    '<div class="p"><button class="x" title="Cerrar">×</button><h2>📒 Migrar desde la Libreta</h2><h3>⬆ De la Libreta a esta pantalla</h3><div class="pq">Buscando lo copiado…</div><textarea placeholder="Si no aparece solo, pegá acá lo copiado en la Libreta (Ctrl+V)"></textarea><label><input type="checkbox" class="rp"> Reemplazar lo que ya esté escrito</label><button class="go">Completar</button><button class="alt un" disabled>Deshacer</button><div class="r"></div><small>No se guarda nada: revisá y apretá «Guardar» en la pantalla.</small>' +
+    '<div class="p"><button class="x" title="Cerrar">×</button><h2>📒 Migrar desde la Libreta</h2><h3>⬆ De la Libreta a esta pantalla</h3><div class="pq">Buscando lo copiado…</div><textarea placeholder="Si no aparece solo, pegá acá lo copiado en la Libreta (Ctrl+V)"></textarea><label><input type="checkbox" class="rp"> Reemplazar lo que ya esté escrito</label><button class="go">Completar</button><button class="alt un" disabled>Deshacer</button><div class="r"></div><button class="alt gd" hidden></button><small class="ng">No se guarda nada: revisá y apretá «Guardar» en la pantalla.</small>' +
     '<div class="tr" hidden><h3>⬇ De esta pantalla a la Libreta</h3>' +
     '<div class="trutu" hidden><small style="margin:0 0 4px">Lee las faltas guardadas en este registro, fecha por fecha. Solo lee: no cambia nada.</small><label class="inl">Desde <input type="date" class="d1"></label><label class="inl">hasta <input type="date" class="d2"></label><div class="dias">Días: ' +
     ["L", "M", "X", "J", "V", "S"].map(function (d, i) { return '<label class="inl"><input type="checkbox" value="' + (i + 1) + '">' + d + "</label>"; }).join("") + '</div><button class="leer">Leer faltas</button><button class="alt det" hidden>Detener</button></div>' +
@@ -334,6 +358,8 @@
     var r = completar(paquete, q(".rp").checked);
     if (r.error) { el.innerHTML = '<span class="mal">' + esc(r.error) + "</span>"; return; }
     q(".un").disabled = !hechos.length;
+    q(".gd").hidden = !paraGuardar.length;
+    if (paraGuardar.length) { q(".gd").disabled = false; q(".gd").textContent = "Guardar " + (paraGuardar.length === 1 ? "la evaluación" : "las " + paraGuardar.length + " evaluaciones") + ", una por una"; }
     var uno = r.puestos === 1, que = (uno ? "casillero" : "casilleros") + (paquete.tipo === "asistencia" ? " de horas" : "");
     el.innerHTML = '<span class="ok"><b>' + r.puestos + "</b> " + que + (uno ? " completado" : " completados") + (r.iguales ? " (" + r.iguales + (r.iguales === 1 ? " ya estaba igual)" : " ya estaban igual)") : "") + ".</span>" +
       lista("av", "Ya tenían otro valor y no se tocaron (en naranja; marcá «Reemplazar» para pisarlos):", r.ocupados) +
@@ -369,6 +395,17 @@
   q(".ab").addEventListener("click", function () { // pasa el paquete en la dirección (#anep=…): no hace falta copiar ni pegar
     var w = window.open(LIBRETA + "#anep=" + encodeURIComponent(q(".out").value.replace(/^LIBRETA-ANEP\s*/, "")), "_blank");
     if (!w) q(".trr").insertAdjacentHTML("beforeend", '<div class="av">El navegador bloqueó la ventana nueva: permití las ventanas emergentes de este sitio o usá «Copiar».</div>');
+  });
+  q(".gd").addEventListener("click", function () { // opcional: aprieta el «Guardar» (disquete) de cada estudiante completado, uno por vez
+    var lista = paraGuardar.slice(), el = q(".r"), i = 0; if (!lista.length) return;
+    if (!confirm("Se van a guardar " + lista.length + " evaluación" + (lista.length === 1 ? "" : "es") + " en ANEP, una por una, como si apretaras el disquete de cada estudiante.\n\nSi ya revisaste los casilleros, aceptá. Después no se deshace desde acá.")) return;
+    q(".gd").disabled = true; q(".un").disabled = true; q(".go").disabled = true;
+    (function sig() {
+      if (i >= lista.length) { paraGuardar = []; hechos = []; q(".gd").hidden = true; q(".go").disabled = false; el.innerHTML = '<span class="ok">Apreté «Guardar» en ' + lista.length + " estudiante" + (lista.length === 1 ? "" : "s") + ". Revisá que cada uno muestre su nota nueva en la columna del período.</span>"; return; }
+      el.textContent = "Guardando " + (i + 1) + " de " + lista.length + " (" + lista[i].nombre + ")…";
+      try { lista[i].a.click(); } catch (e) {}
+      i++; setTimeout(sig, 1300);
+    })();
   });
   q(".det").addEventListener("click", function () { if (lectura) lectura.parar = true; });
   q(".leer").addEventListener("click", function () {
